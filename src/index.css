@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f6f8f7;
+  --surface: #ffffff;
+  --surface-2: #fafbfa;
+  --border: #e5e7eb;
+  --text: #1f2937;
+  --text-muted: #6b7280;
+  --shadow-color: 15, 23, 42;
+}
+
+html.dark {
+  --bg: #0c1210;
+  --surface: #141c19;
+  --surface-2: #101815;
+  --border: #223029;
+  --text: #f3f4f6;
+  --text-muted: #9ca3af;
+  --shadow-color: 0, 0, 0;
+}
+
+/* Phase 23 — lets the admin shell (AdminLayout) own its own fixed-
+   viewport scroll containers instead of the document. Scoped to this
+   app only (admin-panel has its own index.css, separate from
+   frontend/'s) — standalone full-viewport pages (Login, ChatbotStudio,
+   etc.) already size themselves off h-screen/h-dvh and are unaffected
+   by html/body/#root reporting 100% instead of their default auto
+   height. */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Consistent, visible focus ring everywhere, keyboard-only */
+:focus-visible {
+  outline: 2px solid theme("colors.primary.400");
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Keyframes defined directly here too (not just via Tailwind's
+   `animate-*` utilities) so .skeleton-shimmer/.stagger-in below
+   always resolve regardless of which utility classes get scanned. */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Shimmer skeleton */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(120, 130, 125, 0.12) 25%,
+    rgba(120, 130, 125, 0.22) 37%,
+    rgba(120, 130, 125, 0.12) 63%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Staggered entrance helper: set --stagger-index on the element */
+.stagger-in {
+  animation: fadeInUp 0.35s ease-out both;
+  animation-delay: calc(var(--stagger-index, 0) * 50ms);
+}
+
+/* Respect the user's OS-level motion preference: collapse all
+   animation/transition to near-instant instead of removing the
+   final visual state (so content doesn't get stuck mid-animation). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
