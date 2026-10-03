@@ -48,7 +48,7 @@ const NAV_GROUPS = [
     label: "Workspace",
     items: [
       { to: "/dashboard", label: "Overview", icon: FiGrid },
-      { to: "/coming-soon", label: "Live View", icon: FiRadio, soon: true },
+      { to: "/live-view", label: "Live View", icon: FiRadio },
       { to: "/conversations", label: "Conversations", icon: FiMessageSquare },
       { to: "/visitors", label: "Visitors", icon: FiEye },
     ],

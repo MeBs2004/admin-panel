@@ -2,6 +2,7 @@ const STYLES = {
   ACTIVE: "bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-500",
   LIVE: "bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-500",
   ONLINE: "bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-500",
+  IDLE: "bg-warning-50 text-warning-600 dark:bg-warning-500/10 dark:text-warning-500",
   TRIAL: "bg-info-50 text-info-600 dark:bg-info-500/10 dark:text-info-500",
   DRAFT: "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300",
   INACTIVE: "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300",

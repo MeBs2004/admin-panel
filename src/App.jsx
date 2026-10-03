@@ -27,6 +27,8 @@ import CreateChatbotWizard from "./pages/chatbots/create/CreateChatbotWizard.jsx
 import ChatbotStudio from "./pages/chatbots/studio/ChatbotStudio.jsx";
 import ChatbotBuilder from "./pages/chatbots/builder/ChatbotBuilder.jsx";
 
+import LiveView from "./pages/liveview/LiveView.jsx";
+
 import VisitorsList from "./pages/visitors/VisitorsList.jsx";
 import VisitorDetail from "./pages/visitors/VisitorDetail.jsx";
 
@@ -84,6 +86,7 @@ function App() {
       >
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/live-view" element={<LiveView />} />
 
         <Route path="/users" element={<UsersList />} />
         <Route path="/users/:id" element={<UserDetail />} />
