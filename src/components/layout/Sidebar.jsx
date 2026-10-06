@@ -33,6 +33,7 @@ import {
   FiCreditCard,
   FiFileText,
   FiSettings,
+  FiCheckSquare,
   FiX,
 } from "react-icons/fi";
 import { FaWhatsapp, FaInstagram, FaFacebookMessenger, FaTelegram, FaSlack, FaMicrosoft } from "react-icons/fa";
@@ -109,6 +110,7 @@ const NAV_GROUPS = [
     items: [
       { to: "/users", label: "Users", icon: FiUsers, requires: PERMISSIONS.USERS_READ },
       { to: "/roles-permissions", label: "Roles & Permissions", icon: FiShield, requires: PERMISSIONS.USERS_READ },
+      { to: "/tasks", label: "Tasks", icon: FiCheckSquare, requires: PERMISSIONS.TASKS_VIEW },
       { to: "/chatbots", label: "Chatbot Access", icon: FiKey, hint: "Open a chatbot's Access tab to manage chatbot access", requires: PERMISSIONS.CHATBOT_ACCESS_MANAGE },
     ],
   },

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiPlus, FiX } from "react-icons/fi";
+import { FiPlus, FiX, FiCheck } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
@@ -12,9 +12,12 @@ import StatusBadge from "../../components/ui/StatusBadge.jsx";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.jsx";
 import Modal from "../../components/ui/Modal.jsx";
 import ErrorState from "../../components/ui/ErrorState.jsx";
+import EmptyState from "../../components/ui/EmptyState.jsx";
+import Tabs from "../../components/ui/Tabs.jsx";
 import { SkeletonLine } from "../../components/ui/Skeleton.jsx";
+import TaskFormModal from "../tasks/TaskFormModal.jsx";
 
-const COMPANY_ROLE_OPTIONS = [
+const SYSTEM_COMPANY_ROLE_OPTIONS = [
   { value: "COMPANY_ADMIN", label: "Company Admin" },
   { value: "AGENT", label: "Agent" },
   { value: "VIEWER", label: "Viewer" },
@@ -37,10 +40,23 @@ export default function UserDetail() {
   const [allCompanies, setAllCompanies] = useState([]);
   const [grantCompanyId, setGrantCompanyId] = useState("");
   const [grantCompanyRole, setGrantCompanyRole] = useState("AGENT");
+  const [customRolesForGrant, setCustomRolesForGrant] = useState([]);
 
   const [companyForBots, setCompanyForBots] = useState("");
   const [botsForCompany, setBotsForCompany] = useState([]);
   const [grantChatbotId, setGrantChatbotId] = useState("");
+
+  const [tab, setTab] = useState("access");
+
+  const [permCompanyId, setPermCompanyId] = useState("");
+  const [permData, setPermData] = useState(null);
+  const [permLoading, setPermLoading] = useState(false);
+  const [permOverrides, setPermOverrides] = useState({});
+  const [permSaving, setPermSaving] = useState(false);
+
+  const [tasks, setTasks] = useState([]);
+  const [tasksLoading, setTasksLoading] = useState(false);
+  const [showTaskForm, setShowTaskForm] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -71,6 +87,85 @@ export default function UserDetail() {
       .then((res) => setBotsForCompany(res.data.chatbots))
       .catch(() => setBotsForCompany([]));
   }, [companyForBots]);
+
+  useEffect(() => {
+    if (!grantCompanyId) {
+      setCustomRolesForGrant([]);
+      return;
+    }
+    api
+      .get("/roles", { params: { companyId: grantCompanyId } })
+      .then((res) => setCustomRolesForGrant(res.data.roles || []))
+      .catch(() => setCustomRolesForGrant([]));
+  }, [grantCompanyId]);
+
+  const [roleLabelById, setRoleLabelById] = useState({});
+  useEffect(() => {
+    if (!data?.companyAccess?.length) return;
+    const systemKeys = new Set(["COMPANY_ADMIN", "AGENT", "VIEWER", "DEVELOPER"]);
+    const companyIds = [...new Set(data.companyAccess.filter((a) => !systemKeys.has(a.role)).map((a) => a.companyId))];
+    if (companyIds.length === 0) return;
+    Promise.all(companyIds.map((cid) => api.get("/roles", { params: { companyId: cid } }).catch(() => ({ data: { roles: [] } }))))
+      .then((responses) => {
+        const map = {};
+        responses.forEach((res) => (res.data.roles || []).forEach((r) => (map[r._id] = r.name)));
+        setRoleLabelById(map);
+      });
+  }, [data]);
+
+  const formatRoleLabel = (role) =>
+    ["COMPANY_ADMIN", "AGENT", "VIEWER", "DEVELOPER"].includes(role) ? role.replaceAll("_", " ") : roleLabelById[role] || "Custom Role";
+
+  const loadPermissions = (cid) => {
+    if (!cid) return;
+    setPermLoading(true);
+    api
+      .get(`/users/${id}/effective-permissions`, { params: { companyId: cid } })
+      .then((res) => {
+        setPermData(res.data);
+        setPermOverrides(Object.fromEntries((res.data.overrides || []).map((o) => [o.permission, o.granted])));
+      })
+      .catch((err) => showToast(getErrorMessage(err), "error"))
+      .finally(() => setPermLoading(false));
+  };
+
+  useEffect(() => {
+    if (tab !== "permissions") return;
+    if (!permCompanyId && data?.companyAccess?.length) {
+      setPermCompanyId(data.companyAccess[0].companyId);
+      return;
+    }
+    loadPermissions(permCompanyId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, permCompanyId, data]);
+
+  const loadTasks = () => {
+    setTasksLoading(true);
+    api
+      .get("/tasks", { params: { assignee: id, limit: 100 } })
+      .then((res) => setTasks(res.data.tasks || []))
+      .catch(() => setTasks([]))
+      .finally(() => setTasksLoading(false));
+  };
+
+  useEffect(() => {
+    if (tab === "tasks") loadTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+
+  const savePermissionOverrides = async () => {
+    setPermSaving(true);
+    try {
+      const overrides = Object.entries(permOverrides).map(([permission, granted]) => ({ permission, granted }));
+      await api.patch(`/users/${id}/permission-overrides`, { companyId: permCompanyId, overrides });
+      showToast("Permission overrides saved.");
+      loadPermissions(permCompanyId);
+    } catch (err) {
+      showToast(getErrorMessage(err), "error");
+    } finally {
+      setPermSaving(false);
+    }
+  };
 
   const setStatus = async (status) => {
     setBusy(true);
@@ -255,6 +350,18 @@ export default function UserDetail() {
             </dl>
           </div>
 
+          <Tabs
+            tabs={[
+              { value: "access", label: "Access" },
+              { value: "permissions", label: "Permissions" },
+              { value: "tasks", label: "Tasks" },
+            ]}
+            active={tab}
+            onChange={setTab}
+          />
+
+          {tab === "access" && (
+          <>
           <div className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
             <h3 className="mb-3 text-sm font-semibold text-gray-800 dark:text-gray-100">
               Company Access
@@ -272,7 +379,7 @@ export default function UserDetail() {
                     className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 text-sm dark:border-white/5"
                   >
                     <span className="text-gray-700 dark:text-gray-200">
-                      {a.companyId} — {a.role.replaceAll("_", " ")}
+                      {a.companyId} — {formatRoleLabel(a.role)}
                     </span>
                     {canManageAccess && (
                       <button
@@ -305,7 +412,7 @@ export default function UserDetail() {
                     <div className="w-40">
                       <Select
                         label="Role"
-                        options={COMPANY_ROLE_OPTIONS}
+                        options={[...SYSTEM_COMPANY_ROLE_OPTIONS, ...customRolesForGrant.map((r) => ({ value: r._id, label: r.name }))]}
                         value={grantCompanyRole}
                         onChange={(e) => setGrantCompanyRole(e.target.value)}
                       />
@@ -390,6 +497,125 @@ export default function UserDetail() {
               </div>
             )}
           </div>
+          </>
+          )}
+
+          {tab === "permissions" && (
+            <div className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+              {user.role === "SUPER_ADMIN" ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">Super Admin has every permission on every company.</p>
+              ) : companyAccess.length === 0 ? (
+                <EmptyState title="No company access yet" description="Grant company access first to manage permissions." />
+              ) : (
+                <>
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="w-56">
+                      <Select
+                        label="Company"
+                        options={companyAccess.map((a) => ({ value: a.companyId, label: a.companyId }))}
+                        value={permCompanyId}
+                        onChange={(e) => setPermCompanyId(e.target.value)}
+                      />
+                    </div>
+                    {permData && (
+                      <p className="text-xs text-gray-400">
+                        Role: <span className="font-medium text-gray-600 dark:text-gray-300">{permData.roleLabel}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {permLoading && <SkeletonLine className="h-24 w-full" />}
+
+                  {!permLoading && permData && (
+                    <>
+                      {(() => {
+                        const canEditOverrides =
+                          canManageAccess && (me?.role === "SUPER_ADMIN" || can(me?.role, PERMISSIONS.USERS_MANAGE_PERMISSIONS));
+                        return (
+                          <>
+                            <p className="mb-3 text-xs text-gray-400">
+                              Checked = granted (inherited from role, or an override). Unchecking something the role grants adds
+                              an explicit denial override; checking something the role doesn't grant adds an explicit grant
+                              override — you can never grant a permission you don't have yourself.
+                            </p>
+                            <div className="max-h-[360px] space-y-1.5 overflow-y-auto">
+                              {Object.values(PERMISSIONS).map((perm) => {
+                                const inherited = permData.basePermissions.includes(perm);
+                                const effective = permOverrides[perm] !== undefined ? permOverrides[perm] : inherited;
+                                const isOverridden = permOverrides[perm] !== undefined && permOverrides[perm] !== inherited;
+                                return (
+                                  <label
+                                    key={perm}
+                                    className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-sm hover:bg-gray-50 dark:hover:bg-white/5"
+                                  >
+                                    <span className={`flex items-center gap-2 ${effective ? "text-gray-700 dark:text-gray-200" : "text-gray-400"}`}>
+                                      <input
+                                        type="checkbox"
+                                        checked={effective}
+                                        disabled={!canEditOverrides}
+                                        onChange={(e) => setPermOverrides((prev) => ({ ...prev, [perm]: e.target.checked }))}
+                                        className="h-3.5 w-3.5 rounded border-gray-300 text-primary-500 focus:ring-primary-400"
+                                      />
+                                      {perm}
+                                    </span>
+                                    {isOverridden && (
+                                      <span className="text-[10px] font-medium uppercase tracking-wide text-primary-500">override</span>
+                                    )}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                            {canEditOverrides && (
+                              <div className="mt-4 flex justify-end">
+                                <Button onClick={savePermissionOverrides} loading={permSaving}>
+                                  <FiCheck /> Save Overrides
+                                </Button>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {tab === "tasks" && (
+            <div className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Assigned Tasks</h3>
+                {canManageAccess && (
+                  <Button onClick={() => setShowTaskForm(true)}>
+                    <FiPlus /> Assign Task
+                  </Button>
+                )}
+              </div>
+              {tasksLoading && <SkeletonLine className="h-20 w-full" />}
+              {!tasksLoading && tasks.length === 0 && <EmptyState title="No tasks assigned to this user." />}
+              {!tasksLoading && tasks.length > 0 && (
+                <div className="space-y-2">
+                  {tasks.map((t) => (
+                    <div key={t._id} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 text-sm dark:border-white/5">
+                      <div>
+                        <p className={`font-medium ${t.status === "COMPLETED" ? "text-gray-400 line-through" : "text-gray-700 dark:text-gray-200"}`}>
+                          {t.title}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {t.companyId} {t.dueDate ? `· Due ${new Date(t.dueDate).toLocaleDateString()}` : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={t.priority} />
+                        <StatusBadge status={t.status} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {canManageThisUser && (
@@ -461,6 +687,15 @@ export default function UserDetail() {
           </div>
         )}
       </div>
+
+      <TaskFormModal
+        open={showTaskForm}
+        onClose={() => setShowTaskForm(false)}
+        onSaved={loadTasks}
+        companies={allCompanies.filter((c) => companyAccess.some((a) => a.companyId === c.companyId))}
+        defaultCompanyId={companyAccess[0]?.companyId}
+        defaultAssigneeId={id}
+      />
 
       <ConfirmDialog
         open={!!confirm}

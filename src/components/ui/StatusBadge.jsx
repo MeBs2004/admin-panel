@@ -38,6 +38,16 @@ const STYLES = {
   INCOMPLETE: "bg-warning-50 text-warning-600 dark:bg-warning-500/10 dark:text-warning-500",
   NOT_CONFIGURED: "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300",
   CONFIGURED: "bg-info-50 text-info-600 dark:bg-info-500/10 dark:text-info-500",
+
+  // Task status/priority
+  TODO: "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300",
+  IN_PROGRESS: "bg-info-50 text-info-600 dark:bg-info-500/10 dark:text-info-500",
+  BLOCKED: "bg-danger-50 text-danger-600 dark:bg-danger-500/10 dark:text-danger-500",
+  COMPLETED: "bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-500",
+  LOW: "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300",
+  MEDIUM: "bg-info-50 text-info-600 dark:bg-info-500/10 dark:text-info-500",
+  HIGH: "bg-warning-50 text-warning-600 dark:bg-warning-500/10 dark:text-warning-500",
+  URGENT: "bg-danger-50 text-danger-600 dark:bg-danger-500/10 dark:text-danger-500",
 };
 
 const PULSE = new Set(["LIVE", "ONLINE", "ACTIVE", "CONNECTED"]);

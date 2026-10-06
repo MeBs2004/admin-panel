@@ -7,6 +7,7 @@ import { can, PERMISSIONS } from "../../utils/permissions.js";
 import PageHeader from "../../components/ui/PageHeader.jsx";
 import Button from "../../components/ui/Button.jsx";
 import Input from "../../components/ui/Input.jsx";
+import Select from "../../components/ui/Select.jsx";
 import StatusBadge from "../../components/ui/StatusBadge.jsx";
 import { SkeletonTable } from "../../components/ui/Skeleton.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
@@ -23,6 +24,8 @@ export default function UsersList() {
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -34,7 +37,14 @@ export default function UsersList() {
     setLoading(true);
     setError("");
     api
-      .get("/users", { params: { page, search: search || undefined } })
+      .get("/users", {
+        params: {
+          page,
+          search: search || undefined,
+          role: roleFilter || undefined,
+          status: statusFilter || undefined,
+        },
+      })
       .then((res) => {
         setUsers(res.data.users);
         setPagination(res.data.pagination);
@@ -48,7 +58,7 @@ export default function UsersList() {
     const timeout = setTimeout(() => load(1), 300);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, tab]);
+  }, [search, roleFilter, statusFilter, tab]);
 
   return (
     <div>
@@ -94,12 +104,40 @@ export default function UsersList() {
         <InvitationsPanel />
       ) : (
         <>
-          <div className="mb-4 max-w-xs">
-            <Input
-              placeholder="Search users..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+          <div className="mb-4 flex flex-wrap gap-2">
+            <div className="w-64">
+              <Input
+                placeholder="Search users..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="w-44">
+              <Select
+                options={[
+                  { value: "", label: "All Roles" },
+                  { value: "SUPER_ADMIN", label: "Super Admin" },
+                  { value: "COMPANY_ADMIN", label: "Company Admin" },
+                  { value: "AGENT", label: "Agent" },
+                  { value: "VIEWER", label: "Viewer" },
+                  { value: "DEVELOPER", label: "Developer" },
+                ]}
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+              />
+            </div>
+            <div className="w-40">
+              <Select
+                options={[
+                  { value: "", label: "All Statuses" },
+                  { value: "ACTIVE", label: "Active" },
+                  { value: "INACTIVE", label: "Inactive" },
+                  { value: "SUSPENDED", label: "Suspended" },
+                ]}
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)]">
