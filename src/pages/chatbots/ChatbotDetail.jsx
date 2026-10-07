@@ -11,6 +11,7 @@ import StatusBadge from "../../components/ui/StatusBadge.jsx";
 import Tabs from "../../components/ui/Tabs.jsx";
 import ErrorState from "../../components/ui/ErrorState.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
+import ConfirmDialog from "../../components/ui/ConfirmDialog.jsx";
 import { SkeletonLine } from "../../components/ui/Skeleton.jsx";
 import AssignAccessModal from "./AssignAccessModal.jsx";
 
@@ -34,6 +35,8 @@ export default function ChatbotDetail() {
   const [model, setModel] = useState("");
   const [busy, setBusy] = useState(false);
   const [showAssign, setShowAssign] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -87,6 +90,19 @@ export default function ChatbotDetail() {
     }
   };
 
+  const deleteChatbot = async () => {
+    setDeleting(true);
+    try {
+      await api.delete(`/chatbots/${id}`);
+      showToast(`"${data?.chatbot?.name}" deleted.`);
+      navigate("/chatbots");
+    } catch (err) {
+      showToast(getErrorMessage(err), "error");
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-3">
@@ -99,7 +115,7 @@ export default function ChatbotDetail() {
   if (error) return <ErrorState message={error} onRetry={load} />;
   if (!data) return null;
 
-  const { chatbot, company, access } = data;
+  const { chatbot, company, access, siblingChatbotCount } = data;
 
   const isLive = chatbot.status === "LIVE";
 
@@ -190,6 +206,13 @@ export default function ChatbotDetail() {
 
           {tab === "configuration" && (
             <div className="max-w-md space-y-4">
+              {siblingChatbotCount > 0 && (
+                <p className="rounded-lg bg-warning-50 px-3 py-2 text-xs text-warning-600 dark:bg-warning-500/10 dark:text-warning-400">
+                  This company has {siblingChatbotCount + 1} chatbots. AI Settings and Knowledge Base are shared
+                  across all of them — changes made from this chatbot's AI Settings or Knowledge Base pages apply to
+                  every chatbot in {company?.name}, not just this one.
+                </p>
+              )}
               <Input label="Bot Name" value={name} onChange={(e) => setName(e.target.value)} />
               <Input label="Model" value={model} onChange={(e) => setModel(e.target.value)} />
               <Select
@@ -202,6 +225,13 @@ export default function ChatbotDetail() {
               <Button onClick={saveConfig} loading={busy}>
                 Save Changes
               </Button>
+
+              <div className="border-t border-gray-100 pt-4 dark:border-white/5">
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-danger-500">Danger Zone</h3>
+                <Button variant="danger" onClick={() => setConfirmDelete(true)}>
+                  Delete Chatbot
+                </Button>
+              </div>
             </div>
           )}
 
@@ -255,6 +285,16 @@ export default function ChatbotDetail() {
         chatbotId={id}
         onClose={() => setShowAssign(false)}
         onSaved={load}
+      />
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete Chatbot?"
+        message={`"${chatbot.name}" will be removed from Chatbots and taken offline immediately. Conversation history and visitor analytics are preserved; its Bot Builder flows and individual chatbot access grants will be deleted. This cannot be undone.`}
+        confirmLabel="Delete"
+        loading={deleting}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={deleteChatbot}
       />
     </div>
   );

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiUpload, FiSend, FiCheck } from "react-icons/fi";
 import api, { getErrorMessage } from "../../../services/api.js";
+import { subscribeCompany } from "../../../services/realtime.js";
 import { useToast } from "../../../context/ToastContext.jsx";
 import PageHeader from "../../../components/ui/PageHeader.jsx";
 import Button from "../../../components/ui/Button.jsx";
@@ -28,10 +29,13 @@ export default function ChatbotKnowledge() {
   const [testing, setTesting] = useState(false);
   const [answer, setAnswer] = useState(null);
   const [testError, setTestError] = useState("");
+  const [updatedElsewhere, setUpdatedElsewhere] = useState(false);
+  const justSavedRef = useRef(false);
 
   const load = () => {
     setLoading(true);
     setError("");
+    setUpdatedElsewhere(false);
     api
       .get(`/chatbots/${id}/knowledge`)
       .then((res) => {
@@ -44,13 +48,29 @@ export default function ChatbotKnowledge() {
 
   useEffect(load, [id]);
 
+  // Knowledge is shared at the Company level (Company.knowledgeFile)
+  // — another admin's save (from this chatbot or a sibling one)
+  // invalidates what's on screen. Never auto-reload over unsaved
+  // edits (Section 31) — surface a banner; the existing 409 handling
+  // already covers the "tried to save over it" case.
+  useEffect(() => {
+    if (!data?.companyId) return undefined;
+    return subscribeCompany(data.companyId, (evt) => {
+      if (evt.type === "knowledge.updated" && !justSavedRef.current) setUpdatedElsewhere(true);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.companyId]);
+
   const handleSave = async () => {
     setSaving(true);
+    justSavedRef.current = true;
+    setTimeout(() => (justSavedRef.current = false), 3000);
     try {
       const res = await api.put(`/chatbots/${id}/knowledge`, { content, expectedUpdatedAt: data.updatedAt });
       showToast("Knowledge base updated — live for the next visitor message.");
       setJustSaved(true);
       setTimeout(() => setJustSaved(false), 2200);
+      setUpdatedElsewhere(false);
       setData((d) => ({ ...d, updatedAt: res.data.updatedAt, characterCount: content.length, status: content.trim() ? "READY" : "EMPTY", error: null }));
     } catch (err) {
       if (err.response?.status === 409) {
@@ -129,6 +149,22 @@ export default function ChatbotKnowledge() {
           </Button>
         }
       />
+
+      {updatedElsewhere && (
+        <div className="mb-4 flex items-center justify-between rounded-lg bg-info-50 px-4 py-3 text-sm text-info-700 dark:bg-info-500/10 dark:text-info-300">
+          <span>The knowledge base was updated elsewhere. Your unsaved edits here are kept — reload to see the latest before saving, or save to attempt a merge (a conflict will show if it's genuinely incompatible).</span>
+          <Button variant="secondary" onClick={load}>
+            Reload
+          </Button>
+        </div>
+      )}
+
+      {data.siblingChatbotCount > 0 && (
+        <p className="mb-4 rounded-lg bg-warning-50 px-3 py-2 text-xs text-warning-600 dark:bg-warning-500/10 dark:text-warning-400">
+          This company has {data.siblingChatbotCount + 1} chatbots. The knowledge base is shared across all of
+          them — saving here changes what every chatbot in this company knows, not just this one.
+        </p>
+      )}
 
       <div className="space-y-6">
         <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">

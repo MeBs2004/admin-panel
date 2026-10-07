@@ -1,4 +1,4 @@
-import { FiArrowLeft, FiRotateCcw, FiRotateCw, FiZoomIn, FiZoomOut, FiMaximize, FiCheckCircle } from "react-icons/fi";
+import { FiArrowLeft, FiRotateCcw, FiRotateCw, FiZoomIn, FiZoomOut, FiMaximize, FiCheckCircle, FiClock } from "react-icons/fi";
 import Button from "../../../components/ui/Button.jsx";
 
 export default function BuilderToolbar({
@@ -20,6 +20,7 @@ export default function BuilderToolbar({
   onPublish,
   publishing,
   publishedVersion,
+  onOpenHistory,
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 py-2.5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
@@ -79,6 +80,13 @@ export default function BuilderToolbar({
           )}
         </div>
 
+        <button
+          onClick={onOpenHistory}
+          title="Version history"
+          className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5"
+        >
+          <FiClock className="h-4 w-4" />
+        </button>
         <Button variant="secondary" onClick={onValidate} loading={validating}>
           <FiCheckCircle className="h-3.5 w-3.5" /> Validate
         </Button>

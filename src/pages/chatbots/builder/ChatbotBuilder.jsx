@@ -13,6 +13,7 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import api, { getErrorMessage } from "../../../services/api.js";
+import { subscribeChatbot } from "../../../services/realtime.js";
 import { useToast } from "../../../context/ToastContext.jsx";
 import { SkeletonLine } from "../../../components/ui/Skeleton.jsx";
 import ErrorState from "../../../components/ui/ErrorState.jsx";
@@ -21,6 +22,7 @@ import BuilderToolbar from "./BuilderToolbar.jsx";
 import NodeLibrary from "./NodeLibrary.jsx";
 import NodeConfigPanel from "./NodeConfigPanel.jsx";
 import FlowNode from "./FlowNode.jsx";
+import VersionHistoryDrawer from "./VersionHistoryDrawer.jsx";
 import { NODE_DEFS } from "./nodeDefs.js";
 
 const NODE_TYPES = { flowNode: FlowNode };
@@ -85,6 +87,9 @@ function BuilderCanvas() {
   const [publishing, setPublishing] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState(null);
   const [publishedVersion, setPublishedVersion] = useState(null);
+  const [versions, setVersions] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [rollingBack, setRollingBack] = useState(false);
 
   const historyRef = useRef({ stack: [], index: -1 });
   const [historyTick, setHistoryTick] = useState(0);
@@ -102,6 +107,7 @@ function BuilderCanvas() {
         setNodes(rfNodes);
         setEdges(rfEdges);
         setPublishedVersion(flowRes.data.published?.version || null);
+        setVersions(flowRes.data.versions || []);
         const snapshot = { nodes: toBackendNodes(rfNodes), edges: toBackendEdges(rfEdges), startNodeId: draft.startNodeId };
         setSavedSnapshot(snapshot);
         historyRef.current = { stack: [snapshot], index: 0 };
@@ -112,6 +118,46 @@ function BuilderCanvas() {
   }, [id]);
 
   useEffect(load, [load]);
+
+  // Lightweight refresh — only the published pointer + version list,
+  // never the in-progress draft (nodes/edges), so another admin
+  // publishing/rolling back elsewhere never clobbers unsaved local
+  // edits (Section 31's "never silently overwrite" principle, same as
+  // Knowledge Base/AI Settings).
+  const refreshVersions = useCallback(() => {
+    api
+      .get(`/chatbots/${id}/flow`)
+      .then((res) => {
+        setPublishedVersion(res.data.published?.version || null);
+        setVersions(res.data.versions || []);
+      })
+      .catch(() => {});
+  }, [id]);
+
+  useEffect(() => {
+    return subscribeChatbot(id, (evt) => {
+      if (evt.type === "chatbot.flow.published" || evt.type === "chatbot.flow.rolledback") {
+        refreshVersions();
+      }
+    });
+  }, [id, refreshVersions]);
+
+  const onRollback = useCallback(
+    async (version) => {
+      setRollingBack(true);
+      try {
+        const res = await api.post(`/chatbots/${id}/flow/rollback`, { version });
+        setPublishedVersion(res.data.publishedVersion);
+        refreshVersions();
+        showToast(`Rolled back to version ${res.data.publishedVersion}.`);
+      } catch (err) {
+        showToast(getErrorMessage(err), "error");
+      } finally {
+        setRollingBack(false);
+      }
+    },
+    [id, refreshVersions, showToast]
+  );
 
   const currentSnapshot = useCallback(
     () => ({
@@ -343,6 +389,7 @@ function BuilderCanvas() {
         onPublish={onPublish}
         publishing={publishing}
         publishedVersion={publishedVersion}
+        onOpenHistory={() => setShowHistory(true)}
       />
 
       {/* Desktop builder — see section 31: this is intentionally not
@@ -403,6 +450,14 @@ function BuilderCanvas() {
           Bot Builder is optimized for desktop screens. Please use a larger screen for the full flow editor.
         </p>
       </div>
+
+      <VersionHistoryDrawer
+        open={showHistory}
+        onClose={() => setShowHistory(false)}
+        versions={versions}
+        onRollback={onRollback}
+        rollingBack={rollingBack}
+      />
     </div>
   );
 }

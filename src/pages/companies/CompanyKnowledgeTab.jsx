@@ -1,17 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { FiCheck } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
+import { subscribeCompany } from "../../services/realtime.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import Button from "../../components/ui/Button.jsx";
 import ErrorState from "../../components/ui/ErrorState.jsx";
 import { SkeletonLine } from "../../components/ui/Skeleton.jsx";
 
 /**
- * The real, existing knowledge system: one flat text file per
- * company (Company.knowledgeFile), read directly by
- * services/groq.service.js. Saving here writes the actual file
- * and invalidates the server's in-memory cache — no separate
- * "processing" pipeline exists, so we don't fake one.
+ * The real, existing knowledge system: Company.knowledgeContent in
+ * MongoDB (previously a local .txt file — moved off disk because
+ * Render's web service filesystem is ephemeral and was silently
+ * losing edits on every restart/redeploy; see knowledge.service.js).
+ * Saving here writes straight to Mongo and invalidates the server's
+ * in-memory cache — no separate "processing" pipeline exists, so we
+ * don't fake one. Same underlying content as the chatbot-scoped
+ * Knowledge Base page (ChatbotKnowledge.jsx) — this is the Company
+ * page's door onto it, so both need the same conflict/realtime
+ * handling.
  */
 export default function CompanyKnowledgeTab({ companyId }) {
   const { showToast } = useToast();
@@ -21,11 +27,14 @@ export default function CompanyKnowledgeTab({ companyId }) {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
+  const [updatedElsewhere, setUpdatedElsewhere] = useState(false);
   const savedTimeout = useRef(null);
+  const justSavedRef = useRef(false);
 
   const load = () => {
     setLoading(true);
     setError("");
+    setUpdatedElsewhere(false);
     api
       .get(`/companies/${companyId}/knowledge`)
       .then((res) => {
@@ -39,17 +48,30 @@ export default function CompanyKnowledgeTab({ companyId }) {
   useEffect(load, [companyId]);
   useEffect(() => () => clearTimeout(savedTimeout.current), []);
 
+  useEffect(() => {
+    return subscribeCompany(companyId, (evt) => {
+      if (evt.type === "knowledge.updated" && !justSavedRef.current) setUpdatedElsewhere(true);
+    });
+  }, [companyId]);
+
   const handleSave = async () => {
     setSaving(true);
     setJustSaved(false);
+    justSavedRef.current = true;
+    setTimeout(() => (justSavedRef.current = false), 3000);
     try {
-      await api.put(`/companies/${companyId}/knowledge`, { content });
+      await api.put(`/companies/${companyId}/knowledge`, { content, expectedUpdatedAt: data.updatedAt });
       showToast("Knowledge base updated — now live.");
       setJustSaved(true);
+      setUpdatedElsewhere(false);
       savedTimeout.current = setTimeout(() => setJustSaved(false), 2200);
       load();
     } catch (err) {
-      showToast(getErrorMessage(err), "error");
+      if (err.response?.status === 409) {
+        showToast("This knowledge base changed elsewhere since you loaded it. Reload to see the latest before saving.", "error");
+      } else {
+        showToast(getErrorMessage(err), "error");
+      }
     } finally {
       setSaving(false);
     }
@@ -71,6 +93,15 @@ export default function CompanyKnowledgeTab({ companyId }) {
           {data.updatedAt && ` · Updated ${new Date(data.updatedAt).toLocaleString()}`}
         </span>
       </div>
+
+      {updatedElsewhere && (
+        <div className="mb-3 flex items-center justify-between rounded-lg bg-info-50 px-4 py-3 text-sm text-info-700 dark:bg-info-500/10 dark:text-info-300">
+          <span>The knowledge base was updated elsewhere. Your unsaved edits here are kept — reload to see the latest before saving.</span>
+          <Button variant="secondary" onClick={load}>
+            Reload
+          </Button>
+        </div>
+      )}
 
       {data.error && (
         <p className="mb-3 animate-fade-in rounded-lg bg-warning-50 px-3 py-2 text-sm text-warning-600 dark:bg-warning-500/10 dark:text-warning-500">
