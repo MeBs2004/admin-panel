@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiUpload, FiSend, FiCheck } from "react-icons/fi";
+import { FiUpload, FiSend, FiCheck, FiRefreshCw } from "react-icons/fi";
 import api, { getErrorMessage } from "../../../services/api.js";
 import { subscribeCompany } from "../../../services/realtime.js";
 import { useToast } from "../../../context/ToastContext.jsx";
@@ -30,6 +30,7 @@ export default function ChatbotKnowledge() {
   const [answer, setAnswer] = useState(null);
   const [testError, setTestError] = useState("");
   const [updatedElsewhere, setUpdatedElsewhere] = useState(false);
+  const [clearingCache, setClearingCache] = useState(false);
   const justSavedRef = useRef(false);
 
   const load = () => {
@@ -80,6 +81,23 @@ export default function ChatbotKnowledge() {
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Manual escape hatch for knowledge edited directly in MongoDB
+  // (Atlas UI, a script) rather than through this page — that case
+  // self-heals within 30s on its own, but this forces it immediately.
+  // A normal Save above is already instant; this button doesn't make
+  // Save any faster, it's for the out-of-band case.
+  const handleClearCache = async () => {
+    setClearingCache(true);
+    try {
+      await api.post(`/chatbots/${id}/knowledge/clear-cache`);
+      showToast("Knowledge cache cleared — the next message will reload from MongoDB.");
+    } catch (err) {
+      showToast(getErrorMessage(err), "error");
+    } finally {
+      setClearingCache(false);
     }
   };
 
@@ -190,6 +208,14 @@ export default function ChatbotKnowledge() {
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Knowledge Content</h2>
             <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleClearCache}
+                loading={clearingCache}
+                title="Force an immediate reload from MongoDB — only needed if knowledge was edited outside this page (e.g. directly in the database); a normal Save here is already instant."
+              >
+                <FiRefreshCw className="h-3.5 w-3.5" /> Clear Cache
+              </Button>
               <input ref={fileInputRef} type="file" hidden accept=".txt,.pdf,.docx,.xlsx" onChange={handleUpload} />
               <Button variant="secondary" onClick={() => fileInputRef.current?.click()} loading={uploading}>
                 <FiUpload className="h-3.5 w-3.5" /> Upload (.txt, .pdf, .docx, .xlsx)

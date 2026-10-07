@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FiCheck } from "react-icons/fi";
+import { FiCheck, FiRefreshCw } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
 import { subscribeCompany } from "../../services/realtime.js";
 import { useToast } from "../../context/ToastContext.jsx";
@@ -28,6 +28,7 @@ export default function CompanyKnowledgeTab({ companyId }) {
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const [updatedElsewhere, setUpdatedElsewhere] = useState(false);
+  const [clearingCache, setClearingCache] = useState(false);
   const savedTimeout = useRef(null);
   const justSavedRef = useRef(false);
 
@@ -77,6 +78,21 @@ export default function CompanyKnowledgeTab({ companyId }) {
     }
   };
 
+  // Manual escape hatch for knowledge edited directly in MongoDB
+  // rather than through this page — self-heals within 30s on its own,
+  // this forces it immediately. Save above is already instant.
+  const handleClearCache = async () => {
+    setClearingCache(true);
+    try {
+      await api.post(`/companies/${companyId}/knowledge/clear-cache`);
+      showToast("Knowledge cache cleared — the next message will reload from MongoDB.");
+    } catch (err) {
+      showToast(getErrorMessage(err), "error");
+    } finally {
+      setClearingCache(false);
+    }
+  };
+
   if (loading) return <SkeletonLine className="h-64 w-full" />;
   if (error) return <ErrorState message={error} onRetry={load} />;
   if (!data) return null;
@@ -88,10 +104,20 @@ export default function CompanyKnowledgeTab({ companyId }) {
     <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
         <span className="font-medium text-gray-700 dark:text-gray-200">{data.knowledgeFile}</span>
-        <span>
-          {(data.sizeBytes / 1024).toFixed(1)} KB
-          {data.updatedAt && ` · Updated ${new Date(data.updatedAt).toLocaleString()}`}
-        </span>
+        <div className="flex items-center gap-3">
+          <span>
+            {(data.sizeBytes / 1024).toFixed(1)} KB
+            {data.updatedAt && ` · Updated ${new Date(data.updatedAt).toLocaleString()}`}
+          </span>
+          <Button
+            variant="secondary"
+            onClick={handleClearCache}
+            loading={clearingCache}
+            title="Force an immediate reload from MongoDB — only needed if knowledge was edited outside this page (e.g. directly in the database); a normal Save here is already instant."
+          >
+            <FiRefreshCw className="h-3.5 w-3.5" /> Clear Cache
+          </Button>
+        </div>
       </div>
 
       {updatedElsewhere && (
