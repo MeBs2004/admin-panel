@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { FiInfo } from "react-icons/fi";
+import api from "../../../services/api.js";
 import Input from "../../../components/ui/Input.jsx";
 import Select from "../../../components/ui/Select.jsx";
 
@@ -7,7 +9,24 @@ const LANGUAGE_OPTIONS = [
   { value: "Hindi", label: "Hindi" },
 ];
 
-export default function StepAI({ form, setForm }) {
+export default function StepAI({ form, setForm, companyId, companyName }) {
+  // AI configuration is intentionally company-level (Company.ai),
+  // shared across every chatbot in that company — same as the
+  // existing AI Settings page. Saving here will actually write to
+  // that real, live configuration right after creation (see
+  // CreateChatbotWizard's handleCreate), not a dead placeholder field
+  // — so an honest warning when the company already has other
+  // chatbots is the right thing to show, not a vague "coming soon."
+  const [siblingCount, setSiblingCount] = useState(null);
+
+  useEffect(() => {
+    if (!companyId) return;
+    api
+      .get("/chatbots", { params: { companyId, limit: 1 } })
+      .then((res) => setSiblingCount(res.data.pagination?.total ?? 0))
+      .catch(() => setSiblingCount(null));
+  }, [companyId]);
+
   return (
     <div className="space-y-5">
       <div>
@@ -68,15 +87,21 @@ export default function StepAI({ form, setForm }) {
         />
       </label>
 
-      <div className="flex gap-2 rounded-lg bg-info-50 px-3 py-2.5 text-xs text-info-600 dark:bg-info-500/10 dark:text-info-500">
-        <FiInfo className="h-4 w-4 shrink-0" />
-        <p>
-          These settings are saved with your chatbot now and will apply
-          automatically once the Chatbot Customization Studio (coming soon)
-          goes live. Until then, your company's shared AI configuration
-          (Companies → Configuration) is what powers live responses.
-        </p>
-      </div>
+      {siblingCount > 0 ? (
+        <div className="flex gap-2 rounded-lg bg-warning-50 px-3 py-2.5 text-xs text-warning-700 dark:bg-warning-500/10 dark:text-warning-400">
+          <FiInfo className="h-4 w-4 shrink-0" />
+          <p>
+            {companyName || "This company"} already has {siblingCount} chatbot{siblingCount === 1 ? "" : "s"}. AI
+            configuration is shared across every chatbot in a company — saving here will change the AI behavior
+            for {siblingCount === 1 ? "that chatbot too" : "all of them"}, not just this new one.
+          </p>
+        </div>
+      ) : (
+        <div className="flex gap-2 rounded-lg bg-info-50 px-3 py-2.5 text-xs text-info-600 dark:bg-info-500/10 dark:text-info-500">
+          <FiInfo className="h-4 w-4 shrink-0" />
+          <p>These settings are saved as this company's real, live AI configuration as soon as you create the chatbot.</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { FiCopy, FiCheck, FiExternalLink } from "react-icons/fi";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { FiCopy, FiCheck, FiExternalLink, FiPlay } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import PageHeader from "../../components/ui/PageHeader.jsx";
 import Button from "../../components/ui/Button.jsx";
 import Select from "../../components/ui/Select.jsx";
+import Input from "../../components/ui/Input.jsx";
 import ErrorState from "../../components/ui/ErrorState.jsx";
 import { SkeletonLine } from "../../components/ui/Skeleton.jsx";
 
@@ -13,6 +14,12 @@ import { SkeletonLine } from "../../components/ui/Skeleton.jsx";
 // URL frontend/public/widget.js and every existing production
 // installation already points at. Not a placeholder.
 const WIDGET_CDN_URL = "https://chatbot-frontend-nine-psi.vercel.app";
+
+// Same derivation ApiDocumentation.jsx uses — the Developer API's
+// real base URL, computed from the same env var the admin JWT client
+// uses, never a separate/hardcoded host.
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4002/api/admin";
+const DEVELOPER_BASE = API_URL.replace(/\/api\/admin\/?$/, "/api/v1/developer");
 
 const ENGINE_OPTIONS = [
   { value: "legacy", label: "Legacy (current production renderer)" },
@@ -29,6 +36,11 @@ export default function ChatbotInstall() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [webhookCopied, setWebhookCopied] = useState(false);
+  const [testToken, setTestToken] = useState("");
+  const [testText, setTestText] = useState("Hello, what can you help me with?");
+  const [testBusy, setTestBusy] = useState(false);
+  const [testResult, setTestResult] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -56,8 +68,16 @@ export default function ChatbotInstall() {
 
   const { chatbot, company } = data;
   const companyId = company?.companyId;
+  const isV1 = chatbot.widgetEngineVersion === "v1";
 
-  const snippet = `<script\n  src="${WIDGET_CDN_URL}/widget.js"\n  data-company-id="${companyId}"\n></script>`;
+  // A v1 chatbot gets an explicit data-chatbot-id — required the
+  // moment its company has more than one chatbot, since data-company-id
+  // alone can't say which one (see widget.js/Embed.jsx). Legacy
+  // chatbots keep the exact snippet shape every existing install
+  // already uses, unchanged.
+  const snippet = isV1
+    ? `<script\n  src="${WIDGET_CDN_URL}/widget.js"\n  data-company-id="${companyId}"\n  data-chatbot-id="${chatbot._id}"\n></script>`
+    : `<script\n  src="${WIDGET_CDN_URL}/widget.js"\n  data-company-id="${companyId}"\n></script>`;
 
   const copySnippet = async () => {
     try {
@@ -67,6 +87,48 @@ export default function ChatbotInstall() {
       setTimeout(() => setCopied(false), 2000);
     } catch {
       showToast("Could not copy — select and copy manually.", "error");
+    }
+  };
+
+  const webhookUrl = `${DEVELOPER_BASE}/chatbots/${chatbot._id}/messages`;
+
+  const copyWebhookUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(webhookUrl);
+      setWebhookCopied(true);
+      showToast("Webhook URL copied.");
+      setTimeout(() => setWebhookCopied(false), 2000);
+    } catch {
+      showToast("Could not copy — select and copy manually.", "error");
+    }
+  };
+
+  // A REAL call — direct from this browser straight to the Developer
+  // API, using whatever key the admin pastes in. No simulated/fake
+  // response: this is the exact same request/response this endpoint
+  // gives any outside integration.
+  const runWebhookTest = async () => {
+    if (!testToken.trim()) {
+      showToast("Paste an API key with the messages:write scope first.", "error");
+      return;
+    }
+    setTestBusy(true);
+    setTestResult(null);
+    try {
+      const res = await fetch(webhookUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${testToken.trim()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: testText }),
+      });
+      const body = await res.json().catch(() => ({}));
+      setTestResult({ status: res.status, ok: res.ok, body });
+    } catch (err) {
+      setTestResult({ status: null, ok: false, body: { error: { message: err.message || "Network error" } } });
+    } finally {
+      setTestBusy(false);
     }
   };
 
@@ -166,6 +228,112 @@ export default function ChatbotInstall() {
               disabled={busy}
               onChange={(e) => changeEngine(e.target.value)}
             />
+          </div>
+        </section>
+
+        <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+            Inbound webhook
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            A real endpoint — send it a visitor's message and get back the actual AI/flow-engine reply, the same
+            pipeline the embedded widget uses. This requires an API key with the <code>messages:write</code> scope,
+            created under{" "}
+            <Link to="/developer/api-keys" className="font-medium text-primary-600 hover:underline dark:text-primary-400">
+              Developer → API Keys
+            </Link>
+            . There is no separate "webhook secret" to configure — your API key is the credential.
+          </p>
+
+          <div className="mt-3 space-y-3">
+            <div>
+              <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-400">Method & URL</span>
+              <div className="relative">
+                <pre className="overflow-x-auto rounded-lg bg-gray-900 p-3 pr-20 text-xs leading-relaxed text-gray-100">
+                  <code>POST {webhookUrl}</code>
+                </pre>
+                <button
+                  onClick={copyWebhookUrl}
+                  className="absolute right-2 top-2 flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-white/20"
+                >
+                  {webhookCopied ? <FiCheck /> : <FiCopy />}
+                  {webhookCopied ? "Copied" : "Copy"}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-400">Headers</span>
+              <pre className="overflow-x-auto rounded-lg bg-gray-900 p-3 text-xs leading-relaxed text-gray-100">
+                <code>{`Authorization: Bearer nf_live_YOUR_API_KEY\nContent-Type: application/json`}</code>
+              </pre>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-400">Request body</span>
+                <pre className="overflow-x-auto rounded-lg bg-gray-900 p-3 text-xs leading-relaxed text-gray-100">
+                  <code>{`{\n  "text": "What are your business hours?",\n  "visitorId": "optional-existing-id",\n  "language": "English"\n}`}</code>
+                </pre>
+              </div>
+              <div>
+                <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-400">Response — 201</span>
+                <pre className="overflow-x-auto rounded-lg bg-gray-900 p-3 text-xs leading-relaxed text-gray-100">
+                  <code>{`{\n  "success": true,\n  "data": {\n    "visitorId": "api_...",\n    "conversationId": "...",\n    "message": {\n      "sender": "bot",\n      "text": "...",\n      "createdAt": "..."\n    }\n  }\n}`}</code>
+                </pre>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-400">
+              <code>text</code> is required (max 4000 chars). Omit <code>visitorId</code> to start a new conversation
+              each call, or pass one back to continue the same thread. Full field/error reference in{" "}
+              <Link to="/developer/docs" className="font-medium text-primary-600 hover:underline dark:text-primary-400">
+                API Documentation
+              </Link>
+              .
+            </p>
+          </div>
+
+          <div className="mt-5 rounded-lg border border-dashed border-gray-300 p-4 dark:border-white/10">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Send a real test request
+            </h3>
+            <p className="mt-1 text-xs text-gray-400">
+              This fires an actual request from your browser straight to the endpoint above — not a simulation.
+              The response you see is exactly what any outside integration would get back.
+            </p>
+            <div className="mt-3 space-y-3">
+              <Input
+                label="API key (needs messages:write scope)"
+                value={testToken}
+                onChange={(e) => setTestToken(e.target.value)}
+                placeholder="nf_live_..."
+              />
+              <Input
+                label="Message text"
+                value={testText}
+                onChange={(e) => setTestText(e.target.value)}
+              />
+              <Button onClick={runWebhookTest} loading={testBusy} variant="secondary">
+                <FiPlay className="mr-1.5 h-3.5 w-3.5" />
+                Send Test
+              </Button>
+            </div>
+
+            {testResult && (
+              <div className="mt-3">
+                <span
+                  className={`text-xs font-semibold ${
+                    testResult.ok ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                  }`}
+                >
+                  {testResult.status ? `HTTP ${testResult.status}` : "Request failed"}
+                </span>
+                <pre className="mt-1 overflow-x-auto rounded-lg bg-gray-900 p-3 text-xs leading-relaxed text-gray-100">
+                  <code>{JSON.stringify(testResult.body, null, 2)}</code>
+                </pre>
+              </div>
+            )}
           </div>
         </section>
 

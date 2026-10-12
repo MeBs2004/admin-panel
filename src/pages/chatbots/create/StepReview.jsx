@@ -1,6 +1,8 @@
 import StatusBadge from "../../../components/ui/StatusBadge.jsx";
 
-export default function StepReview({ form, companyName }) {
+export default function StepReview({ form, companyName, config }) {
+  const ctaCount = config?.ctas?.filter((c) => c.enabled && c.value).length || 0;
+  const suggestionCount = config?.suggestions?.filter(Boolean).length || 0;
   return (
     <div className="space-y-5">
       <div>
@@ -25,6 +27,17 @@ export default function StepReview({ form, companyName }) {
             <span className="text-gray-400">Not set</span>
           )}
         </Row>
+        <Row label="Launcher color">
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="h-3.5 w-3.5 rounded-full border border-black/10"
+              style={{ background: config?.launcher?.color }}
+            />
+            {config?.launcher?.color}
+          </span>
+        </Row>
+        <Row label="CTA buttons">{ctaCount > 0 ? `${ctaCount} enabled` : "None"}</Row>
+        <Row label="Suggestions">{suggestionCount > 0 ? `${suggestionCount} custom` : "Using company default"}</Row>
         <Row label="Status">
           <StatusBadge status="DRAFT" />
         </Row>

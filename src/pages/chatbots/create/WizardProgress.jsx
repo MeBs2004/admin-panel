@@ -4,6 +4,7 @@ const STEPS = [
   { key: "basics", label: "Basics" },
   { key: "ai", label: "AI" },
   { key: "knowledge", label: "Knowledge" },
+  { key: "customize", label: "Customize" },
   { key: "review", label: "Review" },
 ];
 

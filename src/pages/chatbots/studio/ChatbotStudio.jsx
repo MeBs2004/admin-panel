@@ -18,6 +18,8 @@ import SectionBehavior from "./SectionBehavior.jsx";
 import SectionForms from "./SectionForms.jsx";
 import SectionLanguage from "./SectionLanguage.jsx";
 import SectionAppearance from "./SectionAppearance.jsx";
+import SectionCTAs from "./SectionCTAs.jsx";
+import SectionSuggestions from "./SectionSuggestions.jsx";
 
 export default function ChatbotStudio() {
   const { id } = useParams();
@@ -91,6 +93,15 @@ export default function ChatbotStudio() {
       ...prev,
       [section]: { ...prev[section], [field]: value },
     }));
+  };
+
+  // ctas/suggestions are top-level arrays on config, not nested
+  // sub-objects like launcher/chatWindow — replaced wholesale, same
+  // "whole array in, whole array out" convention SectionForms.fields
+  // already used.
+  const updateArray = (key, value) => {
+    setJustSaved(false);
+    setDraftConfig((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSave = async () => {
@@ -224,6 +235,12 @@ export default function ChatbotStudio() {
                   value={draftConfig.chatWindow.welcomeMessage}
                   onChange={(v) => updateField("chatWindow", "welcomeMessage", v)}
                 />
+              )}
+              {activeSection === "ctas" && (
+                <SectionCTAs value={draftConfig.ctas} onChange={(v) => updateArray("ctas", v)} />
+              )}
+              {activeSection === "suggestions" && (
+                <SectionSuggestions value={draftConfig.suggestions} onChange={(v) => updateArray("suggestions", v)} />
               )}
               {activeSection === "behavior" && (
                 <SectionBehavior

@@ -12,6 +12,7 @@ const SCOPE_DESCRIPTIONS = {
   "chatbots:read": "List and read chatbots",
   "conversations:read": "Read conversations and messages",
   "conversations:write": "Send a reply into a conversation",
+  "messages:write": "Send a visitor message to a chatbot and receive the AI reply (inbound webhook)",
   "visitors:read": "Read visitor records",
   "analytics:read": "Read analytics metrics",
   "knowledge:read": "Read the knowledge base",

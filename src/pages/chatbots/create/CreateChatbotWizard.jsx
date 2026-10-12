@@ -4,15 +4,17 @@ import { FiCheckCircle, FiArrowLeft } from "react-icons/fi";
 import api, { getErrorMessage } from "../../../services/api.js";
 import { useToast } from "../../../context/ToastContext.jsx";
 import useEligibleCompanies from "../../../hooks/useEligibleCompanies.js";
+import { DEFAULT_CHATBOT_CONFIG } from "../../../config/chatbotConfigDefaults.js";
 import PageHeader from "../../../components/ui/PageHeader.jsx";
 import Button from "../../../components/ui/Button.jsx";
 import WizardProgress from "./WizardProgress.jsx";
 import StepBasics from "./StepBasics.jsx";
 import StepAI from "./StepAI.jsx";
 import StepKnowledge from "./StepKnowledge.jsx";
+import StepCustomize from "./StepCustomize.jsx";
 import StepReview from "./StepReview.jsx";
 
-const STEP_ORDER = ["basics", "ai", "knowledge", "review"];
+const STEP_ORDER = ["basics", "ai", "knowledge", "customize", "review"];
 const NAME_MAX = 100;
 
 const DEFAULT_FORM = {
@@ -31,6 +33,7 @@ export default function CreateChatbotWizard() {
 
   const [step, setStep] = useState("basics");
   const [form, setForm] = useState(DEFAULT_FORM);
+  const [config, setConfig] = useState(DEFAULT_CHATBOT_CONFIG);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -67,24 +70,59 @@ export default function CreateChatbotWizard() {
     if (idx > 0) setStep(STEP_ORDER[idx - 1]);
   };
 
+  // Real backend persistence, in order — never just React state:
+  //   1. create the chatbot row (name/company/model)
+  //   2. persist the customization (same endpoint/schema ChatbotStudio
+  //      uses) and flip it to the v1 config-driven engine — a chatbot
+  //      created through this wizard has a genuinely live config from
+  //      the first moment, not a legacy hardcoded shell
+  //   3. persist AI settings through the real, already-working AI
+  //      Settings endpoint (company-level — see StepAI's warning)
+  // Steps 2/3 are best-effort: if either fails, the chatbot still
+  // exists and is fully editable afterward from its own pages, so we
+  // surface a warning rather than pretending the whole thing failed.
   const handleCreate = async () => {
     if (submitting) return;
     setSubmitting(true);
     setSubmitError("");
 
     try {
-      const res = await api.post("/chatbots", {
+      const createRes = await api.post("/chatbots", {
         companyId: form.companyId,
         name: form.name.trim(),
         model: form.model.trim() || undefined,
-        settings: {
-          temperature: form.temperature,
-          language: form.language,
-          systemPrompt: form.systemPrompt.trim() || undefined,
-        },
       });
-      setCreated(res.data.chatbot);
-      showToast("Chatbot created successfully.");
+      const chatbot = createRes.data.chatbot;
+
+      const warnings = [];
+
+      try {
+        await api.patch(`/chatbots/${chatbot._id}/config`, { config });
+        await api.patch(`/chatbots/${chatbot._id}`, { widgetEngineVersion: "v1" });
+      } catch (err) {
+        warnings.push(`Customization: ${getErrorMessage(err)}`);
+      }
+
+      try {
+        await api.put(`/chatbots/${chatbot._id}/ai-settings`, {
+          ai: {
+            model: form.model.trim() || undefined,
+            temperature: form.temperature,
+            language: form.language,
+            systemPrompt: form.systemPrompt.trim() || undefined,
+          },
+        });
+      } catch (err) {
+        warnings.push(`AI settings: ${getErrorMessage(err)}`);
+      }
+
+      if (warnings.length > 0) {
+        showToast(`Chatbot created, but some settings didn't save: ${warnings.join(" · ")}`, "error");
+      } else {
+        showToast("Chatbot created successfully.");
+      }
+
+      setCreated(chatbot);
     } catch (err) {
       setSubmitError(getErrorMessage(err));
     } finally {
@@ -104,20 +142,25 @@ export default function CreateChatbotWizard() {
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
           <strong>{created.name}</strong> has been created successfully.
         </p>
-        <div className="mt-6 flex justify-center gap-3">
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Button variant="secondary" onClick={() => navigate("/chatbots")}>
             All Chatbots
           </Button>
-          <Button onClick={() => navigate(`/chatbots/${created._id}`)}>
+          <Button variant="secondary" onClick={() => navigate(`/chatbots/${created._id}`)}>
             Open Chatbot
+          </Button>
+          <Button onClick={() => navigate(`/chatbots/${created._id}/install`)}>
+            Get Install Snippet
           </Button>
         </div>
       </div>
     );
   }
 
+  const isCustomizeStep = step === "customize";
+
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className={`mx-auto transition-[max-width] duration-150 ${isCustomizeStep ? "max-w-5xl" : "max-w-2xl"}`}>
       <PageHeader
         title="Create your AI chatbot"
         breadcrumbs={[{ label: "Chatbots", to: "/chatbots" }, { label: "Create Chatbot" }]}
@@ -140,11 +183,14 @@ export default function CreateChatbotWizard() {
             errors={errors}
           />
         )}
-        {step === "ai" && <StepAI form={form} setForm={setForm} />}
+        {step === "ai" && <StepAI form={form} setForm={setForm} companyId={form.companyId} companyName={companyName} />}
         {step === "knowledge" && (
           <StepKnowledge companyId={form.companyId} companyName={companyName} />
         )}
-        {step === "review" && <StepReview form={form} companyName={companyName} />}
+        {step === "customize" && (
+          <StepCustomize config={config} setConfig={setConfig} companyId={form.companyId} />
+        )}
+        {step === "review" && <StepReview form={form} companyName={companyName} config={config} />}
 
         {submitError && (
           <p className="mt-4 animate-fade-in-up rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600 dark:bg-red-950 dark:text-red-300">

@@ -53,6 +53,8 @@ export const DEFAULT_CHATBOT_CONFIG = {
     font: "system",
     customCss: "",
   },
+  ctas: [],
+  suggestions: [],
 };
 
 export const ALLOWED_FORM_FIELDS = [
@@ -61,3 +63,13 @@ export const ALLOWED_FORM_FIELDS = [
   { value: "phone", label: "Phone" },
   { value: "company", label: "Company" },
 ];
+
+export const CTA_TYPE_OPTIONS = [
+  { value: "call", label: "Call" },
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "email", label: "Email" },
+  { value: "custom", label: "Custom Link" },
+];
+
+export const MAX_CTAS = 6;
+export const MAX_SUGGESTIONS = 8;

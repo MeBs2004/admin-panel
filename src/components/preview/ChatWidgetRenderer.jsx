@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { FiMessageCircle, FiX, FiSend, FiCpu } from "react-icons/fi";
+import { FiMessageCircle, FiX, FiSend, FiCpu, FiPhone, FiMail } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
+
+const CTA_ICON = { call: FiPhone, whatsapp: FaWhatsapp, email: FiMail, custom: FiMessageCircle };
 
 const LAUNCHER_SIZE = { small: 48, medium: 56, large: 64 };
 const WINDOW_SIZE = {
@@ -56,7 +59,9 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
 
   if (!config) return null;
 
-  const { launcher, chatWindow, behavior, appearance } = config;
+  const { launcher, chatWindow, behavior, appearance, ctas = [], suggestions: configuredSuggestions = [] } = config;
+  const enabledCtas = ctas.filter((c) => c.enabled && c.label);
+  const displaySuggestions = configuredSuggestions.length > 0 ? configuredSuggestions : SAMPLE_SUGGESTIONS;
   const fontFamily = appearance?.font === "inter" ? "Inter, sans-serif" : undefined;
   const isLeft = launcher.position === "bottom-left";
   const launcherHidden = !launcher.enabled || (isMobile && !launcher.showOnMobile);
@@ -167,6 +172,23 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
                 {chatWindow.welcomeMessage}
               </div>
             )}
+
+            {mode === "window" && messages.length === 0 && enabledCtas.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {enabledCtas.map((cta, i) => {
+                  const Icon = CTA_ICON[cta.type] || FiMessageCircle;
+                  return (
+                    <span
+                      key={i}
+                      className="pointer-events-none flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-white"
+                      style={{ background: chatWindow.primaryColor }}
+                    >
+                      <Icon className="h-3 w-3" /> {cta.label}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
             <div
               className="max-w-[80%] self-end rounded-2xl px-3 py-2 text-white"
               style={{ background: chatWindow.primaryColor }}
@@ -212,7 +234,7 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
 
             {mode === "window" && messages.length === 0 && !typing && (
               <div className="mt-1 flex flex-wrap gap-1.5">
-                {SAMPLE_SUGGESTIONS.map((s) => (
+                {displaySuggestions.map((s) => (
                   <button
                     key={s}
                     onClick={() => sendPreview(s)}

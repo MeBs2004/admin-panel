@@ -6,12 +6,16 @@ import {
   FiClipboard,
   FiGlobe,
   FiFeather,
+  FiPhoneCall,
+  FiHelpCircle,
 } from "react-icons/fi";
 
 const SECTIONS = [
   { key: "launcher", label: "Launcher", icon: FiCpu },
   { key: "chatWindow", label: "Chat Window", icon: FiMessageSquare },
   { key: "welcome", label: "Welcome", icon: FiSmile },
+  { key: "ctas", label: "CTA Buttons", icon: FiPhoneCall },
+  { key: "suggestions", label: "Suggestions", icon: FiHelpCircle },
   { key: "behavior", label: "Behavior", icon: FiSliders },
   { key: "forms", label: "Forms", icon: FiClipboard },
   { key: "language", label: "Language", icon: FiGlobe },

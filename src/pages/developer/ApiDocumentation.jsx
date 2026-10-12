@@ -28,6 +28,7 @@ const ENDPOINTS = [
   { method: "GET", path: "/conversations", scope: "conversations:read", desc: "List conversations, paginated." },
   { method: "GET", path: "/conversations/:visitorId", scope: "conversations:read", desc: "A conversation's message thread." },
   { method: "POST", path: "/conversations/:visitorId/messages", scope: "conversations:write", desc: "Send a reply into a conversation." },
+  { method: "POST", path: "/chatbots/:id/messages", scope: "messages:write", desc: "Inbound webhook — send a visitor's message and get back the real AI/flow-engine reply." },
   { method: "GET", path: "/visitors", scope: "visitors:read", desc: "List visitors, paginated." },
   { method: "GET", path: "/analytics", scope: "analytics:read", desc: "Real, aggregated metrics — same engine as the dashboard's Analytics page." },
   { method: "GET", path: "/knowledge", scope: "knowledge:read", desc: "Read the chatbot's knowledge base content." },
@@ -133,9 +134,56 @@ export default function ApiDocumentation() {
           </p>
         </Section>
 
-        <Section title="Webhooks">
+        <Section title="Inbound Webhook (Send a Visitor Message)">
           <p>
-            Events are delivered as a signed POST with a unique <code>id</code>:
+            The one endpoint that accepts a message FROM an outside system and runs it through the real AI/flow
+            engine — the same pipeline used by every other channel (widget, Telegram). There is no separate
+            "webhook URL" to generate: the URL below, called with your own API key, IS the webhook.
+          </p>
+          <Code>{`POST ${DEVELOPER_BASE}/chatbots/:id/messages
+Authorization: Bearer nf_live_YOUR_API_KEY
+Content-Type: application/json`}</Code>
+          <p>Required scope: <code>messages:write</code>. The key must also be allowed for this chatbot (company-wide keys, or keys explicitly scoped to include this chatbot's id).</p>
+          <p>Request body:</p>
+          <Code>{`{
+  "text": "What are your business hours?",
+  "visitorId": "optional-existing-visitor-id",
+  "language": "English"
+}`}</Code>
+          <p>
+            <code>text</code> is required (max 4000 characters). <code>visitorId</code> is optional — omit it to start
+            a brand-new conversation each call, or pass one back from a prior response to continue the same thread.
+            <code> language</code> defaults to <code>"English"</code>.
+          </p>
+          <p>Response — <code>201</code>:</p>
+          <Code>{`{
+  "success": true,
+  "data": {
+    "visitorId": "api_3f9c1e2a-...",
+    "conversationId": "671f2a9b1c4e5f0012ab34cd",
+    "message": {
+      "sender": "bot",
+      "text": "Our business hours are Mon–Fri, 9am–6pm.",
+      "createdAt": "2026-10-10T12:00:00.000Z"
+    }
+  }
+}`}</Code>
+          <Code>{`curl -X POST ${DEVELOPER_BASE}/chatbots/YOUR_CHATBOT_ID/messages \\
+  -H "Authorization: Bearer nf_live_YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"text": "What are your business hours?"}'`}</Code>
+          <p className="text-xs text-gray-400">
+            Errors use the standard shape: <code>CHATBOT_ACCESS_DENIED</code> (403) if the key isn't scoped to this
+            chatbot, <code>RESOURCE_NOT_FOUND</code> (404) if the chatbot doesn't exist or was deleted,
+            <code> INVALID_REQUEST</code> (400) for a missing/oversized <code>text</code>, and <code>INTERNAL_ERROR</code>
+            (500) if the AI/flow pipeline itself fails.
+          </p>
+        </Section>
+
+        <Section title="Outbound Webhooks (Event Deliveries)">
+          <p>
+            Separate from the endpoint above: these are events Nuformly pushes OUT to a URL you register, delivered
+            as a signed POST with a unique <code>id</code>:
           </p>
           <Code>{`{
   "id": "evt_9f2a...",
