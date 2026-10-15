@@ -41,18 +41,42 @@ export default function ChatbotInstall() {
   const [testText, setTestText] = useState("Hello, what can you help me with?");
   const [testBusy, setTestBusy] = useState(false);
   const [testResult, setTestResult] = useState(null);
+  const [domainsText, setDomainsText] = useState("");
+  const [domainsSaving, setDomainsSaving] = useState(false);
+  const [domainsError, setDomainsError] = useState("");
 
   const load = () => {
     setLoading(true);
     setError("");
     api
       .get(`/chatbots/${id}`)
-      .then((res) => setData(res.data))
+      .then((res) => {
+        setData(res.data);
+        setDomainsText((res.data.chatbot.allowedDomains || []).join("\n"));
+      })
       .catch((err) => setError(getErrorMessage(err)))
       .finally(() => setLoading(false));
   };
 
   useEffect(load, [id]);
+
+  const saveDomains = async () => {
+    setDomainsSaving(true);
+    setDomainsError("");
+    try {
+      const domains = domainsText
+        .split("\n")
+        .map((d) => d.trim())
+        .filter(Boolean);
+      await api.patch(`/chatbots/${id}`, { allowedDomains: domains });
+      showToast("Allowed domains updated.");
+      load();
+    } catch (err) {
+      setDomainsError(getErrorMessage(err));
+    } finally {
+      setDomainsSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -229,6 +253,38 @@ export default function ChatbotInstall() {
               onChange={(e) => changeEngine(e.target.value)}
             />
           </div>
+        </section>
+
+        <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+            Allowed website domains
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            One domain per line, e.g. <code>example.com</code> or <code>*.example.com</code> for all
+            subdomains. Leave empty to allow this chatbot on any website (today's default). This is
+            enforced on the backend for the v1 engine's public config, messaging, and calculator
+            endpoints — not just hidden in the frontend. Note: Origin/Referer headers can't be forged by
+            a real browser making a cross-origin request, but a non-browser HTTP client can set any
+            value it wants — this is a website-embedding control, not a substitute for authentication.
+          </p>
+
+          <textarea
+            value={domainsText}
+            onChange={(e) => setDomainsText(e.target.value)}
+            rows={4}
+            placeholder={"example.com\n*.example.com"}
+            className="mt-3 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-xs outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-400/40 dark:bg-[var(--surface)] dark:border-[var(--border)] dark:text-gray-100"
+          />
+
+          {domainsError && (
+            <p className="mt-2 rounded-lg bg-danger-50 px-3 py-2 text-xs text-danger-600 dark:bg-red-950 dark:text-red-300">
+              {domainsError}
+            </p>
+          )}
+
+          <Button onClick={saveDomains} loading={domainsSaving} variant="secondary" className="mt-3">
+            Save Allowed Domains
+          </Button>
         </section>
 
         <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">

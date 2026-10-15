@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import api, { getErrorMessage } from "../services/api.js";
+import api, { companySignupApi, getErrorMessage } from "../services/api.js";
 import { connectRealtime, disconnectRealtime } from "../services/realtime.js";
 
 const AuthContext = createContext(null);
@@ -75,6 +75,22 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Company self-registration — creates the Company + first
+  // COMPANY_ADMIN account on the backend and logs the caller straight
+  // in with the real token it returns, same success/failure contract
+  // as login() above (never throws).
+  const register = async (payload) => {
+    try {
+      const res = await companySignupApi.post("/", payload);
+      localStorage.setItem("nuformly-token", res.data.token);
+      localStorage.setItem("nuformly-user", JSON.stringify(res.data.user));
+      setUser(res.data.user);
+      return { success: true, company: res.data.company };
+    } catch (error) {
+      return { success: false, message: getErrorMessage(error) };
+    }
+  };
+
   const logout = async () => {
     try {
       await api.post("/auth/logout");
@@ -87,7 +103,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, setUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );

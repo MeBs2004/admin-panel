@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import api, { getErrorMessage } from "../../services/api.js";
 import { subscribeAccessibleCompanies, getRealtimeStatus, onRealtimeStatusChange } from "../../services/realtime.js";
 import PageHeader from "../../components/ui/PageHeader.jsx";
@@ -24,6 +24,13 @@ const RELEVANT_EVENT_TYPES = new Set([
 export default function ConversationsInbox() {
   const navigate = useNavigate();
   const params = useParams();
+  const location = useLocation();
+  // Mounted at both /conversations/... (Super Admin shell) and
+  // /company/conversations/... (Company Panel) — this component is
+  // reused as-is at both routes, so its own internal navigation stays
+  // inside whichever shell it was opened from instead of always
+  // jumping back to the Super Admin path.
+  const basePath = location.pathname.startsWith("/company") ? "/company/conversations" : "/conversations";
 
   const [conversations, setConversations] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });
@@ -116,12 +123,12 @@ export default function ConversationsInbox() {
           onFiltersChange={setFilters}
           onPageChange={(page) => setFilters((f) => ({ ...f, page }))}
           selectedKey={selected ? `${selected.companyId}::${selected.visitorId}` : null}
-          onSelect={(c) => navigate(`/conversations/${c.companyId}/${c.visitorId}`)}
+          onSelect={(c) => navigate(`${basePath}/${c.companyId}/${c.visitorId}`)}
           hiddenOnMobile={Boolean(selected)}
         />
         <ConversationDetailPane
           selected={selected}
-          onBack={() => navigate("/conversations")}
+          onBack={() => navigate(basePath)}
           onChanged={() => load(true)}
         />
       </div>

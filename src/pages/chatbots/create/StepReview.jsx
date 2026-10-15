@@ -1,4 +1,5 @@
 import StatusBadge from "../../../components/ui/StatusBadge.jsx";
+import { SECTOR_LABELS } from "../../../config/sectorTemplates.js";
 
 export default function StepReview({ form, companyName, config }) {
   const ctaCount = config?.ctas?.filter((c) => c.enabled && c.value).length || 0;
@@ -16,6 +17,7 @@ export default function StepReview({ form, companyName, config }) {
 
       <dl className="divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-white/5 dark:border-[var(--border)]">
         <Row label="Chatbot">{form.name}</Row>
+        <Row label="Template">{SECTOR_LABELS[form.template] || form.template}</Row>
         <Row label="Company">{companyName}</Row>
         <Row label="AI Model">{form.model}</Row>
         <Row label="Response Style">{form.temperature.toFixed(1)} temperature</Row>

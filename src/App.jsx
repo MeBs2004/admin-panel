@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 
 import Login from "./pages/Login.jsx";
+import CompanyLogin from "./pages/CompanyLogin.jsx";
+import CompanySignup from "./pages/CompanySignup.jsx";
 import AcceptInvite from "./pages/AcceptInvite.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import AuditLogs from "./pages/AuditLogs.jsx";
@@ -49,12 +51,18 @@ import BillingHistoryPage from "./pages/billing/BillingHistoryPage.jsx";
 import BillingSettingsPage from "./pages/billing/BillingSettingsPage.jsx";
 
 import AdminLayout from "./components/layout/AdminLayout.jsx";
+import CompanyLayout from "./components/layout/CompanyLayout.jsx";
 import ProtectedRoute from "./components/layout/ProtectedRoute.jsx";
+
+import CompanyOverview from "./pages/company/CompanyOverview.jsx";
+import CompanySettings from "./pages/company/CompanySettings.jsx";
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/company/login" element={<CompanyLogin />} />
+      <Route path="/company/signup" element={<CompanySignup />} />
       <Route path="/accept-invite/:token" element={<AcceptInvite />} />
 
       {/* Full-viewport takeover, own top bar — deliberately not
@@ -154,6 +162,41 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/coming-soon" element={<ComingSoon />} />
         <Route path="/forbidden" element={<Forbidden />} />
+      </Route>
+
+      {/* Company Admin Panel — a separate layout/route namespace from
+          the Super Admin shell above, per the product requirement to
+          distinguish platform administration from company access.
+          Several routes intentionally reuse the EXACT SAME page
+          components the Super Admin shell uses (ChatbotsList,
+          ConversationsInbox, VisitorsList, Reports, UsersList,
+          BillingOverview, Settings) rather than duplicating their
+          business logic — only Overview and Company Settings are new,
+          company-specific pages. Drilling into a specific record
+          (a chatbot's Builder/Studio/AI Settings, a user's detail
+          page, a billing sub-page) intentionally opens the existing
+          page at its existing absolute route, same as it already does
+          for every role today — those deep tools were never shell-
+          bound to begin with (ChatbotStudio/ChatbotBuilder already
+          render full-viewport, outside any sidebar, for every role). */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <CompanyLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/company" element={<Navigate to="/company/overview" replace />} />
+        <Route path="/company/overview" element={<CompanyOverview />} />
+        <Route path="/company/chatbots" element={<ChatbotsList />} />
+        <Route path="/company/conversations" element={<ConversationsInbox />} />
+        <Route path="/company/conversations/:companyId/:visitorId" element={<ConversationsInbox />} />
+        <Route path="/company/visitors" element={<VisitorsList />} />
+        <Route path="/company/analytics" element={<Reports />} />
+        <Route path="/company/team" element={<UsersList />} />
+        <Route path="/company/billing" element={<BillingOverview />} />
+        <Route path="/company/settings" element={<CompanySettings />} />
+        <Route path="/company/account" element={<Settings />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

@@ -8,18 +8,20 @@ import { DEFAULT_CHATBOT_CONFIG } from "../../../config/chatbotConfigDefaults.js
 import PageHeader from "../../../components/ui/PageHeader.jsx";
 import Button from "../../../components/ui/Button.jsx";
 import WizardProgress from "./WizardProgress.jsx";
+import StepTemplate from "./StepTemplate.jsx";
 import StepBasics from "./StepBasics.jsx";
 import StepAI from "./StepAI.jsx";
 import StepKnowledge from "./StepKnowledge.jsx";
 import StepCustomize from "./StepCustomize.jsx";
 import StepReview from "./StepReview.jsx";
 
-const STEP_ORDER = ["basics", "ai", "knowledge", "customize", "review"];
+const STEP_ORDER = ["template", "basics", "ai", "knowledge", "customize", "review"];
 const NAME_MAX = 100;
 
 const DEFAULT_FORM = {
   companyId: "",
   name: "",
+  template: "general",
   model: "openai/gpt-oss-20b",
   temperature: 0.3,
   language: "English",
@@ -31,7 +33,7 @@ export default function CreateChatbotWizard() {
   const { showToast } = useToast();
   const { companies, loading: companiesLoading } = useEligibleCompanies();
 
-  const [step, setStep] = useState("basics");
+  const [step, setStep] = useState("template");
   const [form, setForm] = useState(DEFAULT_FORM);
   const [config, setConfig] = useState(DEFAULT_CHATBOT_CONFIG);
   const [errors, setErrors] = useState({});
@@ -91,6 +93,7 @@ export default function CreateChatbotWizard() {
         companyId: form.companyId,
         name: form.name.trim(),
         model: form.model.trim() || undefined,
+        template: form.template,
       });
       const chatbot = createRes.data.chatbot;
 
@@ -174,6 +177,9 @@ export default function CreateChatbotWizard() {
       <WizardProgress current={step} />
 
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+        {step === "template" && (
+          <StepTemplate template={form.template} setTemplate={(template) => setForm((f) => ({ ...f, template }))} />
+        )}
         {step === "basics" && (
           <StepBasics
             form={form}

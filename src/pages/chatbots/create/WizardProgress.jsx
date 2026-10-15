@@ -1,6 +1,7 @@
 import { FiCheck } from "react-icons/fi";
 
 const STEPS = [
+  { key: "template", label: "Template" },
   { key: "basics", label: "Basics" },
   { key: "ai", label: "AI" },
   { key: "knowledge", label: "Knowledge" },

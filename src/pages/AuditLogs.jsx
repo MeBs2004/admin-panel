@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { FiFileText } from "react-icons/fi";
 import api, { getErrorMessage } from "../services/api.js";
 import { activityIconFor } from "../utils/activityIcon.js";
@@ -11,10 +12,15 @@ import ErrorState from "../components/ui/ErrorState.jsx";
 import Pagination from "../components/ui/Pagination.jsx";
 
 export default function AuditLogs() {
+  const [searchParams] = useSearchParams();
   const [logs, setLogs] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });
-  const [companyId, setCompanyId] = useState("");
+  // Seeded once from ?companyId= (e.g. a "View audit history" link
+  // from Company Detail) — a plain useState initializer, not a sync
+  // with the URL afterward, so the person can still change the
+  // dropdown freely without it fighting the address bar.
+  const [companyId, setCompanyId] = useState(() => searchParams.get("companyId") || "");
   const [action, setAction] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

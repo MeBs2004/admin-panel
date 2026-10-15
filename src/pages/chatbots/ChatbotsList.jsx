@@ -14,6 +14,7 @@ import { SkeletonTable } from "../../components/ui/Skeleton.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
 import ErrorState from "../../components/ui/ErrorState.jsx";
 import Pagination from "../../components/ui/Pagination.jsx";
+import { SECTOR_LABELS } from "../../config/sectorTemplates.js";
 
 const STATUS_FILTER_OPTIONS = [
   { value: "", label: "All Statuses" },
@@ -145,6 +146,7 @@ export default function ChatbotsList() {
                 <tr>
                   <th className="px-4 py-3 font-medium">Bot Name</th>
                   <th className="px-4 py-3 font-medium">Company</th>
+                  <th className="px-4 py-3 font-medium">Template</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium">Model</th>
                   <th className="px-4 py-3 font-medium">Created</th>
@@ -163,6 +165,9 @@ export default function ChatbotsList() {
                     </td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
                       {bot.companyName}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
+                      {SECTOR_LABELS[bot.template] || "General"}
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={bot.status} />

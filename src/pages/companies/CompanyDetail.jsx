@@ -142,10 +142,36 @@ export default function CompanyDetail() {
                 </dd>
               </div>
               <div>
-                <dt className="text-gray-500 dark:text-gray-400">Created</dt>
+                <dt className="text-gray-500 dark:text-gray-400">Industry</dt>
                 <dd className="font-medium text-gray-800 dark:text-gray-100">
-                  {new Date(company.createdAt).toLocaleDateString()}
+                  {company.industry || "—"}
                 </dd>
+              </div>
+              <div>
+                <dt className="text-gray-500 dark:text-gray-400">Company Size</dt>
+                <dd className="font-medium text-gray-800 dark:text-gray-100">
+                  {company.companySize || "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-gray-500 dark:text-gray-400">Registered By</dt>
+                <dd className="font-medium text-gray-800 dark:text-gray-100">
+                  {company.registeredBy ? `${company.registeredBy.name} (${company.registeredBy.email})` : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-gray-500 dark:text-gray-400">Registered</dt>
+                <dd className="font-medium text-gray-800 dark:text-gray-100">
+                  {new Date(company.createdAt).toLocaleString()}
+                </dd>
+              </div>
+              <div className="sm:col-span-2">
+                <button
+                  onClick={() => navigate(`/audit-logs?companyId=${company.companyId}`)}
+                  className="text-xs font-medium text-primary-600 hover:underline dark:text-primary-400"
+                >
+                  View audit history for this company →
+                </button>
               </div>
             </dl>
           )}

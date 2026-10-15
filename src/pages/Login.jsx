@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext.jsx";
 import Button from "../components/ui/Button.jsx";
@@ -49,6 +49,16 @@ export default function Login() {
       />
 
       <div className="relative w-full max-w-sm animate-fade-in-up">
+        <div className="mb-4 flex items-center justify-center gap-4 text-xs font-medium">
+          <Link to="/company/login" className="text-primary-600 hover:underline dark:text-primary-400">
+            Company Login
+          </Link>
+          <span className="text-gray-300 dark:text-gray-600">·</span>
+          <Link to="/company/signup" className="text-primary-600 hover:underline dark:text-primary-400">
+            Company Sign Up
+          </Link>
+        </div>
+
         <div className="mb-8 text-center">
           <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-primary-500 text-lg font-bold text-white shadow-glow">
             N
@@ -57,7 +67,7 @@ export default function Login() {
             Nuformly
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            AI Chatbot Management Platform
+            Staff &amp; Platform Administration
           </p>
         </div>
 
