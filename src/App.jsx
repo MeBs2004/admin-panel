@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
-
+// Admin Panel
 import Login from "./pages/Login.jsx";
 import CompanyLogin from "./pages/CompanyLogin.jsx";
 import CompanySignup from "./pages/CompanySignup.jsx";
