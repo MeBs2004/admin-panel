@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Toggle from "../../../components/ui/Toggle.jsx";
 import ColorInput from "../../../components/ui/ColorInput.jsx";
 import SegmentedControl from "../../../components/ui/SegmentedControl.jsx";
@@ -27,6 +28,43 @@ const ANIMATION_OPTIONS = [
   { value: "pulse", label: "Pulse" },
   { value: "glow", label: "Soft Glow" },
 ];
+
+// Same limits the backend enforces (models/chatbot.model.js).
+const MAX_TEASERS = 10;
+const MAX_TEASER_LENGTH = 80;
+
+function TeaserMessagesEditor({ value, onChange }) {
+  const [text, setText] = useState(() => (value || []).join("\n"));
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  const tooMany = lines.length > MAX_TEASERS;
+  const tooLong = lines.find((l) => l.length > MAX_TEASER_LENGTH);
+  const error = tooMany
+    ? `At most ${MAX_TEASERS} messages.`
+    : tooLong
+      ? `Each message can be at most ${MAX_TEASER_LENGTH} characters.`
+      : "";
+
+  return (
+    <div>
+      <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Teaser messages</label>
+      <textarea
+        value={text}
+        rows={4}
+        placeholder={"Need help choosing a plan?\nAsk us anything"}
+        onChange={(e) => {
+          setText(e.target.value);
+          const next = e.target.value.split("\n").map((l) => l.trim()).filter(Boolean);
+          // Only a list the backend will accept is passed up to be saved.
+          if (next.length <= MAX_TEASERS && next.every((l) => l.length <= MAX_TEASER_LENGTH)) onChange(next);
+        }}
+        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-primary-500 dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-gray-100"
+      />
+      <p className={`mt-1 text-xs ${error ? "text-danger-600 dark:text-red-300" : "text-gray-400"}`}>
+        {error || `One per line, shown in turn above the chat button. Max ${MAX_TEASERS} messages, ${MAX_TEASER_LENGTH} characters each.`}
+      </p>
+    </div>
+  );
+}
 
 export default function SectionLauncher({ value, onChange }) {
   return (
@@ -138,6 +176,10 @@ export default function SectionLauncher({ value, onChange }) {
                 />
               </>
             )}
+            <TeaserMessagesEditor
+              value={value.teaserMessages}
+              onChange={(v) => onChange("teaserMessages", v)}
+            />
             <Toggle
               label="Show notification badge"
               checked={value.showNotificationBadge}

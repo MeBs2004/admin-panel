@@ -20,6 +20,7 @@ export const DEFAULT_CHATBOT_CONFIG = {
     greetingMessage: "How can we help you today?",
     showNotificationBadge: true,
     showOnMobile: true,
+    teaserMessages: [],
   },
   chatWindow: {
     theme: "light",

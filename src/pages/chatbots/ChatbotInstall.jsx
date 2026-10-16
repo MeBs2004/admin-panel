@@ -100,8 +100,10 @@ export default function ChatbotInstall() {
   // alone can't say which one (see widget.js/Embed.jsx). Legacy
   // chatbots keep the exact snippet shape every existing install
   // already uses, unchanged.
+  // v1: the one-line snippet — everything else (look, text, domains)
+  // comes from this chatbot's settings, so it never needs re-pasting.
   const snippet = isV1
-    ? `<script\n  src="${WIDGET_CDN_URL}/widget.js"\n  data-company-id="${companyId}"\n  data-chatbot-id="${chatbot._id}"\n></script>`
+    ? `<script\n  src="${WIDGET_CDN_URL}/widget.js"\n  data-chatbot-id="${chatbot._id}"\n  async\n></script>`
     : `<script\n  src="${WIDGET_CDN_URL}/widget.js"\n  data-company-id="${companyId}"\n></script>`;
 
   const copySnippet = async () => {
@@ -232,29 +234,32 @@ export default function ChatbotInstall() {
           </a>
         </section>
 
-        <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-            Rendering engine
-          </h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Controls which widget code renders for this chatbot's embed.
-            <strong> Legacy</strong> is what every current installation uses
-            and is unaffected by anything in this panel. <strong>v1</strong>{" "}
-            is the new config-driven engine built in this phase — switch to
-            it only on a chatbot you intend to test, since it does not yet
-            reimplement voice input, text-to-speech, or file upload.
-          </p>
+        {/* Only legacy chatbots can still switch engine; new ones are always v1. */}
+        {!isV1 && (
+          <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+            <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+              Rendering engine
+            </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Controls which widget code renders for this chatbot's embed.
+              <strong> Legacy</strong> is what every current installation uses
+              and is unaffected by anything in this panel. <strong>v1</strong>{" "}
+              is the new config-driven engine built in this phase — switch to
+              it only on a chatbot you intend to test, since it does not yet
+              reimplement voice input, text-to-speech, or file upload.
+            </p>
 
-          <div className="mt-3 max-w-xs">
-            <Select
-              label="Widget engine version"
-              options={ENGINE_OPTIONS}
-              value={chatbot.widgetEngineVersion || "legacy"}
-              disabled={busy}
-              onChange={(e) => changeEngine(e.target.value)}
-            />
-          </div>
-        </section>
+            <div className="mt-3 max-w-xs">
+              <Select
+                label="Widget engine version"
+                options={ENGINE_OPTIONS}
+                value={chatbot.widgetEngineVersion || "legacy"}
+                disabled={busy}
+                onChange={(e) => changeEngine(e.target.value)}
+              />
+            </div>
+          </section>
+        )}
 
         <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
           <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
