@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { usePanel } from "../../utils/panelPath.js";
 import api, { getErrorMessage } from "../../services/api.js";
 import { subscribeAccessibleCompanies } from "../../services/realtime.js";
 import PageHeader from "../../components/ui/PageHeader.jsx";
@@ -19,7 +19,7 @@ const STATUS_FILTERS = [
 ];
 
 export default function VisitorsList() {
-  const navigate = useNavigate();
+  const { navigate } = usePanel();
   const [visitors, setVisitors] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });
   const [search, setSearch] = useState("");

@@ -8,6 +8,7 @@ import api, { getErrorMessage } from "../../services/api.js";
 import { useToast } from "../../context/ToastContext.jsx";
 
 const ROLE_OPTIONS = [
+  { value: "CHATBOT_MANAGER", label: "Chatbot Manager" },
   { value: "AGENT", label: "Agent" },
   { value: "VIEWER", label: "Viewer" },
   { value: "DEVELOPER", label: "Developer" },

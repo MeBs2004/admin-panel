@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { usePanel } from "../../utils/panelPath.js";
 import api, { getErrorMessage } from "../../services/api.js";
 import PageHeader from "../../components/ui/PageHeader.jsx";
 import Button from "../../components/ui/Button.jsx";
@@ -12,7 +12,7 @@ import { useBillingCompany } from "./useBillingCompany.js";
 import BillingCompanyPicker from "../developer/DeveloperCompanyPicker.jsx";
 
 export default function BillingOverview() {
-  const navigate = useNavigate();
+  const { navigate } = usePanel();
   const { companies, companyId, selectCompany, loading: loadingCompanies } = useBillingCompany();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { usePanel } from "../../utils/panelPath.js";
 import { FiPlus, FiX, FiCpu } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
 import { useToast } from "../../context/ToastContext.jsx";
@@ -24,7 +25,7 @@ const STATUS_OPTIONS = [
 
 export default function ChatbotDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { navigate, path: panelPath } = usePanel();
   const { showToast } = useToast();
 
   const [data, setData] = useState(null);
@@ -135,7 +136,7 @@ export default function ChatbotDetail() {
           </span>
         }
         description={company?.name}
-        breadcrumbs={[{ label: "Chatbots", to: "/chatbots" }, { label: chatbot.name }]}
+        breadcrumbs={[{ label: "Chatbots", to: panelPath("/chatbots") }, { label: chatbot.name }]}
         action={
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" onClick={() => navigate("/chatbots")}>

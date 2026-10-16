@@ -63,12 +63,17 @@ export default function CompanyFormModal({ open, onClose, onSaved }) {
       }
     >
       <div className="space-y-4">
-        <Input
-          label="Company ID"
-          placeholder="e.g. acme-corp"
-          value={form.companyId}
-          onChange={(e) => setForm({ ...form, companyId: e.target.value })}
-        />
+        <div>
+          <Input
+            label="Company ID"
+            placeholder="e.g. acme-corp"
+            value={form.companyId}
+            onChange={(e) => setForm({ ...form, companyId: e.target.value.toLowerCase().replace(/\s+/g, "-") })}
+          />
+          <p className="mt-1 text-xs text-gray-400">
+            3-48 characters: lowercase letters, numbers and hyphens. Used by the widget, can't be changed later.
+          </p>
+        </div>
         <Input
           label="Company Name"
           value={form.name}

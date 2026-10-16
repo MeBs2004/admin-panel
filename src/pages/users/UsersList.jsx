@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { usePanel } from "../../utils/panelPath.js";
 import { FiPlus, FiSend } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -19,7 +19,7 @@ import InvitationsPanel from "./InvitationsPanel.jsx";
 
 export default function UsersList() {
   const { user: me } = useAuth();
-  const navigate = useNavigate();
+  const { navigate } = usePanel();
   const [tab, setTab] = useState("members");
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });
@@ -118,6 +118,7 @@ export default function UsersList() {
                   { value: "", label: "All Roles" },
                   { value: "SUPER_ADMIN", label: "Super Admin" },
                   { value: "COMPANY_ADMIN", label: "Company Admin" },
+                  { value: "CHATBOT_MANAGER", label: "Chatbot Manager" },
                   { value: "AGENT", label: "Agent" },
                   { value: "VIEWER", label: "Viewer" },
                   { value: "DEVELOPER", label: "Developer" },

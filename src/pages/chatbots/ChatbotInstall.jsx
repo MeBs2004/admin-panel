@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import { usePanel } from "../../utils/panelPath.js";
 import { FiCopy, FiCheck, FiExternalLink, FiPlay } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
 import { useToast } from "../../context/ToastContext.jsx";
@@ -28,7 +29,7 @@ const ENGINE_OPTIONS = [
 
 export default function ChatbotInstall() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { navigate, path: panelPath } = usePanel();
   const { showToast } = useToast();
 
   const [data, setData] = useState(null);
@@ -179,8 +180,8 @@ export default function ChatbotInstall() {
         title="Installation"
         description={chatbot.name}
         breadcrumbs={[
-          { label: "Chatbots", to: "/chatbots" },
-          { label: chatbot.name, to: `/chatbots/${id}` },
+          { label: "Chatbots", to: panelPath("/chatbots") },
+          { label: chatbot.name, to: panelPath(`/chatbots/${id}`) },
           { label: "Installation" },
         ]}
         action={
@@ -295,7 +296,7 @@ export default function ChatbotInstall() {
             A real endpoint — send it a visitor's message and get back the actual AI/flow-engine reply, the same
             pipeline the embedded widget uses. This requires an API key with the <code>messages:write</code> scope,
             created under{" "}
-            <Link to="/developer/api-keys" className="font-medium text-primary-600 hover:underline dark:text-primary-400">
+            <Link to={panelPath("/developer/api-keys")} className="font-medium text-primary-600 hover:underline dark:text-primary-400">
               Developer → API Keys
             </Link>
             . There is no separate "webhook secret" to configure — your API key is the credential.
@@ -343,7 +344,7 @@ export default function ChatbotInstall() {
             <p className="text-xs text-gray-400">
               <code>text</code> is required (max 4000 chars). Omit <code>visitorId</code> to start a new conversation
               each call, or pass one back to continue the same thread. Full field/error reference in{" "}
-              <Link to="/developer/docs" className="font-medium text-primary-600 hover:underline dark:text-primary-400">
+              <Link to={panelPath("/developer/docs")} className="font-medium text-primary-600 hover:underline dark:text-primary-400">
                 API Documentation
               </Link>
               .

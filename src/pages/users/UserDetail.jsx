@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { usePanel } from "../../utils/panelPath.js";
 import { FiPlus, FiX, FiCheck } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -19,14 +20,26 @@ import TaskFormModal from "../tasks/TaskFormModal.jsx";
 
 const SYSTEM_COMPANY_ROLE_OPTIONS = [
   { value: "COMPANY_ADMIN", label: "Company Admin" },
+  { value: "CHATBOT_MANAGER", label: "Chatbot Manager" },
   { value: "AGENT", label: "Agent" },
   { value: "VIEWER", label: "Viewer" },
   { value: "DEVELOPER", label: "Developer" },
 ];
 
+// Roles for a user limited to specific chatbots — never Company Admin
+// (the backend refuses it too).
+const CHATBOT_SCOPE_ROLE_OPTIONS = SYSTEM_COMPANY_ROLE_OPTIONS.filter((o) => o.value !== "COMPANY_ADMIN");
+
+const SYSTEM_ROLE_KEYS = SYSTEM_COMPANY_ROLE_OPTIONS.map((o) => o.value);
+
+const ACCESS_SCOPE_OPTIONS = [
+  { value: "COMPANY", label: "Whole company" },
+  { value: "CHATBOTS", label: "Assigned chatbots only" },
+];
+
 export default function UserDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { navigate, path: panelPath } = usePanel();
   const { user: me } = useAuth();
   const { showToast } = useToast();
 
@@ -40,6 +53,8 @@ export default function UserDetail() {
   const [allCompanies, setAllCompanies] = useState([]);
   const [grantCompanyId, setGrantCompanyId] = useState("");
   const [grantCompanyRole, setGrantCompanyRole] = useState("AGENT");
+  const [grantCompanyScope, setGrantCompanyScope] = useState("COMPANY");
+  const [grantChatbotRole, setGrantChatbotRole] = useState("AGENT");
   const [customRolesForGrant, setCustomRolesForGrant] = useState([]);
 
   const [companyForBots, setCompanyForBots] = useState("");
@@ -102,7 +117,7 @@ export default function UserDetail() {
   const [roleLabelById, setRoleLabelById] = useState({});
   useEffect(() => {
     if (!data?.companyAccess?.length) return;
-    const systemKeys = new Set(["COMPANY_ADMIN", "AGENT", "VIEWER", "DEVELOPER"]);
+    const systemKeys = new Set(SYSTEM_ROLE_KEYS);
     const companyIds = [...new Set(data.companyAccess.filter((a) => !systemKeys.has(a.role)).map((a) => a.companyId))];
     if (companyIds.length === 0) return;
     Promise.all(companyIds.map((cid) => api.get("/roles", { params: { companyId: cid } }).catch(() => ({ data: { roles: [] } }))))
@@ -114,7 +129,7 @@ export default function UserDetail() {
   }, [data]);
 
   const formatRoleLabel = (role) =>
-    ["COMPANY_ADMIN", "AGENT", "VIEWER", "DEVELOPER"].includes(role) ? role.replaceAll("_", " ") : roleLabelById[role] || "Custom Role";
+    SYSTEM_ROLE_KEYS.includes(role) ? role.replaceAll("_", " ") : roleLabelById[role] || "Custom Role";
 
   const loadPermissions = (cid) => {
     if (!cid) return;
@@ -211,7 +226,11 @@ export default function UserDetail() {
     if (!grantCompanyId) return;
     setBusy(true);
     try {
-      await api.post(`/users/${id}/company-access`, { companyId: grantCompanyId, role: grantCompanyRole });
+      await api.post(`/users/${id}/company-access`, {
+        companyId: grantCompanyId,
+        role: grantCompanyRole,
+        accessScope: grantCompanyScope,
+      });
       showToast("Company access granted.");
       setGrantCompanyId("");
       load();
@@ -240,7 +259,7 @@ export default function UserDetail() {
     if (!grantChatbotId) return;
     setBusy(true);
     try {
-      await api.post(`/users/${id}/chatbot-access`, { chatbotId: grantChatbotId });
+      await api.post(`/users/${id}/chatbot-access`, { chatbotId: grantChatbotId, role: grantChatbotRole });
       showToast("Chatbot access granted.");
       setGrantChatbotId("");
       load();
@@ -302,7 +321,7 @@ export default function UserDetail() {
       <PageHeader
         title={user.name}
         description={user.email}
-        breadcrumbs={[{ label: "Team", to: "/users" }, { label: user.name }]}
+        breadcrumbs={[{ label: "Team", to: panelPath("/users") }, { label: user.name }]}
         action={
           <Button variant="secondary" onClick={() => navigate("/users")}>
             Back to Team
@@ -380,6 +399,9 @@ export default function UserDetail() {
                   >
                     <span className="text-gray-700 dark:text-gray-200">
                       {a.companyId} — {formatRoleLabel(a.role)}
+                      <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 dark:bg-white/5 dark:text-gray-400">
+                        {a.accessScope === "CHATBOTS" ? "Assigned chatbots only" : "Whole company"}
+                      </span>
                     </span>
                     {canManageAccess && (
                       <button
@@ -409,10 +431,26 @@ export default function UserDetail() {
                         onChange={(e) => setGrantCompanyId(e.target.value)}
                       />
                     </div>
+                    <div className="w-48">
+                      <Select
+                        label="Can see"
+                        options={ACCESS_SCOPE_OPTIONS}
+                        value={grantCompanyScope}
+                        onChange={(e) => {
+                          setGrantCompanyScope(e.target.value);
+                          if (e.target.value === "CHATBOTS" && grantCompanyRole === "COMPANY_ADMIN") {
+                            setGrantCompanyRole("CHATBOT_MANAGER");
+                          }
+                        }}
+                      />
+                    </div>
                     <div className="w-40">
                       <Select
                         label="Role"
-                        options={[...SYSTEM_COMPANY_ROLE_OPTIONS, ...customRolesForGrant.map((r) => ({ value: r._id, label: r.name }))]}
+                        options={[
+                          ...(grantCompanyScope === "CHATBOTS" ? CHATBOT_SCOPE_ROLE_OPTIONS : SYSTEM_COMPANY_ROLE_OPTIONS),
+                          ...customRolesForGrant.map((r) => ({ value: r._id, label: r.name })),
+                        ]}
                         value={grantCompanyRole}
                         onChange={(e) => setGrantCompanyRole(e.target.value)}
                       />
@@ -435,8 +473,9 @@ export default function UserDetail() {
             ) : (
               <div className="space-y-2">
                 <p className="text-xs text-gray-400">
-                  A user with Company Access already reaches every chatbot in that company — this section is for
-                  granting access to one specific chatbot without full company access.
+                  A user with whole-company access already reaches every chatbot in that company. Assigning a chatbot
+                  to anyone else limits them to ONLY their assigned chatbots in that company — no company settings,
+                  team, billing or other chatbots.
                 </p>
                 {chatbotAccess.length === 0 && (
                   <p className="text-sm text-gray-500 dark:text-gray-400">No individual chatbot access assigned.</p>
@@ -489,6 +528,16 @@ export default function UserDetail() {
                         disabled={!companyForBots}
                       />
                     </div>
+                    {!companyAccess.some((a) => a.companyId === companyForBots) && (
+                      <div className="w-40">
+                        <Select
+                          label="Role"
+                          options={CHATBOT_SCOPE_ROLE_OPTIONS}
+                          value={grantChatbotRole}
+                          onChange={(e) => setGrantChatbotRole(e.target.value)}
+                        />
+                      </div>
+                    )}
                     <Button onClick={grantChatbotAccess} loading={busy} disabled={!grantChatbotId}>
                       <FiPlus /> Grant
                     </Button>

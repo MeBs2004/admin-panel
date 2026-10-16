@@ -52,7 +52,7 @@ import BillingSettingsPage from "./pages/billing/BillingSettingsPage.jsx";
 
 import AdminLayout from "./components/layout/AdminLayout.jsx";
 import CompanyLayout from "./components/layout/CompanyLayout.jsx";
-import ProtectedRoute from "./components/layout/ProtectedRoute.jsx";
+import ProtectedRoute, { PlatformOnly } from "./components/layout/ProtectedRoute.jsx";
 
 import CompanyOverview from "./pages/company/CompanyOverview.jsx";
 import CompanySettings from "./pages/company/CompanySettings.jsx";
@@ -71,26 +71,27 @@ function App() {
       <Route
         path="/chatbots/:id/customize"
         element={
-          <ProtectedRoute>
+          <PlatformOnly>
             <ChatbotStudio />
-          </ProtectedRoute>
+          </PlatformOnly>
         }
       />
 
       <Route
         path="/chatbots/:id/builder"
         element={
-          <ProtectedRoute>
+          <PlatformOnly>
             <ChatbotBuilder />
-          </ProtectedRoute>
+          </PlatformOnly>
         }
       />
 
+      {/* Nuform platform shell — SUPER_ADMIN only (see PlatformOnly). */}
       <Route
         element={
-          <ProtectedRoute>
+          <PlatformOnly>
             <AdminLayout />
-          </ProtectedRoute>
+          </PlatformOnly>
         }
       >
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -164,21 +165,28 @@ function App() {
         <Route path="/forbidden" element={<Forbidden />} />
       </Route>
 
-      {/* Company Admin Panel — a separate layout/route namespace from
-          the Super Admin shell above, per the product requirement to
-          distinguish platform administration from company access.
-          Several routes intentionally reuse the EXACT SAME page
-          components the Super Admin shell uses (ChatbotsList,
-          ConversationsInbox, VisitorsList, Reports, UsersList,
-          BillingOverview, Settings) rather than duplicating their
-          business logic — only Overview and Company Settings are new,
-          company-specific pages. Drilling into a specific record
-          (a chatbot's Builder/Studio/AI Settings, a user's detail
-          page, a billing sub-page) intentionally opens the existing
-          page at its existing absolute route, same as it already does
-          for every role today — those deep tools were never shell-
-          bound to begin with (ChatbotStudio/ChatbotBuilder already
-          render full-viewport, outside any sidebar, for every role). */}
+      {/* Company Panel — every non-Super-Admin user. Reuses the same
+          page components as the platform shell; those pages build
+          their links with utils/panelPath.js so they never leave this
+          shell. Studio/Builder render full-viewport, outside any
+          sidebar, same as on the platform side. */}
+      <Route
+        path="/company/chatbots/:id/customize"
+        element={
+          <ProtectedRoute>
+            <ChatbotStudio />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/company/chatbots/:id/builder"
+        element={
+          <ProtectedRoute>
+            <ChatbotBuilder />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         element={
           <ProtectedRoute>
@@ -189,14 +197,44 @@ function App() {
         <Route path="/company" element={<Navigate to="/company/overview" replace />} />
         <Route path="/company/overview" element={<CompanyOverview />} />
         <Route path="/company/chatbots" element={<ChatbotsList />} />
+        <Route path="/company/chatbots/new" element={<CreateChatbotWizard />} />
+        <Route path="/company/chatbots/:id" element={<ChatbotDetail />} />
+        <Route path="/company/chatbots/:id/install" element={<ChatbotInstall />} />
+        <Route path="/company/chatbots/:id/channels" element={<ChatbotChannels />} />
+        <Route path="/company/chatbots/:id/ai-settings" element={<ChatbotAiSettings />} />
+        <Route path="/company/chatbots/:id/knowledge" element={<ChatbotKnowledge />} />
         <Route path="/company/conversations" element={<ConversationsInbox />} />
         <Route path="/company/conversations/:companyId/:visitorId" element={<ConversationsInbox />} />
         <Route path="/company/visitors" element={<VisitorsList />} />
+        <Route path="/company/visitors/:id" element={<VisitorDetail />} />
         <Route path="/company/analytics" element={<Reports />} />
         <Route path="/company/team" element={<UsersList />} />
-        <Route path="/company/billing" element={<BillingOverview />} />
+        <Route path="/company/team/:id" element={<UserDetail />} />
+
+        <Route
+          element={
+            <ProtectedRoute roles={["COMPANY_ADMIN", "DEVELOPER"]}>
+              <Outlet />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/company/billing" element={<BillingOverview />} />
+          <Route path="/company/billing/plans" element={<PlansPage />} />
+          <Route path="/company/billing/usage" element={<BillingUsagePage />} />
+          <Route path="/company/billing/history" element={<BillingHistoryPage />} />
+          <Route path="/company/billing/settings" element={<BillingSettingsPage />} />
+
+          <Route path="/company/developer" element={<DeveloperOverview />} />
+          <Route path="/company/developer/api-keys" element={<ApiKeysPage />} />
+          <Route path="/company/developer/webhooks" element={<WebhooksPage />} />
+          <Route path="/company/developer/usage" element={<UsagePage />} />
+          <Route path="/company/developer/docs" element={<ApiDocumentation />} />
+          <Route path="/company/developer/settings" element={<DeveloperSettings />} />
+        </Route>
+
         <Route path="/company/settings" element={<CompanySettings />} />
         <Route path="/company/account" element={<Settings />} />
+        <Route path="/company/forbidden" element={<Forbidden />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

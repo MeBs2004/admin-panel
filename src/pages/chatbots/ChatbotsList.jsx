@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { usePanel } from "../../utils/panelPath.js";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
 import { subscribeAccessibleCompanies } from "../../services/realtime.js";
@@ -33,7 +33,7 @@ const SORT_OPTIONS = [
 ];
 
 export default function ChatbotsList() {
-  const navigate = useNavigate();
+  const { navigate } = usePanel();
   const { showToast } = useToast();
   const [chatbots, setChatbots] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });

@@ -1,4 +1,5 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { usePanel } from "../../utils/panelPath.js";
 import Tabs from "../../components/ui/Tabs.jsx";
 
 const TAB_ROUTES = [
@@ -11,7 +12,9 @@ const TAB_ROUTES = [
 ];
 
 export default function DeveloperTabs() {
-  const navigate = useNavigate();
+  const { navigate, path: panelPath } = usePanel();
   const { pathname } = useLocation();
-  return <Tabs tabs={TAB_ROUTES} active={pathname} onChange={navigate} />;
+  // Same tabs in both shells — mapped to /company/... inside the Company Panel.
+  const tabs = TAB_ROUTES.map((t) => ({ ...t, value: panelPath(t.value) }));
+  return <Tabs tabs={tabs} active={pathname} onChange={navigate} />;
 }

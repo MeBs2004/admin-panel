@@ -10,14 +10,14 @@ import {
   FiSettings,
   FiLogOut,
   FiX,
+  FiCode,
 } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { can, PERMISSIONS } from "../../utils/permissions.js";
 
-// Deliberately minimal and fixed — the exact 9 items the product
-// requires, nothing added to pad it out. No permission-based
-// filtering is needed here (unlike the Super Admin Sidebar): every
-// item is something any company role can at least view, and the
-// backend independently enforces what each one can actually do.
+// Items with `requires` are hidden from roles that can't open them
+// (the routes are role-gated to match). UX only — the backend
+// independently enforces what each one can actually do.
 const ITEMS = [
   { to: "/company/overview", label: "Overview", icon: FiGrid },
   { to: "/company/chatbots", label: "My Chatbots", icon: FiCpu },
@@ -25,12 +25,14 @@ const ITEMS = [
   { to: "/company/visitors", label: "Visitors", icon: FiEye },
   { to: "/company/analytics", label: "Analytics", icon: FiBarChart2 },
   { to: "/company/team", label: "Team", icon: FiUsers },
-  { to: "/company/billing", label: "Plan & Usage", icon: FiCreditCard },
+  { to: "/company/billing", label: "Plan & Usage", icon: FiCreditCard, requires: PERMISSIONS.USAGE_VIEW },
+  { to: "/company/developer", label: "Developer", icon: FiCode, requires: PERMISSIONS.DEVELOPER_VIEW },
   { to: "/company/settings", label: "Company Settings", icon: FiSettings },
 ];
 
 export default function CompanySidebar({ open, onClose }) {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const items = ITEMS.filter((item) => !item.requires || can(user?.role, item.requires));
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -79,7 +81,7 @@ export default function CompanySidebar({ open, onClose }) {
             scroll ownership convention. */}
         <nav className="flex-1 overflow-y-auto px-2 py-2">
           <ul className="space-y-0.5">
-            {ITEMS.map((item) => {
+            {items.map((item) => {
               const active = pathname === item.to || pathname.startsWith(item.to + "/");
               const Icon = item.icon;
               return (

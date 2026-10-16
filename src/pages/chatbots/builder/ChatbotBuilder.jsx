@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { usePanel } from "../../../utils/panelPath.js";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -68,7 +69,7 @@ function snapshotEquals(a, b) {
 
 function BuilderCanvas() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { navigate } = usePanel();
   const { showToast } = useToast();
   const { zoomIn, zoomOut, fitView } = useReactFlow();
 
