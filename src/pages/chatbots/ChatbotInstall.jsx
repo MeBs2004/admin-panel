@@ -11,10 +11,10 @@ import Input from "../../components/ui/Input.jsx";
 import ErrorState from "../../components/ui/ErrorState.jsx";
 import { SkeletonLine } from "../../components/ui/Skeleton.jsx";
 
-// This is the real, already-deployed public widget CDN — the same
-// URL frontend/public/widget.js and every existing production
-// installation already points at. Not a placeholder.
-const WIDGET_CDN_URL = "https://chatbot-frontend-nine-psi.vercel.app";
+// Where widget.js is served. Defaults to the live widget CDN; set
+// VITE_WIDGET_URL (e.g. http://localhost:5173) when running locally,
+// otherwise the snippet loads the live widget against the live backend.
+const WIDGET_CDN_URL = (import.meta.env.VITE_WIDGET_URL || "https://chatbot-frontend-nine-psi.vercel.app").replace(/\/+$/, "");
 
 // Same derivation ApiDocumentation.jsx uses — the Developer API's
 // real base URL, computed from the same env var the admin JWT client
