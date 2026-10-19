@@ -11,10 +11,11 @@ import Input from "../../components/ui/Input.jsx";
 import ErrorState from "../../components/ui/ErrorState.jsx";
 import { SkeletonLine } from "../../components/ui/Skeleton.jsx";
 
-// Where widget.js is served. Defaults to the live widget CDN; set
-// VITE_WIDGET_URL (e.g. http://localhost:5173) when running locally,
-// otherwise the snippet loads the live widget against the live backend.
-const WIDGET_CDN_URL = (import.meta.env.VITE_WIDGET_URL || "https://chatbot-frontend-nine-psi.vercel.app").replace(/\/+$/, "");
+import { WIDGET_URL as WIDGET_CDN_URL } from "../../config/widget.js";
+import { buildSnippet } from "./install/installUtils.js";
+import InstallGuides from "./install/InstallGuides.jsx";
+import InstallStatus from "./install/InstallStatus.jsx";
+import CopyBlock from "./install/CopyBlock.jsx";
 
 // Same derivation ApiDocumentation.jsx uses — the Developer API's
 // real base URL, computed from the same env var the admin JWT client
@@ -61,6 +62,17 @@ export default function ChatbotInstall() {
 
   useEffect(load, [id]);
 
+  // Quiet reload for the install status — no full-page skeleton.
+  const [statusRefreshing, setStatusRefreshing] = useState(false);
+  const refreshStatus = () => {
+    setStatusRefreshing(true);
+    api
+      .get(`/chatbots/${id}`)
+      .then((res) => setData(res.data))
+      .catch((err) => showToast(getErrorMessage(err), "error"))
+      .finally(() => setStatusRefreshing(false));
+  };
+
   const saveDomains = async () => {
     setDomainsSaving(true);
     setDomainsError("");
@@ -103,7 +115,7 @@ export default function ChatbotInstall() {
   // v1: the one-line snippet — everything else (look, text, domains)
   // comes from this chatbot's settings, so it never needs re-pasting.
   const snippet = isV1
-    ? `<script\n  src="${WIDGET_CDN_URL}/widget.js"\n  data-chatbot-id="${chatbot._id}"\n  async\n></script>`
+    ? buildSnippet({ widgetUrl: WIDGET_CDN_URL, chatbotId: chatbot._id })
     : `<script\n  src="${WIDGET_CDN_URL}/widget.js"\n  data-company-id="${companyId}"\n></script>`;
 
   const copySnippet = async () => {
@@ -199,9 +211,9 @@ export default function ChatbotInstall() {
             Embed snippet
           </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Paste this immediately before the closing <code>&lt;/body&gt;</code> tag
-            of every page the widget should appear on. This loads the same
-            production widget script already serving your live chatbots.
+            Paste this line just before the closing <code>&lt;/body&gt;</code> tag
+            of your website. Its look, text and allowed websites all come from
+            this chatbot's settings, so the line never needs changing.
           </p>
 
           {!companyId && (
@@ -233,6 +245,43 @@ export default function ChatbotInstall() {
             View widget CDN <FiExternalLink size={12} />
           </a>
         </section>
+
+        {isV1 && (
+          <>
+            <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+              <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Installation status</h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Websites where this chatbot has loaded. Updated each time a visitor opens a page with the line on it.
+              </p>
+              <div className="mt-4">
+                <InstallStatus
+                  installations={chatbot.installations}
+                  onRefresh={refreshStatus}
+                  refreshing={statusRefreshing}
+                />
+              </div>
+            </section>
+
+            <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+              <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">How to install</h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Pick the platform your website is built on.</p>
+              <div className="mt-4">
+                <InstallGuides snippet={snippet} />
+              </div>
+            </section>
+
+            <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+              <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Share with your developer</h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Send this link to whoever manages the website. It opens a page with the line and these instructions — no
+                login needed, and it shows nothing beyond the chatbot's name.
+              </p>
+              <div className="mt-3">
+                <CopyBlock text={`${window.location.origin}/install/${chatbot._id}`} label="Copy link" />
+              </div>
+            </section>
+          </>
+        )}
 
         {/* Only legacy chatbots can still switch engine; new ones are always v1. */}
         {!isV1 && (

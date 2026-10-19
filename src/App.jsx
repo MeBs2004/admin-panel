@@ -4,6 +4,7 @@ import Login from "./pages/Login.jsx";
 import CompanyLogin from "./pages/CompanyLogin.jsx";
 import CompanySignup from "./pages/CompanySignup.jsx";
 import AcceptInvite from "./pages/AcceptInvite.jsx";
+import PublicInstall from "./pages/PublicInstall.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import AuditLogs from "./pages/AuditLogs.jsx";
 import Settings from "./pages/Settings.jsx";
@@ -64,6 +65,8 @@ function App() {
       <Route path="/company/login" element={<CompanyLogin />} />
       <Route path="/company/signup" element={<CompanySignup />} />
       <Route path="/accept-invite/:token" element={<AcceptInvite />} />
+      {/* Public, no login: install instructions shared with a website's developer. */}
+      <Route path="/install/:chatbotId" element={<PublicInstall />} />
 
       {/* Full-viewport takeover, own top bar — deliberately not
           nested inside AdminLayout (no outer sidebar/header), same
