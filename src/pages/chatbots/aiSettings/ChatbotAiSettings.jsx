@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { usePanel } from "../../../utils/panelPath.js";
 import { FiSend, FiRotateCcw } from "react-icons/fi";
 import api, { getErrorMessage } from "../../../services/api.js";
 import { subscribeCompany } from "../../../services/realtime.js";
@@ -45,7 +46,7 @@ function Section({ title, description, children }) {
 
 export default function ChatbotAiSettings() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { navigate, path: panelPath } = usePanel();
   const { showToast } = useToast();
 
   const [chatbotMeta, setChatbotMeta] = useState(null);
@@ -158,8 +159,8 @@ export default function ChatbotAiSettings() {
         title="AI Settings"
         description={chatbotMeta?.companyName}
         breadcrumbs={[
-          { label: "Chatbots", to: "/chatbots" },
-          { label: chatbotMeta?.companyName || "Chatbot", to: `/chatbots/${id}` },
+          { label: "Chatbots", to: panelPath("/chatbots") },
+          { label: chatbotMeta?.companyName || "Chatbot", to: panelPath(`/chatbots/${id}`) },
           { label: "AI Settings" },
         ]}
         action={

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { usePanel } from "../../utils/panelPath.js";
 import { FiUser, FiMessageSquare, FiCpu, FiUserCheck, FiCheckCircle } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
 import PageHeader from "../../components/ui/PageHeader.jsx";
@@ -19,7 +20,7 @@ const EVENT_META = {
 
 export default function VisitorDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { navigate, path: panelPath } = usePanel();
   const [data, setData] = useState(null);
   const [timeline, setTimeline] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -58,7 +59,7 @@ export default function VisitorDetail() {
       <PageHeader
         title={visitor.name || visitor.email || visitor.visitorId}
         description={company?.name}
-        breadcrumbs={[{ label: "Visitors", to: "/visitors" }, { label: visitor.name || visitor.email || visitor.visitorId }]}
+        breadcrumbs={[{ label: "Visitors", to: panelPath("/visitors") }, { label: visitor.name || visitor.email || visitor.visitorId }]}
         action={
           <Button variant="secondary" onClick={() => navigate("/visitors")}>
             Back to Visitors

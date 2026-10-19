@@ -9,6 +9,9 @@ export default function AssignAccessModal({ open, chatbotId, onClose, onSaved })
   const { showToast } = useToast();
   const [users, setUsers] = useState([]);
   const [userId, setUserId] = useState("");
+  // Only used if the user has no access to this chatbot's company yet
+  // — they then become limited to their assigned chatbots.
+  const [role, setRole] = useState("AGENT");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -16,6 +19,7 @@ export default function AssignAccessModal({ open, chatbotId, onClose, onSaved })
     if (!open) return;
     setError("");
     setUserId("");
+    setRole("AGENT");
     api
       .get("/users", { params: { limit: 100 } })
       .then((res) => {
@@ -31,7 +35,7 @@ export default function AssignAccessModal({ open, chatbotId, onClose, onSaved })
 
     setSaving(true);
     try {
-      await api.post(`/chatbots/${chatbotId}/access`, { userId });
+      await api.post(`/chatbots/${chatbotId}/access`, { userId, role });
       showToast("User assigned to chatbot.");
       onSaved();
       onClose();
@@ -61,7 +65,7 @@ export default function AssignAccessModal({ open, chatbotId, onClose, onSaved })
       <div className="space-y-4">
         {users.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            No eligible users found. Add company access to a user first.
+            No users found. Create a user first.
           </p>
         ) : (
           <Select
@@ -70,6 +74,26 @@ export default function AssignAccessModal({ open, chatbotId, onClose, onSaved })
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
           />
+        )}
+
+        {users.length > 0 && (
+          <>
+            <Select
+              label="Role for this chatbot"
+              options={[
+                { value: "CHATBOT_MANAGER", label: "Chatbot Manager" },
+                { value: "AGENT", label: "Agent" },
+                { value: "VIEWER", label: "Viewer" },
+                { value: "DEVELOPER", label: "Developer" },
+              ]}
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              If this user doesn't already have whole-company access, they'll see only the chatbots assigned to them.
+              Users with whole-company access keep their existing role.
+            </p>
+          </>
         )}
 
         {error && (

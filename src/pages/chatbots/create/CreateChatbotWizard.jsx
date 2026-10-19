@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { usePanel } from "../../../utils/panelPath.js";
 import { FiCheckCircle, FiArrowLeft } from "react-icons/fi";
 import api, { getErrorMessage } from "../../../services/api.js";
 import { useToast } from "../../../context/ToastContext.jsx";
@@ -29,7 +29,7 @@ const DEFAULT_FORM = {
 };
 
 export default function CreateChatbotWizard() {
-  const navigate = useNavigate();
+  const { navigate, path: panelPath } = usePanel();
   const { showToast } = useToast();
   const { companies, loading: companiesLoading } = useEligibleCompanies();
 
@@ -166,7 +166,7 @@ export default function CreateChatbotWizard() {
     <div className={`mx-auto transition-[max-width] duration-150 ${isCustomizeStep ? "max-w-5xl" : "max-w-2xl"}`}>
       <PageHeader
         title="Create your AI chatbot"
-        breadcrumbs={[{ label: "Chatbots", to: "/chatbots" }, { label: "Create Chatbot" }]}
+        breadcrumbs={[{ label: "Chatbots", to: panelPath("/chatbots") }, { label: "Create Chatbot" }]}
         action={
           <Button variant="ghost" onClick={() => navigate("/chatbots")}>
             <FiArrowLeft className="h-4 w-4" /> Cancel

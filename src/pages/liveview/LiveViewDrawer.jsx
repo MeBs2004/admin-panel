@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { usePanel } from "../../utils/panelPath.js";
 import { FiExternalLink, FiUserCheck } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
 import Drawer from "../../components/ui/Drawer.jsx";
@@ -9,7 +9,7 @@ import Button from "../../components/ui/Button.jsx";
 // Reuses the exact same action endpoint/shape ConversationDetailPane
 // already calls (Section 20 — no second handoff implementation).
 export default function LiveViewDrawer({ visitor, permissions, onClose, onChanged }) {
-  const navigate = useNavigate();
+  const { navigate } = usePanel();
   const [taking, setTaking] = useState(false);
   const [error, setError] = useState("");
 

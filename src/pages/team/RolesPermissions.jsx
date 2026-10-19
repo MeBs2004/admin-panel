@@ -13,11 +13,13 @@ import EmptyState from "../../components/ui/EmptyState.jsx";
 import { SkeletonLine } from "../../components/ui/Skeleton.jsx";
 import RoleFormModal from "./RoleFormModal.jsx";
 
-const SYSTEM_ROLES = ["SUPER_ADMIN", "COMPANY_ADMIN", "AGENT", "VIEWER", "DEVELOPER"];
+const SYSTEM_ROLES = ["SUPER_ADMIN", "COMPANY_ADMIN", "CHATBOT_MANAGER", "AGENT", "VIEWER", "DEVELOPER"];
 
 const ROLE_DESCRIPTIONS = {
   SUPER_ADMIN: "Platform-level administration — every company, every chatbot, platform configuration.",
   COMPANY_ADMIN: "Full administration of the companies they belong to: users, chatbots, access, knowledge, integrations.",
+  CHATBOT_MANAGER:
+    "Runs the chatbots they can see: settings, flow, channels, install and conversations. No team, billing, or company-wide settings.",
   AGENT: "Operational: reply to visitors, take over and close conversations. Cannot manage users or credentials.",
   VIEWER: "Read-only access to everything they can see. Cannot reply, take over, or change any configuration.",
   DEVELOPER: "Technical scope: channels and integrations (e.g. webhooks). No user, billing, or platform administration.",
@@ -97,6 +99,7 @@ export default function RolesPermissions() {
 
   const replacementOptions = [
     { value: "COMPANY_ADMIN", label: "Company Admin" },
+    { value: "CHATBOT_MANAGER", label: "Chatbot Manager" },
     { value: "AGENT", label: "Agent" },
     { value: "VIEWER", label: "Viewer" },
     { value: "DEVELOPER", label: "Developer" },

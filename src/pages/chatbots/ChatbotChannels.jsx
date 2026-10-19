@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { usePanel } from "../../utils/panelPath.js";
 import { FiGlobe, FiSend } from "react-icons/fi";
 import { FaTelegram, FaWhatsapp, FaInstagram, FaFacebookMessenger } from "react-icons/fa";
 import api, { getErrorMessage } from "../../services/api.js";
@@ -173,7 +174,7 @@ function ComingSoonCard({ icon: Icon, title }) {
 
 export default function ChatbotChannels() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { navigate, path: panelPath } = usePanel();
   const [channels, setChannels] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -210,7 +211,7 @@ export default function ChatbotChannels() {
       <PageHeader
         title="Channels"
         description="Where visitors reach this chatbot."
-        breadcrumbs={[{ label: "Chatbots", to: "/chatbots" }, { label: "Chatbot", to: `/chatbots/${id}` }, { label: "Channels" }]}
+        breadcrumbs={[{ label: "Chatbots", to: panelPath("/chatbots") }, { label: "Chatbot", to: panelPath(`/chatbots/${id}`) }, { label: "Channels" }]}
         action={
           <Button variant="secondary" onClick={() => navigate(`/chatbots/${id}`)}>
             Back to Chatbot

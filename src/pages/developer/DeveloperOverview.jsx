@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { usePanel } from "../../utils/panelPath.js";
 import { FiKey, FiActivity, FiSend, FiXCircle } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
 import PageHeader from "../../components/ui/PageHeader.jsx";
@@ -20,7 +20,7 @@ const QUICK_START = [
 ];
 
 export default function DeveloperOverview() {
-  const navigate = useNavigate();
+  const { navigate } = usePanel();
   const { companies, companyId, selectCompany, loading: loadingCompanies } = useDeveloperCompany();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);

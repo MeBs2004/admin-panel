@@ -4,11 +4,13 @@ import { FiExternalLink } from "react-icons/fi";
 import api, { getErrorMessage } from "../../../services/api.js";
 import { SkeletonLine } from "../../../components/ui/Skeleton.jsx";
 import ErrorState from "../../../components/ui/ErrorState.jsx";
+import { usePanel } from "../../../utils/panelPath.js";
 
 export default function StepKnowledge({ companyId, companyName }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { inCompanyPanel } = usePanel();
 
   const load = () => {
     if (!companyId) return;
@@ -65,14 +67,22 @@ export default function StepKnowledge({ companyId, companyName }) {
             anytime — including right after creation.
           </p>
 
-          <Link
-            to={`/companies/${companyId}`}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-500 transition-colors hover:text-primary-600"
-          >
-            Edit Knowledge Base <FiExternalLink className="h-3.5 w-3.5" />
-          </Link>
+          {/* The company-level editor lives in the platform shell only;
+              inside the Company Panel it's edited per chatbot. */}
+          {inCompanyPanel ? (
+            <p className="text-xs text-gray-400">
+              After creating, open the chatbot and choose Knowledge Base to edit it.
+            </p>
+          ) : (
+            <Link
+              to={`/companies/${companyId}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-500 transition-colors hover:text-primary-600"
+            >
+              Edit Knowledge Base <FiExternalLink className="h-3.5 w-3.5" />
+            </Link>
+          )}
         </>
       )}
     </div>

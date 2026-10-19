@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { usePanel } from "../../utils/panelPath.js";
 import { FiCpu, FiEye, FiMessageSquare, FiPlus, FiZap, FiActivity } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api, { getErrorMessage } from "../../services/api.js";
@@ -22,7 +22,7 @@ import EmptyState from "../../components/ui/EmptyState.jsx";
 // counter) is simply left out rather than faked.
 export default function CompanyOverview() {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const { navigate } = usePanel();
   const [data, setData] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [recentConversations, setRecentConversations] = useState([]);

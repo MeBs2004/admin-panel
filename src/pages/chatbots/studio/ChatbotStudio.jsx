@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { usePanel } from "../../../utils/panelPath.js";
 import api, { getErrorMessage } from "../../../services/api.js";
 import { subscribeChatbot } from "../../../services/realtime.js";
 import { useToast } from "../../../context/ToastContext.jsx";
@@ -23,7 +24,7 @@ import SectionSuggestions from "./SectionSuggestions.jsx";
 
 export default function ChatbotStudio() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { navigate } = usePanel();
   const { showToast } = useToast();
 
   const [chatbot, setChatbot] = useState(null);

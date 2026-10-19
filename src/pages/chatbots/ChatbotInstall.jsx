@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import { usePanel } from "../../utils/panelPath.js";
 import { FiCopy, FiCheck, FiExternalLink, FiPlay } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
 import { useToast } from "../../context/ToastContext.jsx";
@@ -10,10 +11,11 @@ import Input from "../../components/ui/Input.jsx";
 import ErrorState from "../../components/ui/ErrorState.jsx";
 import { SkeletonLine } from "../../components/ui/Skeleton.jsx";
 
-// This is the real, already-deployed public widget CDN — the same
-// URL frontend/public/widget.js and every existing production
-// installation already points at. Not a placeholder.
-const WIDGET_CDN_URL = "https://chatbot-frontend-nine-psi.vercel.app";
+import { WIDGET_URL as WIDGET_CDN_URL } from "../../config/widget.js";
+import { buildSnippet } from "./install/installUtils.js";
+import InstallGuides from "./install/InstallGuides.jsx";
+import InstallStatus from "./install/InstallStatus.jsx";
+import CopyBlock from "./install/CopyBlock.jsx";
 
 // Same derivation ApiDocumentation.jsx uses — the Developer API's
 // real base URL, computed from the same env var the admin JWT client
@@ -28,7 +30,7 @@ const ENGINE_OPTIONS = [
 
 export default function ChatbotInstall() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { navigate, path: panelPath } = usePanel();
   const { showToast } = useToast();
 
   const [data, setData] = useState(null);
@@ -59,6 +61,17 @@ export default function ChatbotInstall() {
   };
 
   useEffect(load, [id]);
+
+  // Quiet reload for the install status — no full-page skeleton.
+  const [statusRefreshing, setStatusRefreshing] = useState(false);
+  const refreshStatus = () => {
+    setStatusRefreshing(true);
+    api
+      .get(`/chatbots/${id}`)
+      .then((res) => setData(res.data))
+      .catch((err) => showToast(getErrorMessage(err), "error"))
+      .finally(() => setStatusRefreshing(false));
+  };
 
   const saveDomains = async () => {
     setDomainsSaving(true);
@@ -99,8 +112,10 @@ export default function ChatbotInstall() {
   // alone can't say which one (see widget.js/Embed.jsx). Legacy
   // chatbots keep the exact snippet shape every existing install
   // already uses, unchanged.
+  // v1: the one-line snippet — everything else (look, text, domains)
+  // comes from this chatbot's settings, so it never needs re-pasting.
   const snippet = isV1
-    ? `<script\n  src="${WIDGET_CDN_URL}/widget.js"\n  data-company-id="${companyId}"\n  data-chatbot-id="${chatbot._id}"\n></script>`
+    ? buildSnippet({ widgetUrl: WIDGET_CDN_URL, chatbotId: chatbot._id })
     : `<script\n  src="${WIDGET_CDN_URL}/widget.js"\n  data-company-id="${companyId}"\n></script>`;
 
   const copySnippet = async () => {
@@ -179,8 +194,8 @@ export default function ChatbotInstall() {
         title="Installation"
         description={chatbot.name}
         breadcrumbs={[
-          { label: "Chatbots", to: "/chatbots" },
-          { label: chatbot.name, to: `/chatbots/${id}` },
+          { label: "Chatbots", to: panelPath("/chatbots") },
+          { label: chatbot.name, to: panelPath(`/chatbots/${id}`) },
           { label: "Installation" },
         ]}
         action={
@@ -196,9 +211,9 @@ export default function ChatbotInstall() {
             Embed snippet
           </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Paste this immediately before the closing <code>&lt;/body&gt;</code> tag
-            of every page the widget should appear on. This loads the same
-            production widget script already serving your live chatbots.
+            Paste this line just before the closing <code>&lt;/body&gt;</code> tag
+            of your website. Its look, text and allowed websites all come from
+            this chatbot's settings, so the line never needs changing.
           </p>
 
           {!companyId && (
@@ -231,29 +246,69 @@ export default function ChatbotInstall() {
           </a>
         </section>
 
-        <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-            Rendering engine
-          </h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Controls which widget code renders for this chatbot's embed.
-            <strong> Legacy</strong> is what every current installation uses
-            and is unaffected by anything in this panel. <strong>v1</strong>{" "}
-            is the new config-driven engine built in this phase — switch to
-            it only on a chatbot you intend to test, since it does not yet
-            reimplement voice input, text-to-speech, or file upload.
-          </p>
+        {isV1 && (
+          <>
+            <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+              <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Installation status</h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Websites where this chatbot has loaded. Updated each time a visitor opens a page with the line on it.
+              </p>
+              <div className="mt-4">
+                <InstallStatus
+                  installations={chatbot.installations}
+                  onRefresh={refreshStatus}
+                  refreshing={statusRefreshing}
+                />
+              </div>
+            </section>
 
-          <div className="mt-3 max-w-xs">
-            <Select
-              label="Widget engine version"
-              options={ENGINE_OPTIONS}
-              value={chatbot.widgetEngineVersion || "legacy"}
-              disabled={busy}
-              onChange={(e) => changeEngine(e.target.value)}
-            />
-          </div>
-        </section>
+            <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+              <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">How to install</h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Pick the platform your website is built on.</p>
+              <div className="mt-4">
+                <InstallGuides snippet={snippet} />
+              </div>
+            </section>
+
+            <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+              <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Share with your developer</h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Send this link to whoever manages the website. It opens a page with the line and these instructions — no
+                login needed, and it shows nothing beyond the chatbot's name.
+              </p>
+              <div className="mt-3">
+                <CopyBlock text={`${window.location.origin}/install/${chatbot._id}`} label="Copy link" />
+              </div>
+            </section>
+          </>
+        )}
+
+        {/* Only legacy chatbots can still switch engine; new ones are always v1. */}
+        {!isV1 && (
+          <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+            <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+              Rendering engine
+            </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Controls which widget code renders for this chatbot's embed.
+              <strong> Legacy</strong> is what every current installation uses
+              and is unaffected by anything in this panel. <strong>v1</strong>{" "}
+              is the new config-driven engine built in this phase — switch to
+              it only on a chatbot you intend to test, since it does not yet
+              reimplement voice input, text-to-speech, or file upload.
+            </p>
+
+            <div className="mt-3 max-w-xs">
+              <Select
+                label="Widget engine version"
+                options={ENGINE_OPTIONS}
+                value={chatbot.widgetEngineVersion || "legacy"}
+                disabled={busy}
+                onChange={(e) => changeEngine(e.target.value)}
+              />
+            </div>
+          </section>
+        )}
 
         <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
           <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
@@ -295,7 +350,7 @@ export default function ChatbotInstall() {
             A real endpoint — send it a visitor's message and get back the actual AI/flow-engine reply, the same
             pipeline the embedded widget uses. This requires an API key with the <code>messages:write</code> scope,
             created under{" "}
-            <Link to="/developer/api-keys" className="font-medium text-primary-600 hover:underline dark:text-primary-400">
+            <Link to={panelPath("/developer/api-keys")} className="font-medium text-primary-600 hover:underline dark:text-primary-400">
               Developer → API Keys
             </Link>
             . There is no separate "webhook secret" to configure — your API key is the credential.
@@ -343,7 +398,7 @@ export default function ChatbotInstall() {
             <p className="text-xs text-gray-400">
               <code>text</code> is required (max 4000 chars). Omit <code>visitorId</code> to start a new conversation
               each call, or pass one back to continue the same thread. Full field/error reference in{" "}
-              <Link to="/developer/docs" className="font-medium text-primary-600 hover:underline dark:text-primary-400">
+              <Link to={panelPath("/developer/docs")} className="font-medium text-primary-600 hover:underline dark:text-primary-400">
                 API Documentation
               </Link>
               .

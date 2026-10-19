@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { usePanel } from "../../../utils/panelPath.js";
 import { FiUpload, FiSend, FiCheck, FiRefreshCw } from "react-icons/fi";
 import api, { getErrorMessage } from "../../../services/api.js";
 import { subscribeCompany } from "../../../services/realtime.js";
@@ -13,7 +14,7 @@ import { SkeletonLine } from "../../../components/ui/Skeleton.jsx";
 
 export default function ChatbotKnowledge() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { navigate, path: panelPath } = usePanel();
   const { showToast } = useToast();
   const fileInputRef = useRef(null);
 
@@ -157,8 +158,8 @@ export default function ChatbotKnowledge() {
       <PageHeader
         title="Knowledge Base"
         breadcrumbs={[
-          { label: "Chatbots", to: "/chatbots" },
-          { label: "Chatbot", to: `/chatbots/${id}` },
+          { label: "Chatbots", to: panelPath("/chatbots") },
+          { label: "Chatbot", to: panelPath(`/chatbots/${id}`) },
           { label: "Knowledge Base" },
         ]}
         action={
