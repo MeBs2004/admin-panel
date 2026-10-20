@@ -120,7 +120,7 @@ export default function RolesPermissions() {
           return (
             <div
               key={role}
-              className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]"
+              className="panel-card rounded-2xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up"
             >
               <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                 {role.replaceAll("_", " ")}
@@ -177,7 +177,7 @@ export default function RolesPermissions() {
         </div>
       </div>
 
-      <div className="mt-3 rounded-xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)]">
+      <div className="mt-3 panel-card rounded-2xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
         {loading && (
           <div className="space-y-2 p-5">
             <SkeletonLine className="h-5 w-full" />

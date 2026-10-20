@@ -112,7 +112,7 @@ export default function ConversationsInbox() {
         />
       </div>
 
-      <div className="flex min-h-0 flex-1 overflow-hidden rounded-xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)]">
+      <div className="flex min-h-0 flex-1 overflow-hidden panel-card rounded-2xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
         <ConversationListPane
           conversations={conversations}
           pagination={pagination}

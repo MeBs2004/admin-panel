@@ -2,10 +2,12 @@ import { FiPlus, FiTrash2, FiArrowUp, FiArrowDown } from "react-icons/fi";
 import Input from "../../../components/ui/Input.jsx";
 import Button from "../../../components/ui/Button.jsx";
 import { MAX_SUGGESTIONS } from "../../../config/chatbotConfigDefaults.js";
+import Toggle from "../../../components/ui/Toggle.jsx";
+import Field from "../../../components/studio/Field.jsx";
 
 // `value` is the array itself (config.suggestions) — same
 // whole-array-replace convention as SectionCTAs/forms.fields.
-export default function SectionSuggestions({ value = [], onChange }) {
+export default function SectionSuggestions({ value = [], onChange, show = true, onShowChange }) {
   const suggestions = value;
 
   const update = (index, text) => {
@@ -29,7 +31,12 @@ export default function SectionSuggestions({ value = [], onChange }) {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" data-field="suggestions">
+      {onShowChange && (
+        <Field id="chatWindow.showSuggestions">
+          <Toggle label="Show the suggestion chips" description="Hide the quick-reply chips without deleting them." checked={show} onChange={onShowChange} />
+        </Field>
+      )}
       <div>
         <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Suggestions</h3>
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -46,7 +53,7 @@ export default function SectionSuggestions({ value = [], onChange }) {
         )}
 
         {suggestions.map((text, index) => (
-          <div key={index} className="flex items-center gap-1.5">
+          <div key={index} data-field={`suggestions.${index}`} className="flex items-center gap-1.5 rounded-xl">
             <Input
               value={text}
               maxLength={80}

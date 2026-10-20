@@ -7,7 +7,7 @@ export default function Input({ label, error, className = "", ...rest }) {
         </span>
       )}
       <input
-        className={`w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none transition-all duration-150 focus:border-primary-400 focus:ring-2 focus:ring-primary-400/40 dark:bg-[var(--surface)] dark:text-gray-100 ${
+        className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm outline-none transition-all duration-200 hover:border-primary-300 focus:-translate-y-px focus:border-primary-400 focus:shadow-[0_6px_20px_-8px_rgba(26,138,86,0.45)] focus:ring-2 focus:ring-primary-400/30 dark:bg-[var(--surface)] dark:text-gray-100 ${
           error
             ? "border-danger-500"
             : "border-gray-300 dark:border-[var(--border)]"

@@ -7,7 +7,7 @@ export default function Select({ label, options = [], className = "", ...rest })
         </span>
       )}
       <select
-        className={`w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition-all duration-150 focus:border-primary-400 focus:ring-2 focus:ring-primary-400/40 dark:bg-[var(--surface)] dark:text-gray-100 dark:border-[var(--border)] ${className}`}
+        className={`w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm outline-none transition-all duration-200 hover:border-primary-300 focus:border-primary-400 focus:shadow-[0_6px_20px_-8px_rgba(26,138,86,0.45)] focus:ring-2 focus:ring-primary-400/30 dark:bg-[var(--surface)] dark:text-gray-100 dark:border-[var(--border)] ${className}`}
         {...rest}
       >
         {options.map((opt) => (

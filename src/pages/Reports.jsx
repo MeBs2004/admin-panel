@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
 import { FiEye, FiMessageSquare, FiCornerUpRight, FiUserCheck, FiUserPlus, FiRepeat, FiCheckCircle, FiClock } from "react-icons/fi";
 import api, { getErrorMessage } from "../services/api.js";
-import { fillDailySeries } from "../utils/chartData.js";
+import { fillDailySeries, mergeDailySeries, fillAiVsHuman, weekdayRows } from "../utils/chartData.js";
 import PageHeader from "../components/ui/PageHeader.jsx";
 import Select from "../components/ui/Select.jsx";
 import StatCard from "../components/ui/StatCard.jsx";
-import AreaChart from "../components/ui/AreaChart.jsx";
+import ChartCard, { LegendDot } from "../components/charts/ChartCard.jsx";
+import TrendChart from "../components/charts/TrendChart.jsx";
+import BarsChart from "../components/charts/BarsChart.jsx";
+import DonutChart from "../components/charts/DonutChart.jsx";
+import RadialGauge from "../components/charts/RadialGauge.jsx";
+import { CHART_COLORS } from "../components/charts/chartTheme.js";
 import { SkeletonCards } from "../components/ui/Skeleton.jsx";
 import ErrorState from "../components/ui/ErrorState.jsx";
 import EmptyState from "../components/ui/EmptyState.jsx";
@@ -18,66 +23,8 @@ const RANGE_OPTIONS = [
   { value: "custom", label: "Custom" },
 ];
 
-function ChartCard({ title, children }) {
-  return (
-    <div className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-4 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
-      <h3 className="mb-1 text-sm font-semibold text-gray-800 dark:text-gray-100">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
 function metricDisplay(value, suffix = "") {
   return value === null || value === undefined ? "Not enough data" : `${value}${suffix}`;
-}
-
-function AiVsHumanChart({ series, since, days }) {
-  const dense = {};
-  for (const row of series) dense[row._id] = row;
-  const points = [];
-  const start = new Date(since);
-  for (let i = 0; i < days; i++) {
-    const d = new Date(start);
-    d.setDate(d.getDate() + i);
-    const key = d.toISOString().slice(0, 10);
-    const row = dense[key] || { ai: 0, human: 0 };
-    points.push({ label: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }), ai: row.ai, human: row.human });
-  }
-  const max = Math.max(1, ...points.map((p) => p.ai + p.human));
-
-  return (
-    <div>
-      <div className="mb-2 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-        <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-info-500" /> AI
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-amber-500" /> Human
-        </span>
-      </div>
-      <div className="flex h-32 items-end gap-1">
-        {points.map((p, i) => (
-          <div key={i} className="group relative flex flex-1 flex-col items-center justify-end gap-0.5" style={{ height: "100%" }}>
-            <div className="flex w-full flex-1 flex-col-reverse justify-start overflow-hidden rounded-sm bg-gray-50 dark:bg-white/5">
-              {p.ai + p.human > 0 && (
-                <>
-                  <div className="w-full bg-amber-400" style={{ height: `${(p.human / max) * 100}%` }} />
-                  <div className="w-full bg-info-500" style={{ height: `${(p.ai / max) * 100}%` }} />
-                </>
-              )}
-            </div>
-            <span className="pointer-events-none absolute -top-6 hidden rounded bg-gray-900 px-1.5 py-0.5 text-[10px] text-white group-hover:block">
-              {p.ai} AI · {p.human} human
-            </span>
-          </div>
-        ))}
-      </div>
-      <div className="mt-1 flex justify-between text-[10px] text-gray-400">
-        <span>{points[0]?.label}</span>
-        <span>{points[points.length - 1]?.label}</span>
-      </div>
-    </div>
-  );
 }
 
 export default function Reports() {
@@ -156,10 +103,10 @@ export default function Reports() {
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Key Metrics</h2>
           <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             <StatCard index={0} label="Visitors" value={data.metrics.visitors} icon={FiEye} accent="warning" />
-            <StatCard index={1} label="Conversations" value={data.metrics.conversations} icon={FiMessageSquare} accent="primary" />
-            <StatCard index={2} label="Messages" value={data.metrics.messages} icon={FiCornerUpRight} accent="info" />
+            <StatCard index={1} label="Conversations" value={data.metrics.conversations} icon={FiMessageSquare} accent="info" />
+            <StatCard index={2} label="Messages" value={data.metrics.messages} icon={FiCornerUpRight} accent="violet" />
             <StatCard index={3} label="AI Conversations" value={data.metrics.aiConversations} icon={FiUserCheck} accent="success" />
-            <StatCard index={4} label="Human Handoffs" value={data.metrics.humanHandoffs} icon={FiUserPlus} accent="warning" />
+            <StatCard index={4} label="Human Handoffs" value={data.metrics.humanHandoffs} icon={FiUserPlus} accent="rose" />
             <StatCard index={5} label="Closed" value={data.metrics.closedConversations} icon={FiCheckCircle} accent="neutral" hint={`${data.metrics.openConversations} currently open`} />
           </div>
 
@@ -174,20 +121,96 @@ export default function Reports() {
           {!hasTrendData ? (
             <EmptyState title="Not enough data yet." description="Charts will appear once visitors start chatting in this range." />
           ) : (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <ChartCard title="Visitor Trend">
-                <AreaChart data={fillDailySeries(data.trends.visitorsPerDay, data.range.since, data.range.days)} color="primary" />
-              </ChartCard>
-              <ChartCard title="Conversation Trend">
-                <AreaChart data={fillDailySeries(data.trends.conversationsPerDay, data.range.since, data.range.days)} color="info" />
-              </ChartCard>
-              <ChartCard title="Message Volume">
-                <AreaChart data={fillDailySeries(data.trends.messagesPerDay, data.range.since, data.range.days)} color="primary" />
-              </ChartCard>
-              <ChartCard title="AI vs Human">
-                <AiVsHumanChart series={data.trends.aiVsHumanPerDay} since={data.range.since} days={data.range.days} />
-              </ChartCard>
-            </div>
+            <>
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Performance</h2>
+              <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <ChartCard index={0} title="Handoff rate" subtitle="Handoffs ÷ conversations">
+                  <RadialGauge value={data.metrics.humanHandoffRate} color={CHART_COLORS.amber} />
+                </ChartCard>
+                <ChartCard index={1} title="Returning visitors" subtitle="Of visitors active in range">
+                  <RadialGauge value={data.metrics.returningVisitorRate} color={CHART_COLORS.emerald} />
+                </ChartCard>
+                <ChartCard className="col-span-2" index={2} title="Conversation outcome" subtitle="Open vs closed in range">
+                  <DonutChart
+                    height={130}
+                    centerLabel="Convos"
+                    data={[
+                      { name: "Open", value: data.metrics.openConversations, color: CHART_COLORS.sky },
+                      { name: "Closed", value: data.metrics.closedConversations, color: CHART_COLORS.emerald },
+                    ]}
+                  />
+                </ChartCard>
+              </div>
+
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Trends</h2>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <ChartCard
+                  index={3}
+                  title="Visitors & conversations"
+                  right={
+                    <div className="flex gap-3">
+                      <LegendDot color={CHART_COLORS.amber} label="Visitors" />
+                      <LegendDot color={CHART_COLORS.sky} label="Conversations" />
+                    </div>
+                  }
+                >
+                  <TrendChart
+                    data={mergeDailySeries({ visitors: data.trends.visitorsPerDay, conversations: data.trends.conversationsPerDay }, data.range.since, data.range.days)}
+                    series={[
+                      { key: "visitors", name: "Visitors", color: CHART_COLORS.amber },
+                      { key: "conversations", name: "Conversations", color: CHART_COLORS.sky },
+                    ]}
+                  />
+                </ChartCard>
+                <ChartCard index={4} title="Message volume" subtitle={`${data.metrics.messages} messages`}>
+                  <BarsChart
+                    data={fillDailySeries(data.trends.messagesPerDay, data.range.since, data.range.days).map((d) => ({ label: d.label, messages: d.value }))}
+                    series={[{ key: "messages", name: "Messages", color: CHART_COLORS.indigo }]}
+                  />
+                </ChartCard>
+                <ChartCard
+                  index={5}
+                  title="Busiest days"
+                  subtitle="Visitors and messages by weekday"
+                  right={
+                    <div className="flex gap-3">
+                      <LegendDot color={CHART_COLORS.amber} label="Visitors" />
+                      <LegendDot color={CHART_COLORS.indigo} label="Messages" />
+                    </div>
+                  }
+                >
+                  <BarsChart
+                    data={weekdayRows(data.trends.visitorsPerDay, data.trends.messagesPerDay)}
+                    allTicks
+                    series={[
+                      { key: "visitors", name: "Visitors", color: CHART_COLORS.amber },
+                      { key: "messages", name: "Messages", color: CHART_COLORS.indigo },
+                    ]}
+                  />
+                </ChartCard>
+                <ChartCard
+                  className="lg:col-span-2"
+                  index={6}
+                  title="AI vs human"
+                  right={
+                    <div className="flex gap-3">
+                      <LegendDot color={CHART_COLORS.violet} label="AI" />
+                      <LegendDot color={CHART_COLORS.rose} label="Human" />
+                    </div>
+                  }
+                >
+                  <TrendChart
+                    stacked
+                    height={240}
+                    data={fillAiVsHuman(data.trends.aiVsHumanPerDay, data.range.since, data.range.days)}
+                    series={[
+                      { key: "ai", name: "AI", color: CHART_COLORS.violet },
+                      { key: "human", name: "Human", color: CHART_COLORS.rose },
+                    ]}
+                  />
+                </ChartCard>
+              </div>
+            </>
           )}
         </>
       )}

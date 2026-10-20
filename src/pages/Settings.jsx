@@ -11,7 +11,7 @@ import StatusBadge from "../components/ui/StatusBadge.jsx";
 function SectionCard({ icon: Icon, title, description, children, index = 0 }) {
   return (
     <div
-      className="stagger-in max-w-lg rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]"
+      className="stagger-in max-w-lg panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]"
       style={{ "--stagger-index": index }}
     >
       <div className="mb-4 flex items-center gap-2">

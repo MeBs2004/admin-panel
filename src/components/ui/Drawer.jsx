@@ -11,12 +11,12 @@ export default function Drawer({ open, onClose, title, children, footer }) {
     >
       <div
         onClick={onClose}
-        className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
+        className={`absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity duration-300 ${
           open ? "opacity-100" : "opacity-0"
         }`}
       />
       <div
-        className={`absolute right-0 top-0 flex h-full w-full max-w-sm flex-col bg-white shadow-card-hover transition-transform duration-300 ease-out dark:bg-[var(--surface)] ${
+        className={`absolute right-0 top-0 flex h-full w-full max-w-sm flex-col bg-white shadow-lift border-l-4 border-l-emerald-400 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] dark:bg-[var(--surface)] ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
         role="dialog"

@@ -259,7 +259,7 @@ export default function LiveView() {
             />
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)]">
+          <div className="overflow-hidden panel-card rounded-2xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
             {loading && <SkeletonTable cols={6} />}
             {!loading && error && <ErrorState message={error} onRetry={() => load(false)} />}
             {!loading && !error && visitors.length === 0 && (
@@ -319,7 +319,7 @@ export default function LiveView() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+        <div className="panel-card rounded-2xl border border-gray-200 bg-white p-4 dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
           <h3 className="mb-3 text-sm font-semibold text-gray-800 dark:text-gray-100">Live Activity</h3>
           {activity.length === 0 ? (
             <p className="text-xs text-gray-400">Events will appear here as they happen.</p>

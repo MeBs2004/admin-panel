@@ -206,7 +206,7 @@ export default function ChatbotInstall() {
       />
 
       <div className="space-y-6">
-        <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+        <section className="animate-fade-in-up panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
           <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
             Embed snippet
           </h2>
@@ -248,7 +248,7 @@ export default function ChatbotInstall() {
 
         {isV1 && (
           <>
-            <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+            <section className="animate-fade-in-up panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
               <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Installation status</h2>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Websites where this chatbot has loaded. Updated each time a visitor opens a page with the line on it.
@@ -262,7 +262,7 @@ export default function ChatbotInstall() {
               </div>
             </section>
 
-            <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+            <section className="animate-fade-in-up panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
               <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">How to install</h2>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Pick the platform your website is built on.</p>
               <div className="mt-4">
@@ -270,7 +270,7 @@ export default function ChatbotInstall() {
               </div>
             </section>
 
-            <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+            <section className="animate-fade-in-up panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
               <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Share with your developer</h2>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Send this link to whoever manages the website. It opens a page with the line and these instructions — no
@@ -285,7 +285,7 @@ export default function ChatbotInstall() {
 
         {/* Only legacy chatbots can still switch engine; new ones are always v1. */}
         {!isV1 && (
-          <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+          <section className="animate-fade-in-up panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
             <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
               Rendering engine
             </h2>
@@ -310,7 +310,7 @@ export default function ChatbotInstall() {
           </section>
         )}
 
-        <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+        <section className="animate-fade-in-up panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
           <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
             Allowed website domains
           </h2>
@@ -342,7 +342,7 @@ export default function ChatbotInstall() {
           </Button>
         </section>
 
-        <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+        <section className="animate-fade-in-up panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
           <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
             Inbound webhook
           </h2>
@@ -448,7 +448,7 @@ export default function ChatbotInstall() {
           </div>
         </section>
 
-        <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+        <section className="animate-fade-in-up panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
           <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
             Installation status
           </h2>

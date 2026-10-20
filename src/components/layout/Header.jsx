@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiMenu, FiSun, FiMoon, FiChevronDown, FiSidebar, FiUser, FiLogOut, FiBell } from "react-icons/fi";
+import { FiMenu, FiSun, FiMoon, FiChevronDown, FiSidebar, FiUser, FiLogOut, FiBell, FiSearch } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { getRealtimeStatus, onRealtimeStatusChange } from "../../services/realtime.js";
+import { toggleTheme } from "../../utils/theme.js";
 
 const STATUS_LABEL = { live: "Live", reconnecting: "Reconnecting", offline: "Offline" };
 const STATUS_DOT = {
@@ -21,13 +22,16 @@ function RealtimeStatus() {
       className="hidden items-center gap-1.5 rounded-full px-2 py-1 text-[11px] font-medium text-gray-500 sm:flex dark:text-gray-400"
       title={`Realtime: ${STATUS_LABEL[status]}`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full transition-colors duration-200 ${STATUS_DOT[status]}`} />
+      <span className="relative flex h-2 w-2">
+        {status === "live" && <span className="absolute inline-flex h-full w-full rounded-full bg-success-500" style={{ animation: "dotPing 1.8s ease-out infinite" }} />}
+        <span className={`relative h-2 w-2 rounded-full transition-colors duration-200 ${STATUS_DOT[status]}`} />
+      </span>
       {STATUS_LABEL[status]}
     </span>
   );
 }
 
-export default function Header({ title, onOpenSidebar, onToggleCollapse, profilePath = "/settings", loginPath = "/login" }) {
+export default function Header({ title, onOpenSidebar, onToggleCollapse, onOpenSearch, profilePath = "/settings", loginPath = "/login" }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -35,12 +39,12 @@ export default function Header({ title, onOpenSidebar, onToggleCollapse, profile
     document.documentElement.classList.contains("dark")
   );
 
-  const toggleTheme = () => {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("nuformly-theme", next ? "dark" : "light");
-  };
+  // The command palette can flip the theme too — stay in sync with it.
+  useEffect(() => {
+    const sync = () => setDark(document.documentElement.classList.contains("dark"));
+    window.addEventListener("nuformly-theme", sync);
+    return () => window.removeEventListener("nuformly-theme", sync);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -48,7 +52,7 @@ export default function Header({ title, onOpenSidebar, onToggleCollapse, profile
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-gray-200 bg-white/80 px-4 backdrop-blur dark:bg-[var(--surface)]/80 dark:border-[var(--border)]">
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between glass border-b border-gray-200/70 px-4 dark:border-[var(--border)]">
       <div className="flex items-center gap-3">
         <button
           className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 lg:hidden dark:hover:bg-white/5"
@@ -64,12 +68,24 @@ export default function Header({ title, onOpenSidebar, onToggleCollapse, profile
         >
           <FiSidebar />
         </button>
-        <h1 className="animate-fade-in text-sm font-medium text-gray-700 dark:text-gray-200">
+        <h1 className="animate-fade-in text-base font-semibold tracking-tight text-gray-800 dark:text-gray-100">
           {title}
         </h1>
       </div>
 
       <div className="flex items-center gap-2">
+        {onOpenSearch && (
+          <button
+            type="button"
+            onClick={onOpenSearch}
+            aria-label="Open quick search"
+            className="group hidden items-center gap-2 rounded-full border border-gray-200 bg-white/70 py-1.5 pl-3 pr-2 text-xs text-gray-500 transition-all duration-200 hover:-translate-y-px hover:border-primary-300 hover:text-primary-600 hover:shadow-card md:flex dark:border-[var(--border)] dark:bg-white/5 dark:text-gray-400"
+          >
+            <FiSearch className="h-3.5 w-3.5 transition-transform duration-200 group-hover:scale-110" />
+            <span className="pr-4">Search…</span>
+            <kbd className="rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-sans text-[10px] font-medium text-gray-400 dark:border-[var(--border)] dark:bg-white/5">⌘K</kbd>
+          </button>
+        )}
         <RealtimeStatus />
 
         <button
@@ -82,7 +98,7 @@ export default function Header({ title, onOpenSidebar, onToggleCollapse, profile
         </button>
 
         <button
-          onClick={toggleTheme}
+          onClick={() => toggleTheme()}
           className="relative overflow-hidden rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5"
           aria-label="Toggle theme"
         >
@@ -99,7 +115,7 @@ export default function Header({ title, onOpenSidebar, onToggleCollapse, profile
             onClick={() => setMenuOpen((o) => !o)}
             className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-white/5"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-600 dark:bg-primary-500/20 dark:text-primary-200">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-gradient text-xs font-semibold text-white shadow-glow ring-2 ring-white dark:ring-[var(--surface)]">
               {user?.name?.[0]?.toUpperCase() || "?"}
             </div>
             <span className="hidden text-sm font-medium text-gray-700 dark:text-gray-200 sm:block">

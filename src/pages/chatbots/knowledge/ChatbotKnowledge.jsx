@@ -186,7 +186,7 @@ export default function ChatbotKnowledge() {
       )}
 
       <div className="space-y-6">
-        <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+        <section className="animate-fade-in-up panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{data.knowledgeFile}</p>
@@ -205,7 +205,7 @@ export default function ChatbotKnowledge() {
           )}
         </section>
 
-        <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+        <section className="animate-fade-in-up panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Knowledge Content</h2>
             <div className="flex items-center gap-2">
@@ -246,7 +246,7 @@ export default function ChatbotKnowledge() {
           </div>
         </section>
 
-        <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+        <section className="animate-fade-in-up panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
           <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Test Knowledge</h2>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Runs a real question through the AI using this knowledge base. Answers are generated from the text above —

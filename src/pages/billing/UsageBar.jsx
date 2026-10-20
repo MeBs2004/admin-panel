@@ -1,11 +1,11 @@
 import StatusBadge from "../../components/ui/StatusBadge.jsx";
 
 const BAR_COLOR = {
-  HEALTHY: "bg-success-500",
-  APPROACHING: "bg-warning-500",
-  LIMIT_REACHED: "bg-danger-500",
-  OVER_LIMIT: "bg-danger-500",
-  UNLIMITED: "bg-primary-500",
+  HEALTHY: "bg-gradient-to-r from-emerald-400 to-teal-500",
+  APPROACHING: "bg-gradient-to-r from-amber-400 to-orange-500",
+  LIMIT_REACHED: "bg-gradient-to-r from-rose-400 to-red-500",
+  OVER_LIMIT: "bg-gradient-to-r from-rose-400 to-red-500",
+  UNLIMITED: "bg-gradient-to-r from-indigo-400 to-violet-500",
   NOT_TRACKED: "bg-gray-300 dark:bg-white/20",
 };
 
@@ -40,9 +40,9 @@ export default function UsageBar({ metric, data }) {
         </div>
       </div>
       {data.status !== "NOT_TRACKED" && (
-        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
           <div
-            className={`h-full rounded-full transition-all duration-300 ${BAR_COLOR[data.status] || "bg-gray-300"}`}
+            className={`h-full origin-left animate-bar-grow rounded-full shadow-sm ${BAR_COLOR[data.status] || "bg-gray-300"}`}
             style={{ width: `${pct}%` }}
           />
         </div>

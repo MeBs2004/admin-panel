@@ -16,7 +16,7 @@ const ICONS = { website: FiGlobe, telegram: FaTelegram, whatsapp: FaWhatsapp, in
 
 function ChannelCard({ icon: Icon, title, status, children }) {
   return (
-    <div className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+    <div className="animate-fade-in-up panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300">

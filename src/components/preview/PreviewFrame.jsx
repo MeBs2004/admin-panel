@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { FiRefreshCw } from "react-icons/fi";
 import Tabs from "../ui/Tabs.jsx";
 import ChatWidgetRenderer from "./ChatWidgetRenderer.jsx";
 import NuformSocialWidgetPreview from "./NuformSocialWidgetPreview.jsx";
@@ -26,7 +27,7 @@ const BRAND_RENDERERS = {
 // whatever space is actually available, so nothing is ever clipped at
 // any browser/sidebar width.
 const DEVICE_SIZE = {
-  desktop: { width: 900, height: 640 },
+  desktop: { width: 900, height: 700 },
   tablet: { width: 640, height: 640 },
   mobile: { width: 390, height: 720 },
 };
@@ -123,23 +124,80 @@ function PreviewViewport({ device, children }) {
  * tabs always starts from a clean, predictable state instead of
  * carrying over whatever the admin was mid-typing in the other tab.
  */
-export default function PreviewFrame({ config, deviceMode = "desktop", companyId = null }) {
+export default function PreviewFrame({ config, deviceMode = "desktop", companyId = null, engine = "v1", focus = null, onEdit = null }) {
   const [mode, setMode] = useState("widget");
+  const [replayKey, setReplayKey] = useState(0);
+  // The preview opens exactly like a brand-new chat; this adds a made-up conversation
+  // so message bubbles, avatars and timestamps can be styled without typing first.
+  const [sampleChat, setSampleChat] = useState(false);
+  // Edit: click any element to jump to its setting. Try it: use the chat like a visitor.
+  const [editing, setEditing] = useState(true);
+
+  // Editing a launcher setting shows the closed widget; editing a chat
+  // window setting opens the window — so every change is on screen.
+  useEffect(() => {
+    if (focus) setMode(focus);
+  }, [focus]);
   const device = DEVICE_SIZE[deviceMode] || DEVICE_SIZE.desktop;
   const isMobile = deviceMode === "mobile";
 
-  const Renderer = BRAND_RENDERERS[companyId] || ChatWidgetRenderer;
+  // Brand renderers mimic the legacy hardcoded widgets. A chatbot on
+  // the config-driven v1 engine (everything the wizard creates) is
+  // drawn by the generic renderer — the same logic the live widget runs.
+  const Renderer = engine === "legacy" ? BRAND_RENDERERS[companyId] || ChatWidgetRenderer : ChatWidgetRenderer;
 
   return (
     <div className="flex h-full flex-col">
-      <div className="shrink-0 bg-white px-4 pt-2 dark:bg-[var(--surface)]">
-        <Tabs tabs={PREVIEW_TABS} active={mode} onChange={setMode} />
+      <div className="flex shrink-0 items-end justify-between gap-2 bg-white px-4 pt-2 dark:bg-[var(--surface)]">
+        <div className="min-w-0 flex-1">
+          <Tabs tabs={PREVIEW_TABS} active={mode} onChange={setMode} />
+        </div>
+        <button
+          type="button"
+          onClick={() => setReplayKey((k) => k + 1)}
+          title="Replay animations"
+          className="mb-1.5 flex shrink-0 items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1 text-xs font-medium text-gray-500 transition-all hover:-translate-y-px hover:border-primary-300 hover:text-primary-600 active:scale-95 dark:border-[var(--border)] dark:text-gray-400"
+        >
+          <FiRefreshCw className="h-3 w-3" /> Replay
+        </button>
+        {onEdit && engine !== "legacy" && (
+          <div className="mb-1.5 flex shrink-0 items-center rounded-full border border-gray-200 bg-gray-50 p-0.5 text-xs font-medium dark:border-[var(--border)] dark:bg-white/5" role="group" aria-label="Preview mode">
+            {[
+              { value: true, label: "Edit" },
+              { value: false, label: "Try it" },
+            ].map((o) => (
+              <button
+                key={o.label}
+                type="button"
+                onClick={() => setEditing(o.value)}
+                aria-pressed={editing === o.value}
+                title={o.value ? "Click any element in the preview to edit it" : "Chat with the preview like a visitor"}
+                className={`rounded-full px-3 py-1 transition-all duration-200 active:scale-95 ${
+                  editing === o.value ? "bg-white text-primary-600 shadow-sm dark:bg-[var(--surface)] dark:text-emerald-300" : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                }`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => setSampleChat((v) => !v)}
+          aria-pressed={sampleChat}
+          title="Show a made-up conversation so you can style the message bubbles"
+          className={`mb-1.5 flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-all hover:-translate-y-px active:scale-95 ${
+            sampleChat ? "border-primary-400 bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-emerald-300" : "border-gray-200 text-gray-500 hover:border-primary-300 hover:text-primary-600 dark:border-[var(--border)] dark:text-gray-400"
+          }`}
+        >
+          Sample chat
+        </button>
       </div>
       <div className="flex-1 overflow-hidden p-2">
         <PreviewViewport device={device}>
           <div className="relative h-full w-full overflow-hidden rounded-2xl border border-gray-200 shadow-card dark:border-[var(--border)]">
             <MockWebsite />
-            <Renderer key={mode} config={config} isMobile={isMobile} mode={mode} />
+            <Renderer key={mode} config={config} isMobile={isMobile} mode={mode} replayKey={replayKey} sampleChat={sampleChat} editMode={Boolean(onEdit) && editing} onEdit={onEdit} />
           </div>
         </PreviewViewport>
       </div>

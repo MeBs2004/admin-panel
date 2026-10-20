@@ -12,6 +12,7 @@ import StatCard from "../../components/ui/StatCard.jsx";
 import ErrorState from "../../components/ui/ErrorState.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
 import { SkeletonLine } from "../../components/ui/Skeleton.jsx";
+import DeleteCompanyModal from "./DeleteCompanyModal.jsx";
 import CompanyConfigTab from "./CompanyConfigTab.jsx";
 import CompanyKnowledgeTab from "./CompanyKnowledgeTab.jsx";
 import CompanyIntegrationsTab from "./CompanyIntegrationsTab.jsx";
@@ -34,6 +35,7 @@ export default function CompanyDetail() {
   const [error, setError] = useState("");
   const [tab, setTab] = useState("overview");
   const [busy, setBusy] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -81,9 +83,16 @@ export default function CompanyDetail() {
         description={company.website || company.domain}
         breadcrumbs={[{ label: "Companies", to: "/companies" }, { label: company.name }]}
         action={
-          <Button variant="secondary" onClick={() => navigate("/companies")}>
-            Back to Companies
-          </Button>
+          <div className="flex items-center gap-2">
+            {me?.role === "SUPER_ADMIN" && (
+              <Button variant="danger" onClick={() => setShowDelete(true)}>
+                Delete Company
+              </Button>
+            )}
+            <Button variant="secondary" onClick={() => navigate("/companies")}>
+              Back to Companies
+            </Button>
+          </div>
         }
       />
 
@@ -94,7 +103,7 @@ export default function CompanyDetail() {
         <StatCard label="Plan" value={company.plan || "—"} />
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)]">
+      <div className="panel-card rounded-2xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
         <Tabs
           tabs={[
             { value: "overview", label: "Overview" },
@@ -226,6 +235,11 @@ export default function CompanyDetail() {
           )}
         </div>
       </div>
+      <DeleteCompanyModal
+        company={showDelete ? company : null}
+        onClose={() => setShowDelete(false)}
+        onDeleted={() => navigate("/companies")}
+      />
     </div>
   );
 }

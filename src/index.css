@@ -106,3 +106,296 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ───────────── Visual layer: aurora, glass, motion ───────────── */
+
+/* Soft multi-colour aurora behind every panel's <main>. Fixed so it
+   doesn't scroll with content; very low contrast so data stays the hero. */
+.app-aurora {
+  background-image: theme("backgroundImage.aurora");
+  background-attachment: fixed;
+}
+html.dark .app-aurora {
+  background-image:
+    radial-gradient(60% 50% at 15% 0%, rgba(52, 211, 153, 0.1) 0%, transparent 60%),
+    radial-gradient(45% 40% at 90% 10%, rgba(99, 102, 241, 0.1) 0%, transparent 60%),
+    radial-gradient(50% 45% at 70% 100%, rgba(14, 165, 233, 0.08) 0%, transparent 60%);
+}
+
+/* Glass surface used by header + floating cards */
+.glass {
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+}
+
+/* Premium card: lift + glowing gradient border on hover */
+.card-fx {
+  position: relative;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s;
+}
+.card-fx:hover {
+  transform: translateY(-3px);
+  box-shadow: theme("boxShadow.lift");
+}
+.card-fx::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.55), rgba(99, 102, 241, 0.4), rgba(14, 165, 233, 0.45));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+}
+.card-fx:hover::before {
+  opacity: 1;
+}
+
+/* Animated gradient text */
+.text-gradient {
+  background: linear-gradient(90deg, #0d5537, #1a8a56, #6366f1, #0ea5e9, #1a8a56);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradientShift 8s ease infinite;
+}
+html.dark .text-gradient {
+  background-image: linear-gradient(90deg, #6ee7b7, #34d399, #a5b4fc, #7dd3fc, #34d399);
+}
+
+/* Button shine sweep */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: translateX(-120%) skewX(-20deg);
+}
+.btn-shine:hover::after {
+  animation: sheen 0.9s ease;
+}
+
+/* Nicer scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 130, 125, 0.35) transparent;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(120, 130, 125, 0.3);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 130, 125, 0.5);
+}
+
+::selection {
+  background: rgba(52, 211, 153, 0.35);
+}
+
+/* Table rows glide in */
+tbody tr {
+  animation: fadeInUp 0.35s ease-out both;
+}
+tbody tr:nth-child(1) { animation-delay: 20ms; }
+tbody tr:nth-child(2) { animation-delay: 60ms; }
+tbody tr:nth-child(3) { animation-delay: 100ms; }
+tbody tr:nth-child(4) { animation-delay: 140ms; }
+tbody tr:nth-child(5) { animation-delay: 180ms; }
+tbody tr:nth-child(n + 6) { animation-delay: 220ms; }
+
+/* Recharts tooltip/animation polish */
+.recharts-default-tooltip {
+  border-radius: 12px !important;
+}
+.recharts-sector:focus,
+.recharts-surface:focus {
+  outline: none;
+}
+
+
+/* ───────────── Round 2: polish everywhere ───────────── */
+
+/* Mouse-follow spotlight on .card-fx (--mx/--my set in main.jsx) */
+.card-fx::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(52, 211, 153, 0.12), transparent 65%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.card-fx:hover::after {
+  opacity: 1;
+}
+
+/* Calm card used on forms/tables: glow border only, no movement */
+.panel-card {
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+.panel-card:hover {
+  border-color: rgba(26, 138, 86, 0.35);
+  box-shadow: 0 8px 28px -12px rgba(26, 138, 86, 0.28);
+}
+
+/* Every data table in both panels */
+table thead {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.07), rgba(99, 102, 241, 0.05), transparent);
+}
+table thead th {
+  letter-spacing: 0.06em;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+table tbody tr {
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+table tbody tr:hover {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.08), transparent 70%);
+  box-shadow: inset 3px 0 0 #10b981;
+}
+
+/* Inputs: soft glow when focused */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #10b981;
+}
+
+/* Thin route-change progress bar (see RouteProgress) */
+@keyframes routeBar {
+  0% { transform: scaleX(0); opacity: 1; }
+  70% { transform: scaleX(0.92); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+.route-progress {
+  transform-origin: left;
+  animation: routeBar 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes toastLife {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.6); }
+  70% { transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.pop-in {
+  animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes dotPing {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+
+/* Section content swaps in with a soft slide */
+@keyframes sectionIn { 0% { opacity: 0; transform: translateX(14px) } 100% { opacity: 1; transform: translateX(0) } }
+.section-in { animation: sectionIn .35s cubic-bezier(.16,1,.3,1) both }
+
+/* Drag-over shimmer for the image uploader */
+@keyframes dashMarch { to { background-position: 16px 0, -16px 100%, 0 -16px, 100% 16px } }
+.drop-active {
+  background-image: linear-gradient(90deg, #10b981 50%, transparent 0), linear-gradient(90deg, #10b981 50%, transparent 0), linear-gradient(0deg, #10b981 50%, transparent 0), linear-gradient(0deg, #10b981 50%, transparent 0);
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-size: 16px 2px, 16px 2px, 2px 16px, 2px 16px;
+  background-position: 0 0, 0 100%, 0 0, 100% 0;
+  animation: dashMarch .6s linear infinite;
+}
+
+/* Wizard celebration */
+@keyframes confettiFall {
+  0% { transform: translate3d(0, -20px, 0) rotate(0); opacity: 1 }
+  100% { transform: translate3d(var(--dx, 0px), 420px, 0) rotate(720deg); opacity: 0 }
+}
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  animation: confettiFall 2.6s cubic-bezier(.2,.7,.4,1) both;
+}
+@keyframes drawCheck { from { stroke-dashoffset: 40 } to { stroke-dashoffset: 0 } }
+.draw-check { stroke-dasharray: 40; animation: drawCheck .6s .25s ease-out both }
+@media (prefers-reduced-motion: reduce) { .confetti-piece { display: none } }
+
+
+/* ───────────── Click to edit (Studio preview) ───────────── */
+[data-editing="on"] [data-edit] { cursor: pointer; }
+[data-editing="on"] [data-edit]:hover:not(:has([data-edit]:hover)) {
+  outline: 2px dashed #10b981;
+  outline-offset: 2px;
+}
+@keyframes studioFlash {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.75); background-color: rgba(16, 185, 129, 0.14); }
+  100% { box-shadow: 0 0 0 16px rgba(16, 185, 129, 0); background-color: transparent; }
+}
+.studio-flash { animation: studioFlash 1.4s ease-out 1; }
+
+
+/* ───────────── Round 3: motion & polish ───────────── */
+
+/* Click ripple (see ui/Button.jsx) */
+@keyframes rippleOut { 0% { transform: scale(0); opacity: .38 } 100% { transform: scale(1); opacity: 0 } }
+.ripple-dot { position: absolute; border-radius: 9999px; background: currentColor; pointer-events: none; animation: rippleOut .6s ease-out forwards; }
+
+/* Waving hand in the greeting */
+@keyframes wave { 0%,60%,100% { transform: rotate(0) } 10%,30% { transform: rotate(14deg) } 20% { transform: rotate(-8deg) } 40% { transform: rotate(-4deg) } 50% { transform: rotate(10deg) } }
+.wave { display: inline-block; transform-origin: 70% 70%; animation: wave 2.4s ease-in-out 1.2s 2; }
+
+/* Pointer-following ambient light behind every panel (see layout/AmbientGlow.jsx) */
+.ambient-glow {
+  background: radial-gradient(520px circle at var(--gx, 70%) var(--gy, 20%), rgba(16, 185, 129, 0.07), transparent 70%);
+  transition: background-position .2s;
+}
+html.dark .ambient-glow {
+  background: radial-gradient(520px circle at var(--gx, 70%) var(--gy, 20%), rgba(52, 211, 153, 0.09), transparent 70%);
+}
+
+/* Sidebar: the highlight glides to the active item */
+.nav-indicator { transition: top .35s cubic-bezier(.16, 1, .3, 1), height .35s cubic-bezier(.16, 1, .3, 1), left .35s, width .35s, opacity .2s; }
+
+/* Command palette */
+@keyframes paletteIn { 0% { opacity: 0; transform: translateY(-12px) scale(.97) } 100% { opacity: 1; transform: none } }
+.palette-in { animation: paletteIn .22s cubic-bezier(.16, 1, .3, 1) both; }
+
+/* Auth screens: slow orbiting rings + marquee glow */
+@keyframes orbit { to { transform: rotate(360deg) } }
+.orbit-slow { animation: orbit 60s linear infinite; }
+.orbit-slower { animation: orbit 90s linear infinite reverse; }
+@keyframes slideFade { 0% { opacity: 0; transform: translateY(14px) } 100% { opacity: 1; transform: none } }
+.slide-fade { animation: slideFade .55s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes progressFill { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+.progress-fill { transform-origin: left; animation: progressFill 4.2s linear forwards; }
+
+/* Branded loader */
+@keyframes loaderRing { 0% { transform: scale(.8); opacity: .6 } 100% { transform: scale(1.8); opacity: 0 } }
+.loader-ring { animation: loaderRing 1.6s ease-out infinite; }
+
+/* Trend chip */
+@keyframes chipIn { 0% { opacity: 0; transform: translateY(4px) scale(.9) } 100% { opacity: 1; transform: none } }
+.chip-in { animation: chipIn .45s cubic-bezier(.34, 1.56, .64, 1) .4s both; }

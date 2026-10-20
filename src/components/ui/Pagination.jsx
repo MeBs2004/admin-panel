@@ -12,14 +12,14 @@ export default function Pagination({ page, pages, onChange }) {
         <button
           disabled={page <= 1}
           onClick={() => onChange(page - 1)}
-          className="flex items-center gap-1 rounded-md border border-gray-300 px-3 py-1 transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-transparent dark:border-[var(--border)] dark:hover:bg-white/5"
+          className="flex items-center gap-1 rounded-full border border-gray-300 px-3.5 py-1 transition-all duration-200 hover:-translate-x-0.5 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-600 disabled:opacity-40 disabled:hover:translate-x-0 disabled:hover:border-gray-300 disabled:hover:bg-transparent dark:border-[var(--border)] dark:hover:bg-white/5"
         >
           <FiChevronLeft className="h-3.5 w-3.5" /> Previous
         </button>
         <button
           disabled={page >= pages}
           onClick={() => onChange(page + 1)}
-          className="flex items-center gap-1 rounded-md border border-gray-300 px-3 py-1 transition-colors hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-transparent dark:border-[var(--border)] dark:hover:bg-white/5"
+          className="flex items-center gap-1 rounded-full border border-gray-300 px-3.5 py-1 transition-all duration-200 hover:translate-x-0.5 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-600 disabled:opacity-40 disabled:hover:translate-x-0 disabled:hover:border-gray-300 disabled:hover:bg-transparent dark:border-[var(--border)] dark:hover:bg-white/5"
         >
           Next <FiChevronRight className="h-3.5 w-3.5" />
         </button>

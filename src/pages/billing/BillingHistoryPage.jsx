@@ -62,7 +62,7 @@ export default function BillingHistoryPage() {
       )}
 
       {!loading && !error && invoices && invoices.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)]">
+        <div className="overflow-hidden panel-card rounded-2xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-gray-100 text-xs uppercase text-gray-500 dark:border-[var(--border)] dark:text-gray-400">
               <tr>

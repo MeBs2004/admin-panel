@@ -4,23 +4,13 @@ import { usePanel } from "../../../utils/panelPath.js";
 import api, { getErrorMessage } from "../../../services/api.js";
 import { subscribeChatbot } from "../../../services/realtime.js";
 import { useToast } from "../../../context/ToastContext.jsx";
-import { DEFAULT_CHATBOT_CONFIG } from "../../../config/chatbotConfigDefaults.js";
+import { STARTER_CHATBOT_CONFIG } from "../../../config/chatbotStarter.js";
 import Button from "../../../components/ui/Button.jsx";
 import ConfirmDialog from "../../../components/ui/ConfirmDialog.jsx";
 import ErrorState from "../../../components/ui/ErrorState.jsx";
 import { SkeletonLine } from "../../../components/ui/Skeleton.jsx";
-import PreviewFrame from "../../../components/preview/PreviewFrame.jsx";
+import StudioWorkspace from "../../../components/studio/StudioWorkspace.jsx";
 import StudioTopBar from "./StudioTopBar.jsx";
-import StudioSectionNav from "./StudioSectionNav.jsx";
-import SectionLauncher from "./SectionLauncher.jsx";
-import SectionChatWindow from "./SectionChatWindow.jsx";
-import SectionWelcome from "./SectionWelcome.jsx";
-import SectionBehavior from "./SectionBehavior.jsx";
-import SectionForms from "./SectionForms.jsx";
-import SectionLanguage from "./SectionLanguage.jsx";
-import SectionAppearance from "./SectionAppearance.jsx";
-import SectionCTAs from "./SectionCTAs.jsx";
-import SectionSuggestions from "./SectionSuggestions.jsx";
 
 export default function ChatbotStudio() {
   const { id } = useParams();
@@ -35,11 +25,10 @@ export default function ChatbotStudio() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
-  const [activeSection, setActiveSection] = useState("launcher");
   const [deviceMode, setDeviceMode] = useState("desktop");
-  const [mobileTab, setMobileTab] = useState("customize");
   const [confirmReset, setConfirmReset] = useState(false);
   const [conflict, setConflict] = useState(false);
+  const [switchingEngine, setSwitchingEngine] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -88,23 +77,6 @@ export default function ChatbotStudio() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const updateField = (section, field, value) => {
-    setJustSaved(false);
-    setDraftConfig((prev) => ({
-      ...prev,
-      [section]: { ...prev[section], [field]: value },
-    }));
-  };
-
-  // ctas/suggestions are top-level arrays on config, not nested
-  // sub-objects like launcher/chatWindow — replaced wholesale, same
-  // "whole array in, whole array out" convention SectionForms.fields
-  // already used.
-  const updateArray = (key, value) => {
-    setJustSaved(false);
-    setDraftConfig((prev) => ({ ...prev, [key]: value }));
-  };
-
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -122,8 +94,24 @@ export default function ChatbotStudio() {
     }
   };
 
+  // Chatbots created before the config-driven widget run the old
+  // hardcoded widgets, which ignore most Customize options. Switching
+  // makes every option below real — for the preview and the live widget.
+  const handleSwitchEngine = async () => {
+    setSwitchingEngine(true);
+    try {
+      await api.patch(`/chatbots/${id}`, { widgetEngineVersion: "v1" });
+      setChatbot((c) => ({ ...c, widgetEngineVersion: "v1" }));
+      showToast("Switched to the new widget engine. Every option now applies.");
+    } catch (err) {
+      showToast(getErrorMessage(err), "error");
+    } finally {
+      setSwitchingEngine(false);
+    }
+  };
+
   const handleReset = () => {
-    setDraftConfig(DEFAULT_CHATBOT_CONFIG);
+    setDraftConfig(STARTER_CHATBOT_CONFIG);
     setJustSaved(false);
     setConfirmReset(false);
   };
@@ -191,101 +179,36 @@ export default function ChatbotStudio() {
         </div>
       )}
 
-      <div className="flex justify-center gap-1 border-b border-gray-100 bg-white px-4 py-2 dark:bg-[var(--surface)] dark:border-[var(--border)] lg:hidden">
-        {["customize", "preview"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setMobileTab(tab)}
-            className={`flex-1 rounded-lg py-1.5 text-sm font-medium capitalize transition-colors ${
-              mobileTab === tab
-                ? "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-200"
-                : "text-gray-500"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+      {chatbot.widgetEngineVersion !== "v1" && (
+        <div className="animate-fade-in-up flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <span>
+            <strong>Legacy widget.</strong> This chatbot still uses the original hardcoded widget, which ignores most options here (new colors,
+            animations, fonts, forms and more). Switch to the new engine so every option below takes effect.
+          </span>
+          <Button onClick={handleSwitchEngine} loading={switchingEngine}>
+            Switch to new engine
+          </Button>
+        </div>
+      )}
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        {/* Configuration panel */}
-        <div
-          className={`min-h-0 w-full shrink-0 overflow-y-auto border-r border-gray-100 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)] lg:block lg:w-[420px] ${
-            mobileTab === "customize" ? "block" : "hidden"
-          }`}
-        >
-          <div className="flex h-full min-h-0">
-            <div className="w-40 shrink-0 border-r border-gray-100 p-2 dark:border-[var(--border)]">
-              <StudioSectionNav active={activeSection} onChange={setActiveSection} />
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-5">
-              {activeSection === "launcher" && (
-                <SectionLauncher
-                  value={draftConfig.launcher}
-                  onChange={(field, v) => updateField("launcher", field, v)}
-                />
-              )}
-              {activeSection === "chatWindow" && (
-                <SectionChatWindow
-                  value={draftConfig.chatWindow}
-                  onChange={(field, v) => updateField("chatWindow", field, v)}
-                />
-              )}
-              {activeSection === "welcome" && (
-                <SectionWelcome
-                  value={draftConfig.chatWindow.welcomeMessage}
-                  onChange={(v) => updateField("chatWindow", "welcomeMessage", v)}
-                />
-              )}
-              {activeSection === "ctas" && (
-                <SectionCTAs value={draftConfig.ctas} onChange={(v) => updateArray("ctas", v)} />
-              )}
-              {activeSection === "suggestions" && (
-                <SectionSuggestions value={draftConfig.suggestions} onChange={(v) => updateArray("suggestions", v)} />
-              )}
-              {activeSection === "behavior" && (
-                <SectionBehavior
-                  value={draftConfig.behavior}
-                  onChange={(field, v) => updateField("behavior", field, v)}
-                />
-              )}
-              {activeSection === "forms" && (
-                <SectionForms
-                  value={draftConfig.forms}
-                  onChange={(field, v) => updateField("forms", field, v)}
-                />
-              )}
-              {activeSection === "language" && (
-                <SectionLanguage
-                  value={draftConfig.language}
-                  onChange={(field, v) => updateField("language", field, v)}
-                />
-              )}
-              {activeSection === "appearance" && (
-                <SectionAppearance
-                  value={draftConfig.appearance}
-                  onChange={(field, v) => updateField("appearance", field, v)}
-                />
-              )}
-
-              <div className="mt-8 border-t border-gray-100 pt-5 dark:border-[var(--border)]">
-                <Button variant="ghost" onClick={() => setConfirmReset(true)}>
-                  Reset to defaults
-                </Button>
-              </div>
-            </div>
+      <StudioWorkspace
+        className="flex-1"
+        config={draftConfig}
+        onConfigChange={(updater) => {
+          setJustSaved(false);
+          setDraftConfig(updater);
+        }}
+        companyId={company?.companyId}
+        engine={chatbot.widgetEngineVersion || "legacy"}
+        deviceMode={deviceMode}
+        footer={
+          <div className="mt-8 border-t border-gray-100 pt-5 dark:border-[var(--border)]">
+            <Button variant="ghost" onClick={() => setConfirmReset(true)}>
+              Reset to defaults
+            </Button>
           </div>
-        </div>
-
-        {/* Preview */}
-        <div
-          className={`min-h-0 flex-1 overflow-hidden bg-gray-50 dark:bg-black/10 lg:block ${
-            mobileTab === "preview" ? "block" : "hidden"
-          }`}
-        >
-          <PreviewFrame config={draftConfig} deviceMode={deviceMode} companyId={company?.companyId} />
-        </div>
-      </div>
+        }
+      />
 
       <ConfirmDialog
         open={confirmReset}

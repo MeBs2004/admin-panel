@@ -3,14 +3,14 @@ export default function Modal({ open, onClose, title, children, footer, wide }) 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         className={`w-full ${
           wide ? "max-w-2xl" : "max-w-md"
-        } max-h-[90vh] animate-scale-in overflow-y-auto rounded-xl bg-white shadow-card-hover dark:bg-[var(--surface)] dark:border dark:border-[var(--border)]`}
+        } max-h-[90vh] animate-scale-in overflow-y-auto rounded-2xl bg-white shadow-lift ring-1 ring-black/5 border-t-4 border-t-emerald-400 dark:bg-[var(--surface)] dark:border dark:border-[var(--border)]`}
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-[var(--border)]">
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
@@ -18,7 +18,7 @@ export default function Modal({ open, onClose, title, children, footer, wide }) 
           </h2>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/10 dark:hover:text-gray-200"
+            className="rounded-md p-1 text-gray-400 transition-colors hover:rotate-90 hover:bg-gray-100 hover:text-gray-700 duration-300 dark:hover:bg-white/10 dark:hover:text-gray-200"
             aria-label="Close"
           >
             ✕

@@ -40,7 +40,7 @@ export default function PublicInstall() {
         {state === "loading" && <p className="text-sm text-gray-500">Loading…</p>}
 
         {state === "missing" && (
-          <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-[var(--border)] dark:bg-[var(--surface)]">
+          <div className="panel-card rounded-2xl border border-gray-200 bg-white p-6 dark:border-[var(--border)] dark:bg-[var(--surface)] shadow-card animate-fade-in-up">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">This install link isn't valid</h1>
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               The chatbot may have been removed. Ask whoever sent you this link for a new one.
@@ -49,7 +49,7 @@ export default function PublicInstall() {
         )}
 
         {state === "ready" && (
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-card dark:border-[var(--border)] dark:bg-[var(--surface)]">
+          <div className="panel-card rounded-2xl border border-gray-200 bg-white p-6 shadow-card dark:border-[var(--border)] dark:bg-[var(--surface)] animate-fade-in-up">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Add the {info.name} chat to your website
             </h1>

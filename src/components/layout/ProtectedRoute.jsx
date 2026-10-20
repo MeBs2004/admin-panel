@@ -1,14 +1,9 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { isCompanyPanelPath, toPanelPath } from "../../utils/panelPath.js";
+import PageLoader from "../ui/PageLoader.jsx";
 
-function Loading() {
-  return (
-    <div className="flex h-screen items-center justify-center text-sm text-gray-500">
-      Loading Nuformly...
-    </div>
-  );
-}
+const Loading = () => <PageLoader />;
 
 export default function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();

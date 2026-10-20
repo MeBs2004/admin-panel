@@ -36,7 +36,7 @@ function Field({ label, hint, children }) {
 
 function Section({ title, description, children }) {
   return (
-    <section className="animate-fade-in-up rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+    <section className="animate-fade-in-up panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
       <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">{title}</h2>
       {description && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{description}</p>}
       <div className="mt-4">{children}</div>

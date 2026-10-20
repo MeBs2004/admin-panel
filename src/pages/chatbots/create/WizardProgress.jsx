@@ -1,57 +1,65 @@
-import { FiCheck } from "react-icons/fi";
+import { FiCheck, FiLayers, FiEdit3, FiCpu, FiBookOpen, FiDroplet, FiFlag } from "react-icons/fi";
 
 const STEPS = [
-  { key: "template", label: "Template" },
-  { key: "basics", label: "Basics" },
-  { key: "ai", label: "AI" },
-  { key: "knowledge", label: "Knowledge" },
-  { key: "customize", label: "Customize" },
-  { key: "review", label: "Review" },
+  { key: "template", label: "Template", icon: FiLayers },
+  { key: "basics", label: "Basics", icon: FiEdit3 },
+  { key: "ai", label: "AI", icon: FiCpu },
+  { key: "knowledge", label: "Knowledge", icon: FiBookOpen },
+  { key: "customize", label: "Design", icon: FiDroplet },
+  { key: "review", label: "Review", icon: FiFlag },
 ];
 
-export default function WizardProgress({ current }) {
+// Completed steps are clickable (jump back); upcoming ones aren't, so
+// the required-field validation in the wizard can't be skipped.
+export default function WizardProgress({ current, onStepClick }) {
   const currentIndex = STEPS.findIndex((s) => s.key === current);
+  const pct = (currentIndex / (STEPS.length - 1)) * 100;
 
   return (
-    <div className="mb-8 flex items-center justify-between">
-      {STEPS.map((step, i) => {
-        const isDone = i < currentIndex;
-        const isActive = i === currentIndex;
+    <div className="relative mb-8 px-2">
+      {/* track + animated gradient fill */}
+      <div className="absolute left-6 right-6 top-[18px] h-1 rounded-full bg-gray-100 dark:bg-white/10">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-sky-400 to-indigo-500 transition-[width] duration-700 ease-out"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
 
-        return (
-          <div key={step.key} className="flex flex-1 items-center last:flex-none">
-            <div className="flex flex-col items-center gap-1.5">
-              <div
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-200 ${
+      <ol className="relative flex items-start justify-between">
+        {STEPS.map((step, i) => {
+          const isDone = i < currentIndex;
+          const isActive = i === currentIndex;
+          const Icon = step.icon;
+          const clickable = isDone && onStepClick;
+          return (
+            <li key={step.key} className="flex flex-col items-center gap-1.5">
+              <button
+                type="button"
+                disabled={!clickable}
+                onClick={() => clickable && onStepClick(step.key)}
+                aria-current={isActive ? "step" : undefined}
+                className={`relative flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold transition-all duration-500 ${
                   isDone
-                    ? "bg-primary-500 text-white"
+                    ? "bg-gradient-to-br from-emerald-400 to-primary-500 text-white shadow-glow hover:scale-110"
                     : isActive
-                    ? "bg-primary-50 text-primary-600 ring-2 ring-primary-500 dark:bg-primary-500/10 dark:text-primary-300"
-                    : "bg-gray-100 text-gray-400 dark:bg-white/5 dark:text-gray-500"
-                }`}
+                      ? "scale-110 bg-white text-primary-600 shadow-glow-lg ring-2 ring-primary-400 dark:bg-[var(--surface)] dark:text-emerald-300"
+                      : "bg-gray-100 text-gray-400 dark:bg-white/5 dark:text-gray-500"
+                } ${clickable ? "cursor-pointer" : "cursor-default"}`}
               >
-                {isDone ? <FiCheck className="h-4 w-4" /> : i + 1}
-              </div>
+                {isActive && <span className="absolute inset-0 rounded-full animate-ring-pulse" aria-hidden="true" />}
+                {isDone ? <FiCheck className="pop-in h-4 w-4" /> : <Icon className="h-4 w-4" />}
+              </button>
               <span
-                className={`whitespace-nowrap text-xs font-medium ${
-                  isActive
-                    ? "text-gray-800 dark:text-gray-100"
-                    : "text-gray-400 dark:text-gray-500"
+                className={`hidden whitespace-nowrap text-xs font-medium transition-colors sm:block ${
+                  isActive ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"
                 }`}
               >
                 {step.label}
               </span>
-            </div>
-            {i < STEPS.length - 1 && (
-              <div
-                className={`mx-2 h-0.5 flex-1 rounded-full transition-colors duration-300 ${
-                  isDone ? "bg-primary-500" : "bg-gray-100 dark:bg-white/10"
-                }`}
-              />
-            )}
-          </div>
-        );
-      })}
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }

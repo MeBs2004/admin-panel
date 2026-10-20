@@ -4,6 +4,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext.jsx";
 import Button from "../components/ui/Button.jsx";
 import Input from "../components/ui/Input.jsx";
+import AuthShell from "../components/ui/AuthShell.jsx";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -48,12 +49,7 @@ export default function CompanyLogin() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--bg)] px-4">
-      <div
-        className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-primary-400/10 blur-3xl dark:bg-primary-400/5"
-        aria-hidden="true"
-      />
-
+    <AuthShell>
       <div className="relative w-full max-w-sm animate-fade-in-up">
         <div className="mb-4 text-center text-xs font-medium">
           <Link to="/login" className="text-gray-400 hover:underline dark:text-gray-500">
@@ -62,7 +58,7 @@ export default function CompanyLogin() {
         </div>
 
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-primary-500 text-lg font-bold text-white shadow-glow">
+          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-gradient bg-[length:200%_200%] text-lg font-bold text-white shadow-glow-lg animate-gradient-shift animate-float-y">
             N
           </div>
           <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -73,7 +69,7 @@ export default function CompanyLogin() {
           </p>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-card-hover dark:bg-[var(--surface)] dark:border-[var(--border)]">
+        <div className="glass rounded-2xl border border-white/60 bg-white/80 p-7 shadow-lift dark:border-[var(--border)] dark:bg-[var(--surface)]/80">
           <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-100">
             Sign in to your company
           </h2>
@@ -126,6 +122,6 @@ export default function CompanyLogin() {
           </p>
         </div>
       </div>
-    </div>
+    </AuthShell>
   );
 }

@@ -4,7 +4,7 @@ import { FiCheckCircle, FiArrowLeft } from "react-icons/fi";
 import api, { getErrorMessage } from "../../../services/api.js";
 import { useToast } from "../../../context/ToastContext.jsx";
 import useEligibleCompanies from "../../../hooks/useEligibleCompanies.js";
-import { DEFAULT_CHATBOT_CONFIG } from "../../../config/chatbotConfigDefaults.js";
+import { STARTER_CHATBOT_CONFIG } from "../../../config/chatbotStarter.js";
 import PageHeader from "../../../components/ui/PageHeader.jsx";
 import Button from "../../../components/ui/Button.jsx";
 import WizardProgress from "./WizardProgress.jsx";
@@ -35,7 +35,8 @@ export default function CreateChatbotWizard() {
 
   const [step, setStep] = useState("template");
   const [form, setForm] = useState(DEFAULT_FORM);
-  const [config, setConfig] = useState(DEFAULT_CHATBOT_CONFIG);
+  // Every new chatbot starts with the Nuform look and is customized from there.
+  const [config, setConfig] = useState(STARTER_CHATBOT_CONFIG);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -134,27 +135,43 @@ export default function CreateChatbotWizard() {
   };
 
   if (created) {
+    const COLORS = ["#10b981", "#6366f1", "#0ea5e9", "#f59e0b", "#f43f5e", "#8b5cf6"];
     return (
-      <div className="mx-auto max-w-lg py-16 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 animate-scale-in items-center justify-center rounded-full bg-success-50 text-success-600 dark:bg-success-500/10">
-          <FiCheckCircle className="h-7 w-7" />
+      <div className="relative mx-auto max-w-lg overflow-hidden py-16 text-center">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-full" aria-hidden="true">
+          {Array.from({ length: 36 }).map((_, i) => (
+            <span
+              key={i}
+              className="confetti-piece"
+              style={{
+                left: `${(i * 97) % 100}%`,
+                background: COLORS[i % COLORS.length],
+                "--dx": `${((i % 7) - 3) * 22}px`,
+                animationDelay: `${(i % 9) * 0.07}s`,
+              }}
+            />
+          ))}
         </div>
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          Your chatbot is ready
-        </h1>
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+        <div className="relative mx-auto mb-5 flex h-20 w-20 items-center justify-center">
+          <span className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-400 to-primary-500 opacity-20 animate-ring-pulse" />
+          <span className="pop-in flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-primary-500 text-white shadow-glow-lg">
+            <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <path className="draw-check" d="M5 13l4 4L19 7" />
+            </svg>
+          </span>
+        </div>
+        <h1 className="animate-fade-in-up text-2xl font-semibold text-gray-900 dark:text-gray-100">Your chatbot is ready 🎉</h1>
+        <p className="mt-2 animate-fade-in-up text-sm text-gray-500 dark:text-gray-400">
           <strong>{created.name}</strong> has been created successfully.
         </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <div className="relative mt-7 flex flex-wrap justify-center gap-3">
           <Button variant="secondary" onClick={() => navigate("/chatbots")}>
             All Chatbots
           </Button>
-          <Button variant="secondary" onClick={() => navigate(`/chatbots/${created._id}`)}>
-            Open Chatbot
+          <Button variant="secondary" onClick={() => navigate(`/chatbots/${created._id}/customize`)}>
+            Keep customizing
           </Button>
-          <Button onClick={() => navigate(`/chatbots/${created._id}/install`)}>
-            Get Install Snippet
-          </Button>
+          <Button onClick={() => navigate(`/chatbots/${created._id}/install`)}>Get Install Snippet</Button>
         </div>
       </div>
     );
@@ -163,7 +180,7 @@ export default function CreateChatbotWizard() {
   const isCustomizeStep = step === "customize";
 
   return (
-    <div className={`mx-auto transition-[max-width] duration-150 ${isCustomizeStep ? "max-w-5xl" : "max-w-2xl"}`}>
+    <div className={`mx-auto transition-[max-width] duration-500 ease-out ${isCustomizeStep ? "max-w-[1480px]" : step === "review" ? "max-w-5xl" : "max-w-2xl"}`}>
       <PageHeader
         title="Create your AI chatbot"
         breadcrumbs={[{ label: "Chatbots", to: panelPath("/chatbots") }, { label: "Create Chatbot" }]}
@@ -174,9 +191,15 @@ export default function CreateChatbotWizard() {
         }
       />
 
-      <WizardProgress current={step} />
+      <WizardProgress
+        current={step}
+        onStepClick={(key) => {
+          if (!submitting) setStep(key);
+        }}
+      />
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+      <div className="panel-card rounded-2xl border border-gray-200 bg-white p-6 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)] animate-fade-in-up">
+        <div key={step} className="section-in">
         {step === "template" && (
           <StepTemplate template={form.template} setTemplate={(template) => setForm((f) => ({ ...f, template }))} />
         )}
@@ -197,6 +220,7 @@ export default function CreateChatbotWizard() {
           <StepCustomize config={config} setConfig={setConfig} companyId={form.companyId} />
         )}
         {step === "review" && <StepReview form={form} companyName={companyName} config={config} />}
+        </div>
 
         {submitError && (
           <p className="mt-4 animate-fade-in-up rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600 dark:bg-red-950 dark:text-red-300">

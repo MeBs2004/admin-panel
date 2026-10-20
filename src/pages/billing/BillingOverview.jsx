@@ -50,28 +50,28 @@ export default function BillingOverview() {
       {!loading && !error && data && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+            <div className="card-fx rounded-2xl border border-gray-200 bg-white p-4 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
               <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Current Plan</p>
               <p className="mt-2 text-xl font-semibold text-gray-900 dark:text-gray-100">{data.plan.name}</p>
               <Button variant="secondary" className="mt-3" onClick={() => navigate("/billing/plans")}>
                 Change Plan
               </Button>
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+            <div className="card-fx rounded-2xl border border-gray-200 bg-white p-4 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
               <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Billing Status</p>
               <div className="mt-2">
                 <StatusBadge status={data.account.status} />
               </div>
               <p className="mt-2 text-xs text-gray-400">{data.account.billingInterval}</p>
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+            <div className="card-fx rounded-2xl border border-gray-200 bg-white p-4 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
               <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Current Period</p>
               <p className="mt-2 text-sm text-gray-800 dark:text-gray-100">
                 {new Date(data.account.currentPeriodStart).toLocaleDateString()} –{" "}
                 {new Date(data.account.currentPeriodEnd).toLocaleDateString()}
               </p>
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+            <div className="card-fx rounded-2xl border border-gray-200 bg-white p-4 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
               <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Payment Provider</p>
               <div className="mt-2">
                 <StatusBadge status={data.provider.status} />
@@ -87,7 +87,7 @@ export default function BillingOverview() {
             </div>
           )}
 
-          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+          <div className="card-fx rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Usage this period</h3>
               <Button variant="secondary" onClick={() => navigate("/billing/usage")}>

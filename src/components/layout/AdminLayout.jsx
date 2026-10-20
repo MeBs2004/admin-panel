@@ -1,7 +1,14 @@
-import { useEffect, useRef, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import Sidebar from "./Sidebar.jsx";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { FiMoon, FiLogOut, FiPlusCircle } from "react-icons/fi";
+import Sidebar, { NAV_GROUPS } from "./Sidebar.jsx";
 import Header from "./Header.jsx";
+import RouteProgress from "./RouteProgress.jsx";
+import CommandPalette from "./CommandPalette.jsx";
+import AmbientGlow from "./AmbientGlow.jsx";
+import ScrollTopButton from "./ScrollTopButton.jsx";
+import { can } from "../../utils/permissions.js";
+import { toggleTheme } from "../../utils/theme.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 
 // Labels only — every route path below is unchanged from before this
@@ -21,9 +28,42 @@ const TITLES = {
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const mainRef = useRef(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // ⌘K / Ctrl+K quick search: every real page this role can open, plus a few actions.
+  const paletteItems = useMemo(() => {
+    const seen = new Set();
+    const pages = [];
+    for (const group of NAV_GROUPS) {
+      for (const item of group.items) {
+        if (item.soon || item.hint || seen.has(item.to)) continue;
+        if (item.requires && !can(user?.role, item.requires)) continue;
+        seen.add(item.to);
+        pages.push({ id: `nav:${item.to}`, label: item.label === "Overview" ? `${group.label} overview` : item.label, group: group.label, icon: item.icon, to: item.to });
+      }
+    }
+    return [
+      ...pages,
+      { id: "act:create", label: "Create a chatbot", group: "Actions", icon: FiPlusCircle, to: "/chatbots/new" },
+      { id: "act:theme", label: "Toggle dark mode", group: "Actions", icon: FiMoon, run: () => toggleTheme(), keywords: "theme light dark appearance" },
+      { id: "act:logout", label: "Log out", group: "Actions", icon: FiLogOut, run: async () => { await logout(); navigate("/login"); } },
+    ];
+  }, [user?.role, logout, navigate]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const title =
     Object.entries(TITLES).find(([path]) =>
@@ -42,6 +82,9 @@ export default function AdminLayout() {
 
   return (
     <div className="flex h-dvh overflow-hidden bg-[var(--bg)]">
+      <RouteProgress />
+      <AmbientGlow />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} items={paletteItems} />
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -53,8 +96,9 @@ export default function AdminLayout() {
           title={title}
           onOpenSidebar={() => setSidebarOpen(true)}
           onToggleCollapse={() => setCollapsed((c) => !c)}
+          onOpenSearch={() => setPaletteOpen(true)}
         />
-        <main ref={mainRef} className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+        <main ref={mainRef} className="app-aurora min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
           {/* h-full: lets a page that wants to fill the remaining
               viewport (e.g. ConversationsInbox's split-pane inbox) size
               itself with `h-full` against this real, bounded ancestor
@@ -66,6 +110,7 @@ export default function AdminLayout() {
             <Outlet />
           </div>
         </main>
+        <ScrollTopButton scrollRef={mainRef} />
       </div>
     </div>
   );

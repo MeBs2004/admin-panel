@@ -69,7 +69,7 @@ export default function VisitorDetail() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+          <div className="panel-card rounded-2xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
             <div className="mb-4 flex flex-wrap gap-2">
               <StatusBadge status={isActive ? "ACTIVE" : "INACTIVE"} />
               <StatusBadge status={isReturning ? "RETURNING" : "NEW"} />
@@ -82,6 +82,14 @@ export default function VisitorDetail() {
               <div>
                 <dt className="text-gray-500 dark:text-gray-400">Email</dt>
                 <dd className="font-medium text-gray-800 dark:text-gray-100">{visitor.email || "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500 dark:text-gray-400">Phone</dt>
+                <dd className="font-medium text-gray-800 dark:text-gray-100">{visitor.phone || "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500 dark:text-gray-400">Company</dt>
+                <dd className="font-medium text-gray-800 dark:text-gray-100">{visitor.company || "—"}</dd>
               </div>
               <div>
                 <dt className="text-gray-500 dark:text-gray-400">Sessions</dt>
@@ -114,7 +122,7 @@ export default function VisitorDetail() {
             </dl>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+          <div className="panel-card rounded-2xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
             <h2 className="mb-4 text-sm font-semibold text-gray-800 dark:text-gray-100">Activity Timeline</h2>
             {!timeline || timeline.length === 0 ? (
               <EmptyState title="No recorded activity." />
@@ -145,7 +153,7 @@ export default function VisitorDetail() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+          <div className="panel-card rounded-2xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
             <h2 className="mb-3 text-sm font-semibold text-gray-800 dark:text-gray-100">Conversation</h2>
             {!conversation ? (
               <EmptyState icon={FiMessageSquare} title="No conversation record." description="This visitor has no tracked conversation yet." />

@@ -331,7 +331,7 @@ export default function UserDetail() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+          <div className="panel-card rounded-2xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
             <h2 className="mb-4 text-sm font-semibold text-gray-800 dark:text-gray-100">
               Profile
             </h2>
@@ -381,7 +381,7 @@ export default function UserDetail() {
 
           {tab === "access" && (
           <>
-          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+          <div className="panel-card rounded-2xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
             <h3 className="mb-3 text-sm font-semibold text-gray-800 dark:text-gray-100">
               Company Access
             </h3>
@@ -464,7 +464,7 @@ export default function UserDetail() {
             )}
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+          <div className="panel-card rounded-2xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
             <h3 className="mb-3 text-sm font-semibold text-gray-800 dark:text-gray-100">
               Chatbot Access
             </h3>
@@ -550,7 +550,7 @@ export default function UserDetail() {
           )}
 
           {tab === "permissions" && (
-            <div className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+            <div className="panel-card rounded-2xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
               {user.role === "SUPER_ADMIN" ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400">Super Admin has every permission on every company.</p>
               ) : companyAccess.length === 0 ? (
@@ -632,7 +632,7 @@ export default function UserDetail() {
           )}
 
           {tab === "tasks" && (
-            <div className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+            <div className="panel-card rounded-2xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Assigned Tasks</h3>
                 {canManageAccess && (
@@ -668,7 +668,7 @@ export default function UserDetail() {
         </div>
 
         {canManageThisUser && (
-          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+          <div className="panel-card rounded-2xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
             <h2 className="mb-4 text-sm font-semibold text-gray-800 dark:text-gray-100">
               Actions
             </h2>

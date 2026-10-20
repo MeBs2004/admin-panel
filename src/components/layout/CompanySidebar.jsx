@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   FiGrid,
@@ -14,11 +15,12 @@ import {
 } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { can, PERMISSIONS } from "../../utils/permissions.js";
+import useNavIndicator, { NavIndicator } from "./useNavIndicator.jsx";
 
 // Items with `requires` are hidden from roles that can't open them
 // (the routes are role-gated to match). UX only — the backend
 // independently enforces what each one can actually do.
-const ITEMS = [
+export const ITEMS = [
   { to: "/company/overview", label: "Overview", icon: FiGrid },
   { to: "/company/chatbots", label: "My Chatbots", icon: FiCpu },
   { to: "/company/conversations", label: "Conversations", icon: FiMessageSquare },
@@ -35,6 +37,8 @@ export default function CompanySidebar({ open, onClose }) {
   const items = ITEMS.filter((item) => !item.requires || can(user?.role, item.requires));
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const contentRef = useRef(null);
+  const indicator = useNavIndicator(contentRef, [pathname, user?.role]);
 
   const handleLogout = async () => {
     await logout();
@@ -51,14 +55,15 @@ export default function CompanySidebar({ open, onClose }) {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-gray-200 bg-white transition-transform duration-300 ease-in-out dark:bg-[var(--surface)] dark:border-[var(--border)] lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-gray-200 bg-white/90 backdrop-blur transition-transform duration-300 ease-in-out dark:bg-[var(--surface)] dark:border-[var(--border)] lg:static lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex h-16 shrink-0 items-center justify-between px-4">
           <div className="flex items-center gap-2 overflow-hidden">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-500 text-sm font-bold text-white shadow-card">
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-gradient bg-[length:200%_200%] text-sm font-bold text-white shadow-glow animate-gradient-shift">
               N
+              <span className="absolute inset-0 rounded-xl animate-ring-pulse" aria-hidden="true" />
             </div>
             <div className="min-w-0 leading-tight">
               <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">Nuformly</p>
@@ -80,28 +85,32 @@ export default function CompanySidebar({ open, onClose }) {
             around it never does, matching the main AdminLayout's
             scroll ownership convention. */}
         <nav className="flex-1 overflow-y-auto px-2 py-2">
+          <div ref={contentRef} className="relative">
+          <NavIndicator style={indicator} />
           <ul className="space-y-0.5">
-            {items.map((item) => {
+            {items.map((item, itemIndex) => {
               const active = pathname === item.to || pathname.startsWith(item.to + "/");
               const Icon = item.icon;
               return (
-                <li key={item.to}>
+                <li key={item.to} className="animate-slide-in-left" style={{ animationDelay: `${itemIndex * 50}ms` }}>
                   <NavLink
                     to={item.to}
+                    data-nav-active={active}
                     onClick={onClose}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    className={`group relative z-10 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                       active
-                        ? "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300"
-                        : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5"
+                        ? "text-primary-600 dark:text-primary-300"
+                        : "text-gray-600 hover:bg-gray-50 hover:pl-4 dark:text-gray-300 dark:hover:bg-white/5"
                     }`}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
+                    <Icon className={`h-4 w-4 shrink-0 transition-all duration-200 group-hover:scale-110 ${active ? "text-primary-500 dark:text-emerald-300" : ""}`} />
                     {item.label}
                   </NavLink>
                 </li>
               );
             })}
           </ul>
+          </div>
         </nav>
 
         <div className="shrink-0 border-t border-gray-100 p-2 dark:border-white/5">

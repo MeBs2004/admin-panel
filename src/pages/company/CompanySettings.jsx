@@ -90,7 +90,7 @@ export default function CompanySettings() {
     <div>
       <PageHeader title="Company Settings" description="Your company's profile and contact details." />
 
-      <div className="max-w-lg rounded-xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+      <div className="max-w-lg panel-card rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)] animate-fade-in-up">
         <div className="mb-4 flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-500 dark:bg-primary-500/10 dark:text-primary-300">
             <FiBriefcase className="h-4 w-4" />

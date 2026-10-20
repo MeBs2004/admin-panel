@@ -29,7 +29,7 @@ export function SkeletonCards({ count = 4 }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="rounded-xl border border-gray-200 bg-white p-4 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]"
+          className="rounded-2xl border border-gray-200 bg-white p-4 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]"
         >
           <SkeletonLine className="mb-3 h-3 w-2/3" />
           <SkeletonLine className="h-6 w-1/3" />

@@ -124,7 +124,7 @@ export default function ChatbotsList() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)]">
+      <div className="overflow-hidden panel-card rounded-2xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
         {loading && <SkeletonTable />}
         {!loading && error && <ErrorState message={error} onRetry={() => load()} />}
         {!loading && !error && chatbots.length === 0 && (

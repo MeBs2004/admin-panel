@@ -59,7 +59,7 @@ export default function UsagePage() {
           {GROUPS.map((group) => (
             <div
               key={group.title}
-              className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]"
+              className="space-y-4 card-fx rounded-2xl border border-gray-200 bg-white p-5 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]"
             >
               <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">{group.title}</h3>
               {group.metrics.map((metric) => (

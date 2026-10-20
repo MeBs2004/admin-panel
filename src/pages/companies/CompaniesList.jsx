@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiTrash2 } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { INDUSTRY_OPTIONS } from "../../config/companyProfileOptions.js";
@@ -14,6 +14,7 @@ import EmptyState from "../../components/ui/EmptyState.jsx";
 import ErrorState from "../../components/ui/ErrorState.jsx";
 import Pagination from "../../components/ui/Pagination.jsx";
 import CompanyFormModal from "./CompanyFormModal.jsx";
+import DeleteCompanyModal from "./DeleteCompanyModal.jsx";
 
 const STATUS_OPTIONS = [
   { value: "", label: "All Statuses" },
@@ -43,6 +44,7 @@ export default function CompaniesList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [deleting, setDeleting] = useState(null);
 
   const load = (page = 1) => {
     setLoading(true);
@@ -118,7 +120,7 @@ export default function CompaniesList() {
         <Select value={sort} onChange={(e) => setSort(e.target.value)} options={SORT_OPTIONS} />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)]">
+      <div className="overflow-hidden panel-card rounded-2xl border border-gray-200 bg-white dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
         {loading && <SkeletonTable />}
         {!loading && error && <ErrorState message={error} onRetry={() => load(1)} />}
         {!loading && !error && companies.length === 0 && (
@@ -141,6 +143,7 @@ export default function CompaniesList() {
                   <th className="px-4 py-3 font-medium">Visitors</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium">Registered</th>
+                  {me?.role === "SUPER_ADMIN" && <th className="px-4 py-3 font-medium" />}
                 </tr>
               </thead>
               <tbody>
@@ -181,6 +184,21 @@ export default function CompaniesList() {
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       {new Date(c.createdAt).toLocaleString()}
                     </td>
+                    {me?.role === "SUPER_ADMIN" && (
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleting(c);
+                          }}
+                          className="rounded-lg p-1.5 text-gray-400 transition-all duration-200 hover:scale-110 hover:bg-danger-50 hover:text-danger-500 dark:hover:bg-danger-500/10"
+                          title={`Delete ${c.name}`}
+                          aria-label={`Delete ${c.name}`}
+                        >
+                          <FiTrash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -192,6 +210,12 @@ export default function CompaniesList() {
           <Pagination page={pagination.page} pages={pagination.pages} onChange={load} />
         )}
       </div>
+
+      <DeleteCompanyModal
+        company={deleting}
+        onClose={() => setDeleting(null)}
+        onDeleted={() => load(1)}
+      />
 
       <CompanyFormModal
         open={showForm}

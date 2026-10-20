@@ -24,13 +24,18 @@ const FIELD_PLACEHOLDER = {
   company: "Acme Inc.",
 };
 
-export default function ChatbotFormsPreview({ fields, style, primaryColor, panelText, inputBg, inputBorder, onComplete }) {
+export default function ChatbotFormsPreview({ fields, style, primaryColor, panelText, inputBg, inputBorder, onComplete, sizes, texts = {} }) {
+  const label = { title: texts.title || "Before we start", subtitle: texts.subtitle || "A few details so we can help you faster.", button: texts.button || "Start Chat" };
   const orderedFields = (fields || []).filter((f) => FIELD_META[f]);
   const [values, setValues] = useState({});
   const [errors, setErrors] = useState({});
   const [step, setStep] = useState(0);
 
-  const inputStyle = { background: inputBg, borderColor: inputBorder, color: panelText };
+  const fieldH = sizes?.fieldHeight;
+  const buttonH = sizes?.buttonHeight;
+  const fontPx = sizes?.fontSize;
+  const inputStyle = { background: inputBg, borderColor: inputBorder, color: panelText, ...(fieldH ? { minHeight: fieldH } : {}), ...(fontPx ? { fontSize: fontPx } : {}) };
+  const buttonSize = { ...(buttonH ? { minHeight: buttonH } : {}), ...(fontPx ? { fontSize: fontPx } : {}) };
 
   const setValue = (field, v) => {
     setValues((prev) => ({ ...prev, [field]: v }));
@@ -49,9 +54,9 @@ export default function ChatbotFormsPreview({ fields, style, primaryColor, panel
           type="button"
           onClick={onComplete}
           className="rounded-full px-5 py-2 text-[13px] font-semibold text-white"
-          style={{ background: primaryColor }}
+          style={{ background: primaryColor, ...buttonSize }}
         >
-          Start Chat
+          {label.button}
         </button>
       </div>
     );
@@ -99,9 +104,9 @@ export default function ChatbotFormsPreview({ fields, style, primaryColor, panel
             type="button"
             onClick={next}
             className="rounded-full px-4 py-1.5 text-[12px] font-semibold text-white"
-            style={{ background: primaryColor }}
+            style={{ background: primaryColor, ...buttonSize }}
           >
-            {isLast ? "Start Chat" : "Next"}
+            {isLast ? label.button : "Next"}
           </button>
         </div>
       </div>
@@ -126,10 +131,10 @@ export default function ChatbotFormsPreview({ fields, style, primaryColor, panel
     <div className="flex h-full flex-col justify-center gap-3.5 overflow-y-auto px-5 py-4">
       <div>
         <h3 className="text-[14px] font-semibold" style={{ color: panelText }}>
-          Before we start
+          {label.title}
         </h3>
         <p className="mt-0.5 text-[12px] opacity-60" style={{ color: panelText }}>
-          A few details so we can help you faster.
+          {label.subtitle}
         </p>
       </div>
       {orderedFields.map((f) => {
@@ -155,9 +160,9 @@ export default function ChatbotFormsPreview({ fields, style, primaryColor, panel
         type="button"
         onClick={submit}
         className="mt-1 rounded-full py-2 text-[13px] font-semibold text-white"
-        style={{ background: primaryColor }}
+        style={{ background: primaryColor, ...buttonSize }}
       >
-        Start Chat
+        {label.button}
       </button>
     </div>
   );

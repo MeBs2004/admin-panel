@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useState } from "react";
+import { FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 
 const ToastContext = createContext(null);
 
@@ -36,7 +37,7 @@ export function ToastProvider({ children }) {
           <div
             key={t.id}
             onClick={() => dismiss(t.id)}
-            className={`cursor-pointer rounded-lg border px-4 py-3 text-sm shadow-lg transition-all duration-200 ease-out ${
+            className={`relative cursor-pointer overflow-hidden rounded-xl border px-4 py-3 pl-5 text-sm shadow-lift backdrop-blur transition-all duration-200 ease-out ${
               t.leaving ? "translate-x-2 opacity-0" : "translate-x-0 opacity-100 animate-fade-in-up"
             } ${
               t.type === "error"
@@ -44,7 +45,21 @@ export function ToastProvider({ children }) {
                 : "bg-white border-gray-200 text-gray-800 dark:bg-[var(--surface)] dark:border-[var(--border)] dark:text-gray-100"
             }`}
           >
-            {t.message}
+            <span
+              className={`absolute inset-y-0 left-0 w-1.5 ${t.type === "error" ? "bg-gradient-to-b from-rose-400 to-red-500" : "bg-gradient-to-b from-emerald-400 to-teal-500"}`}
+            />
+            <span className="flex items-start gap-2.5">
+              {t.type === "error" ? (
+                <FiAlertCircle className="pop-in mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+              ) : (
+                <FiCheckCircle className="pop-in mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+              )}
+              <span>{t.message}</span>
+            </span>
+            <span
+              className={`absolute inset-x-0 bottom-0 h-0.5 origin-left ${t.type === "error" ? "bg-red-400/70" : "bg-emerald-400/70"}`}
+              style={{ animation: "toastLife 4s linear forwards" }}
+            />
           </div>
         ))}
       </div>

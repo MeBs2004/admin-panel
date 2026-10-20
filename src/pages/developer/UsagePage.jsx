@@ -4,7 +4,10 @@ import api, { getErrorMessage } from "../../services/api.js";
 import PageHeader from "../../components/ui/PageHeader.jsx";
 import Select from "../../components/ui/Select.jsx";
 import StatCard from "../../components/ui/StatCard.jsx";
-import AreaChart from "../../components/ui/AreaChart.jsx";
+import ChartCard from "../../components/charts/ChartCard.jsx";
+import TrendChart from "../../components/charts/TrendChart.jsx";
+import DonutChart from "../../components/charts/DonutChart.jsx";
+import { CHART_COLORS } from "../../components/charts/chartTheme.js";
 import { SkeletonLine } from "../../components/ui/Skeleton.jsx";
 import ErrorState from "../../components/ui/ErrorState.jsx";
 import EmptyState from "../../components/ui/EmptyState.jsx";
@@ -74,18 +77,29 @@ export default function UsagePage() {
             <StatCard label="Requests" value={data.metrics.requests} icon={FiActivity} accent="primary" index={0} />
             <StatCard label="Successful" value={data.metrics.successfulRequests} icon={FiCheckCircle} accent="success" index={1} />
             <StatCard label="Failed" value={data.metrics.failedRequests} icon={FiXCircle} accent="warning" index={2} />
-            <StatCard label="Rate Limited" value={data.metrics.rateLimitedRequests} icon={FiClock} accent="warning" index={3} />
+            <StatCard label="Rate Limited" value={data.metrics.rateLimitedRequests} icon={FiClock} accent="rose" index={3} />
             <StatCard label="Active API Keys" value={data.metrics.activeApiKeys} icon={FiKey} accent="info" index={4} />
-            <StatCard label="Webhook Deliveries" value={data.metrics.webhookDeliveries} icon={FiSend} accent="info" index={5} />
+            <StatCard label="Webhook Deliveries" value={data.metrics.webhookDeliveries} icon={FiSend} accent="violet" index={5} />
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
-            <h3 className="mb-3 text-sm font-semibold text-gray-800 dark:text-gray-100">Requests per day</h3>
-            {chartData.length > 0 ? (
-              <AreaChart data={chartData} />
-            ) : (
-              <p className="text-sm text-gray-400">No API requests recorded in this range yet.</p>
-            )}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <ChartCard className="lg:col-span-2" index={0} title="Requests per day">
+              {chartData.length > 0 ? (
+                <TrendChart data={chartData} series={[{ key: "value", name: "Requests", color: CHART_COLORS.indigo }]} />
+              ) : (
+                <p className="text-sm text-gray-400">No API requests recorded in this range yet.</p>
+              )}
+            </ChartCard>
+            <ChartCard index={1} title="Request outcomes">
+              <DonutChart
+                centerLabel="Requests"
+                data={[
+                  { name: "Successful", value: data.metrics.successfulRequests, color: CHART_COLORS.emerald },
+                  { name: "Failed", value: data.metrics.failedRequests, color: CHART_COLORS.amber },
+                  { name: "Rate limited", value: data.metrics.rateLimitedRequests, color: CHART_COLORS.rose },
+                ]}
+              />
+            </ChartCard>
           </div>
         </>
       )}

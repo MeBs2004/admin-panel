@@ -1,9 +1,11 @@
-import { FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiArrowUp, FiArrowDown } from "react-icons/fi";
 import Select from "../../../components/ui/Select.jsx";
 import Input from "../../../components/ui/Input.jsx";
 import Toggle from "../../../components/ui/Toggle.jsx";
 import Button from "../../../components/ui/Button.jsx";
 import { CTA_TYPE_OPTIONS, MAX_CTAS } from "../../../config/chatbotConfigDefaults.js";
+import OptionalColor from "../../../components/studio/ColorPair.jsx";
+import Field from "../../../components/studio/Field.jsx";
 
 const VALUE_LABEL = {
   call: "Phone number",
@@ -25,7 +27,7 @@ const DEFAULT_LABEL = { call: "Call", whatsapp: "WhatsApp", email: "Email", cust
 // SectionCTAs is one of the few sections whose onChange replaces the
 // whole array in one call, same convention SectionForms already uses
 // for `forms.fields`.
-export default function SectionCTAs({ value = [], onChange }) {
+export default function SectionCTAs({ value = [], onChange, show = true, onShowChange }) {
   const ctas = value;
 
   const update = (index, patch) => {
@@ -36,12 +38,25 @@ export default function SectionCTAs({ value = [], onChange }) {
     onChange(ctas.filter((_, i) => i !== index));
   };
 
+  const move = (index, dir) => {
+    const target = index + dir;
+    if (target < 0 || target >= ctas.length) return;
+    const next = [...ctas];
+    [next[index], next[target]] = [next[target], next[index]];
+    onChange(next);
+  };
+
   const add = () => {
-    onChange([...ctas, { type: "call", enabled: true, label: DEFAULT_LABEL.call, value: "" }]);
+    onChange([...ctas, { type: "call", enabled: true, label: DEFAULT_LABEL.call, value: "", color: "" }]);
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" data-field="ctas">
+      {onShowChange && (
+        <Field id="chatWindow.showCtas">
+          <Toggle label="Show the CTA buttons" description="Hide them all without deleting them." checked={show} onChange={onShowChange} />
+        </Field>
+      )}
       <div>
         <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">CTA Buttons</h3>
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -57,7 +72,7 @@ export default function SectionCTAs({ value = [], onChange }) {
         )}
 
         {ctas.map((cta, index) => (
-          <div key={index} className="space-y-2.5 rounded-lg border border-gray-200 p-3 dark:border-[var(--border)]">
+          <div key={index} data-field={`ctas.${index}`} className="space-y-2.5 rounded-lg border border-gray-200 p-3 dark:border-[var(--border)]">
             <div className="flex items-center justify-between gap-2">
               <div className="w-36">
                 <Select
@@ -70,6 +85,12 @@ export default function SectionCTAs({ value = [], onChange }) {
                 />
               </div>
               <Toggle checked={cta.enabled} onChange={(v) => update(index, { enabled: v })} />
+              <button onClick={() => move(index, -1)} disabled={index === 0} className="text-gray-400 hover:text-gray-600 disabled:opacity-30" aria-label="Move up">
+                <FiArrowUp className="h-4 w-4" />
+              </button>
+              <button onClick={() => move(index, 1)} disabled={index === ctas.length - 1} className="text-gray-400 hover:text-gray-600 disabled:opacity-30" aria-label="Move down">
+                <FiArrowDown className="h-4 w-4" />
+              </button>
               <button
                 onClick={() => remove(index)}
                 className="text-gray-400 hover:text-danger-500"
@@ -91,6 +112,7 @@ export default function SectionCTAs({ value = [], onChange }) {
               maxLength={300}
               onChange={(e) => update(index, { value: e.target.value })}
             />
+            <OptionalColor label="Button color" value={cta.color || ""} onChange={(v) => update(index, { color: v })} autoHint="Primary color" />
           </div>
         ))}
 

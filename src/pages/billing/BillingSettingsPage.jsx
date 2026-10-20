@@ -45,7 +45,7 @@ export default function BillingSettingsPage() {
       {!loading && !loadingCompanies && !companyId && <EmptyState title="No company selected." />}
 
       {!loading && !error && data && (
-        <div className="max-w-xl space-y-4 rounded-xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)]">
+        <div className="max-w-xl space-y-4 panel-card rounded-2xl border border-gray-200 bg-white p-5 dark:bg-[var(--surface)] dark:border-[var(--border)] shadow-card animate-fade-in-up">
           <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm dark:bg-white/5">
             <span className="text-gray-500 dark:text-gray-400">Payment provider</span>
             <StatusBadge status={data.provider.status} />

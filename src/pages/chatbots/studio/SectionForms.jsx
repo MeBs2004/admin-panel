@@ -32,7 +32,7 @@ export default function SectionForms({ value, onChange }) {
           onChange={(v) => onChange("style", v)}
         />
 
-        <div>
+        <div data-field="forms.fields">
           <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
             Fields to collect
           </span>

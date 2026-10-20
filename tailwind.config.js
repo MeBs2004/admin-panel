@@ -46,6 +46,12 @@ export default {
         "card-hover":
           "0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -2px rgba(15, 23, 42, 0.05)",
         glow: "0 0 0 1px rgba(13, 85, 55, 0.15), 0 0 20px -4px rgba(26, 138, 86, 0.35)",
+        "glow-lg": "0 0 0 1px rgba(26, 138, 86, 0.2), 0 10px 40px -8px rgba(26, 138, 86, 0.45)",
+        lift: "0 12px 32px -8px rgba(15, 23, 42, 0.18), 0 4px 10px -4px rgba(15, 23, 42, 0.08)",
+      },
+      backgroundImage: {
+        "brand-gradient": "linear-gradient(135deg, #0d5537 0%, #1a8a56 55%, #34d399 100%)",
+        "aurora": "radial-gradient(60% 50% at 15% 0%, rgba(52,211,153,0.16) 0%, transparent 60%), radial-gradient(45% 40% at 90% 10%, rgba(99,102,241,0.12) 0%, transparent 60%), radial-gradient(50% 45% at 70% 100%, rgba(14,165,233,0.10) 0%, transparent 60%)",
       },
       keyframes: {
         fadeInUp: {
@@ -76,6 +82,35 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-5px)" },
         },
+        floatY: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
+        gradientShift: {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
+        blobDrift: {
+          "0%, 100%": { transform: "translate(0,0) scale(1)" },
+          "33%": { transform: "translate(40px,-30px) scale(1.1)" },
+          "66%": { transform: "translate(-30px,30px) scale(0.95)" },
+        },
+        slideInLeft: {
+          "0%": { opacity: "0", transform: "translateX(-12px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        barGrow: {
+          "0%": { transform: "scaleX(0)" },
+          "100%": { transform: "scaleX(1)" },
+        },
+        ringPulse: {
+          "0%": { boxShadow: "0 0 0 0 rgba(26,138,86,0.45)" },
+          "100%": { boxShadow: "0 0 0 12px rgba(26,138,86,0)" },
+        },
+        sheen: {
+          "0%": { transform: "translateX(-120%) skewX(-20deg)" },
+          "100%": { transform: "translateX(220%) skewX(-20deg)" },
+        },
         launcherGlow: {
           "0%, 100%": { boxShadow: "0 0 0 0 rgba(13, 85, 55, 0)" },
           "50%": { boxShadow: "0 0 16px 4px rgba(13, 85, 55, 0.35)" },
@@ -90,6 +125,12 @@ export default {
         "slide-down": "slideDown 0.18s ease-out both",
         "launcher-float": "launcherFloat 2.8s ease-in-out infinite",
         "launcher-glow": "launcherGlow 2.4s ease-in-out infinite",
+        "float-y": "floatY 5s ease-in-out infinite",
+        "gradient-shift": "gradientShift 8s ease infinite",
+        "blob-drift": "blobDrift 18s ease-in-out infinite",
+        "slide-in-left": "slideInLeft 0.4s cubic-bezier(0.16,1,0.3,1) both",
+        "bar-grow": "barGrow 0.9s cubic-bezier(0.16,1,0.3,1) both",
+        "ring-pulse": "ringPulse 1.8s ease-out infinite",
       },
     },
   },

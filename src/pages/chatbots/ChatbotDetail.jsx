@@ -164,7 +164,7 @@ export default function ChatbotDetail() {
         }
       />
 
-      <div className="animate-fade-in-up rounded-xl border border-gray-200 bg-white shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
+      <div className="animate-fade-in-up panel-card rounded-2xl border border-gray-200 bg-white shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)]">
         <Tabs
           tabs={[
             { value: "overview", label: "Overview" },
