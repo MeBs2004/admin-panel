@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 // Admin Panel
 import Login from "./pages/Login.jsx";
@@ -58,9 +59,20 @@ import ProtectedRoute, { PlatformOnly } from "./components/layout/ProtectedRoute
 import CompanyOverview from "./pages/company/CompanyOverview.jsx";
 import CompanySettings from "./pages/company/CompanySettings.jsx";
 
+// The public marketing page is its own chunk, so the panels never load it.
+const Landing = lazy(() => import("./pages/landing/Landing.jsx"));
+
 function App() {
   return (
     <Routes>
+      <Route
+        path="/"
+        element={
+          <Suspense fallback={<div className="min-h-screen bg-[#f2f7f4]" />}>
+            <Landing />
+          </Suspense>
+        }
+      />
       <Route path="/login" element={<Login />} />
       <Route path="/company/login" element={<CompanyLogin />} />
       <Route path="/company/signup" element={<CompanySignup />} />
@@ -97,7 +109,6 @@ function App() {
           </PlatformOnly>
         }
       >
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/live-view" element={<LiveView />} />
         <Route path="/tasks" element={<TasksList />} />

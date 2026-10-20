@@ -104,6 +104,14 @@ function FileBlock({ file, primary }) {
   );
 }
 
+// Longhand background properties only: mixing the `background` shorthand with
+// backgroundImage/backgroundSize makes React drop layers when a theme changes.
+const isGradient = (v) => typeof v === "string" && v.includes("gradient(");
+function fillStyle(fill, pattern) {
+  const layers = [pattern, isGradient(fill) ? fill : null].filter((v) => v && v !== "none");
+  return { backgroundColor: isGradient(fill) ? undefined : fill, backgroundImage: layers.length ? layers.join(", ") : undefined };
+}
+
 const nowLabel = () => new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
 /**
@@ -113,9 +121,10 @@ const nowLabel = () => new Date().toLocaleTimeString([], { hour: "numeric", minu
  * preview can't drift from production. `mode` picks the first state
  * ("widget" = closed launcher, "window" = open); `replayKey` restarts
  * every animation on demand. Local typing only appends to component
- * state — nothing here ever calls the real chat API.
+ * state — nothing here ever calls the real chat API. `replyFor(text)`
+ * optionally scripts the reply to a typed message (the landing demo).
  */
-export default function ChatWidgetRenderer({ config, isMobile = false, mode = "widget", replayKey = 0, sampleChat = false, editMode = false, onEdit }) {
+export default function ChatWidgetRenderer({ config, isMobile = false, mode = "widget", replayKey = 0, sampleChat = false, editMode = false, onEdit, replyFor }) {
   const [open, setOpen] = useState(mode === "window");
   // Who opened the window: an automatic open uses behavior.autoOpenAnimation.
   const [openedBy, setOpenedBy] = useState("manual");
@@ -434,7 +443,7 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
       ? lang === "Hindi"
         ? `मुझे “${sent.name}” मिल गई। आपके लाइव चैटबॉट में AI इसे पढ़कर जवाब देगा।`
         : `Got “${sent.name}”. In your live chatbot the AI reads attachments like this and answers questions about them.`
-      : null;
+      : replyFor?.(trimmed) || null;
     if (behavior.typingIndicator) {
       setTyping(true);
       setTimeout(() => {
@@ -518,7 +527,7 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
           <div
             data-edit="chatWindow.headerGradient"
             className={`flex shrink-0 items-center justify-between gap-2.5 px-4 ${animClass("nfp", "head", chatWindow.headerAnimation)}`}
-            style={{ background: W.headerBg, backgroundSize: W.headerBgSize, color: W.headerText, height: W.headerHeight }}
+            style={{ ...fillStyle(W.headerBg), backgroundSize: W.headerBgSize, color: W.headerText, height: W.headerHeight }}
           >
             <div className="flex min-w-0 items-center gap-3">
               {shown(config, "showHeaderAvatar") && (
@@ -616,7 +625,7 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
               <div
                 ref={scrollRef}
                 className="flex-1 overflow-y-auto"
-                style={{ background: W.chatBg, backgroundImage: W.chatBgImage, backgroundSize: W.chatBgSize, padding: W.contentPadding }}
+                style={{ ...fillStyle(W.chatBg, W.chatBgImage), backgroundSize: W.chatBgSize, padding: W.contentPadding }}
               >
                 {isOffline && (
                   <div
