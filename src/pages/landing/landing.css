@@ -187,9 +187,21 @@
   color: var(--lp-muted);
   transition: color 0.2s, background 0.2s;
 }
-.lp-nav-link:hover {
+.lp-nav-link:hover,
+.lp-nav-link.is-hover {
   color: var(--lp-ink);
-  background: rgba(13, 85, 55, 0.07);
+}
+/* the line that glides between section links */
+.lp-nav-line {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  height: 2.5px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--lp-leaf), var(--lp-mint), var(--lp-signal));
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.55);
+  transition: left 0.42s var(--lp-spring), width 0.42s var(--lp-spring), opacity 0.25s ease;
 }
 .lp-burger {
   display: grid;

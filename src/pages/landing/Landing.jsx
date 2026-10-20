@@ -46,6 +46,44 @@ function useActiveSection() {
   return active;
 }
 
+/**
+ * Desktop section links with one line that glides to whichever link is hovered
+ * (or focused), and rests under the current section when the pointer leaves.
+ */
+function SectionLinks({ active }) {
+  const navRef = useRef(null);
+  const [hovered, setHovered] = useState(null);
+  const [line, setLine] = useState({ opacity: 0 });
+  const target = hovered || active;
+  useEffect(() => {
+    const el = target && navRef.current?.querySelector(`a[href="${target}"]`);
+    if (!el) {
+      setLine((l) => ({ ...l, opacity: 0 }));
+      return;
+    }
+    const pad = 14; // matches the link's side padding, so the line spans the text
+    setLine({ opacity: 1, left: el.offsetLeft + pad, width: el.offsetWidth - pad * 2 });
+  }, [target]);
+  return (
+    <nav ref={navRef} className="relative hidden items-center gap-1 lg:flex" aria-label="Sections" onPointerLeave={() => setHovered(null)}>
+      {LINKS.map(([href, label]) => (
+        <a
+          key={href}
+          href={href}
+          className={`lp-nav-link ${active === href ? "is-active" : ""} ${hovered === href ? "is-hover" : ""}`}
+          aria-current={active === href ? "true" : undefined}
+          onPointerEnter={() => setHovered(href)}
+          onFocus={() => setHovered(href)}
+          onBlur={() => setHovered(null)}
+        >
+          {label}
+        </a>
+      ))}
+      <span className="lp-nav-line" style={line} aria-hidden="true" />
+    </nav>
+  );
+}
+
 function Nav({ startHref, dashboardHref }) {
   const { progress, scrolled } = useScrollProgress();
   const active = useActiveSection();
@@ -77,13 +115,7 @@ function Nav({ startHref, dashboardHref }) {
           </span>
           <span className="lp-display text-[22px] text-[var(--lp-ink)]">Nuformly</span>
         </a>
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Sections">
-          {LINKS.map(([href, label]) => (
-            <a key={href} href={href} className={`lp-nav-link ${active === href ? "is-active" : ""}`} aria-current={active === href ? "true" : undefined}>
-              {label}
-            </a>
-          ))}
-        </nav>
+        <SectionLinks active={active} />
         <div className="flex items-center gap-2">
           {dashboardHref ? (
             <Link to={dashboardHref} className="lp-btn lp-btn-primary lp-btn-sm">
