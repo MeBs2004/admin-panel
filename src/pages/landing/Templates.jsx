@@ -36,7 +36,7 @@ function MarketingCalculator() {
         <Slider label="Revenue from ads" value={revenue} min={0} max={600000} step={5000} onChange={setRevenue} format={inr} />
       </div>
       <div className="lp-calc-reply">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--lp-leaf-ink)]">Assistant</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--lp-leaf-ink)]">Assistant</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {results.map(([k, v, f]) => (
             <div key={k} className="lp-calc-out" title={`${k} = ${f}`}>
@@ -80,7 +80,7 @@ export default function Templates() {
             <article key={t.key} className="lp-tpl" data-spot data-reveal="up" style={{ "--d": `${i * 90}ms`, "--i": i }}>
               <div className="lp-tpl-photo">
                 <div className="lp-tpl-parallax" data-parallax="-0.08">
-                  <img src={t.photo} alt="" loading="lazy" />
+                  <img decoding="async" src={t.photo} alt="" loading="lazy" />
                 </div>
                 <span className="lp-tpl-tag">{t.asks[0]}</span>
               </div>

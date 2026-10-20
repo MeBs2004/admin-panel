@@ -19,15 +19,22 @@ export default function Statement() {
       return undefined;
     }
     let raf = 0;
+    let lastP = "";
+    let lastLit = 0;
     const run = () => {
       raf = 0;
       const r = el.getBoundingClientRect();
       const total = r.height - window.innerHeight;
       // no room to scroll through it (very tall window): just show it lit
       const p = total <= 40 ? 1 : Math.min(1, Math.max(0, -r.top / total));
-      el.style.setProperty("--p", p.toFixed(3));
-      const lit = p * spans.length * 1.12;
-      spans.forEach((s, i) => s.classList.toggle("is-lit", i < lit));
+      const pv = p.toFixed(3);
+      if (pv !== lastP) el.style.setProperty("--p", (lastP = pv));
+      // only touch the words whose state changed
+      const lit = Math.min(spans.length, Math.ceil(p * spans.length * 1.12));
+      if (lit !== lastLit) {
+        for (let i = Math.min(lit, lastLit); i < Math.max(lit, lastLit); i += 1) spans[i].classList.toggle("is-lit", i < lit);
+        lastLit = lit;
+      }
     };
     const on = () => {
       if (!raf) raf = requestAnimationFrame(run);

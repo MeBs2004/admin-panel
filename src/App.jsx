@@ -1,69 +1,62 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
-// Admin Panel
-import Login from "./pages/Login.jsx";
-import CompanyLogin from "./pages/CompanyLogin.jsx";
-import CompanySignup from "./pages/CompanySignup.jsx";
-import AcceptInvite from "./pages/AcceptInvite.jsx";
-import PublicInstall from "./pages/PublicInstall.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
-import AuditLogs from "./pages/AuditLogs.jsx";
-import Settings from "./pages/Settings.jsx";
-import Reports from "./pages/Reports.jsx";
-import ComingSoon from "./pages/ComingSoon.jsx";
-import Forbidden from "./pages/Forbidden.jsx";
-import NotFound from "./pages/NotFound.jsx";
-
-import UsersList from "./pages/users/UsersList.jsx";
-import UserDetail from "./pages/users/UserDetail.jsx";
-import RolesPermissions from "./pages/team/RolesPermissions.jsx";
-
-import CompaniesList from "./pages/companies/CompaniesList.jsx";
-import CompanyDetail from "./pages/companies/CompanyDetail.jsx";
-
-import ChatbotsList from "./pages/chatbots/ChatbotsList.jsx";
-import ChatbotDetail from "./pages/chatbots/ChatbotDetail.jsx";
-import ChatbotInstall from "./pages/chatbots/ChatbotInstall.jsx";
-import ChatbotAiSettings from "./pages/chatbots/aiSettings/ChatbotAiSettings.jsx";
-import ChatbotChannels from "./pages/chatbots/ChatbotChannels.jsx";
-import ChatbotKnowledge from "./pages/chatbots/knowledge/ChatbotKnowledge.jsx";
-import CreateChatbotWizard from "./pages/chatbots/create/CreateChatbotWizard.jsx";
-import ChatbotStudio from "./pages/chatbots/studio/ChatbotStudio.jsx";
-import ChatbotBuilder from "./pages/chatbots/builder/ChatbotBuilder.jsx";
-
-import LiveView from "./pages/liveview/LiveView.jsx";
-import TasksList from "./pages/tasks/TasksList.jsx";
-
-import VisitorsList from "./pages/visitors/VisitorsList.jsx";
-import VisitorDetail from "./pages/visitors/VisitorDetail.jsx";
-
-import ConversationsInbox from "./pages/conversations/ConversationsInbox.jsx";
-
-import DeveloperOverview from "./pages/developer/DeveloperOverview.jsx";
-import ApiKeysPage from "./pages/developer/ApiKeysPage.jsx";
-import WebhooksPage from "./pages/developer/WebhooksPage.jsx";
-import UsagePage from "./pages/developer/UsagePage.jsx";
-import ApiDocumentation from "./pages/developer/ApiDocumentation.jsx";
-import DeveloperSettings from "./pages/developer/DeveloperSettings.jsx";
-
-import BillingOverview from "./pages/billing/BillingOverview.jsx";
-import PlansPage from "./pages/billing/PlansPage.jsx";
-import BillingUsagePage from "./pages/billing/UsagePage.jsx";
-import BillingHistoryPage from "./pages/billing/BillingHistoryPage.jsx";
-import BillingSettingsPage from "./pages/billing/BillingSettingsPage.jsx";
-
 import AdminLayout from "./components/layout/AdminLayout.jsx";
 import CompanyLayout from "./components/layout/CompanyLayout.jsx";
 import ProtectedRoute, { PlatformOnly } from "./components/layout/ProtectedRoute.jsx";
+import PageLoader from "./components/ui/PageLoader.jsx";
 
-import CompanyOverview from "./pages/company/CompanyOverview.jsx";
-import CompanySettings from "./pages/company/CompanySettings.jsx";
+// Every page is its own chunk, loaded when it is first opened: the landing
+// page (and each panel) only downloads the code it actually shows.
+const Login = lazy(() => import("./pages/Login.jsx"));
+const CompanyLogin = lazy(() => import("./pages/CompanyLogin.jsx"));
+const CompanySignup = lazy(() => import("./pages/CompanySignup.jsx"));
+const AcceptInvite = lazy(() => import("./pages/AcceptInvite.jsx"));
+const PublicInstall = lazy(() => import("./pages/PublicInstall.jsx"));
+const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
+const AuditLogs = lazy(() => import("./pages/AuditLogs.jsx"));
+const Settings = lazy(() => import("./pages/Settings.jsx"));
+const Reports = lazy(() => import("./pages/Reports.jsx"));
+const ComingSoon = lazy(() => import("./pages/ComingSoon.jsx"));
+const Forbidden = lazy(() => import("./pages/Forbidden.jsx"));
+const NotFound = lazy(() => import("./pages/NotFound.jsx"));
+const UsersList = lazy(() => import("./pages/users/UsersList.jsx"));
+const UserDetail = lazy(() => import("./pages/users/UserDetail.jsx"));
+const RolesPermissions = lazy(() => import("./pages/team/RolesPermissions.jsx"));
+const CompaniesList = lazy(() => import("./pages/companies/CompaniesList.jsx"));
+const CompanyDetail = lazy(() => import("./pages/companies/CompanyDetail.jsx"));
+const ChatbotsList = lazy(() => import("./pages/chatbots/ChatbotsList.jsx"));
+const ChatbotDetail = lazy(() => import("./pages/chatbots/ChatbotDetail.jsx"));
+const ChatbotInstall = lazy(() => import("./pages/chatbots/ChatbotInstall.jsx"));
+const ChatbotAiSettings = lazy(() => import("./pages/chatbots/aiSettings/ChatbotAiSettings.jsx"));
+const ChatbotChannels = lazy(() => import("./pages/chatbots/ChatbotChannels.jsx"));
+const ChatbotKnowledge = lazy(() => import("./pages/chatbots/knowledge/ChatbotKnowledge.jsx"));
+const CreateChatbotWizard = lazy(() => import("./pages/chatbots/create/CreateChatbotWizard.jsx"));
+const ChatbotStudio = lazy(() => import("./pages/chatbots/studio/ChatbotStudio.jsx"));
+const ChatbotBuilder = lazy(() => import("./pages/chatbots/builder/ChatbotBuilder.jsx"));
+const LiveView = lazy(() => import("./pages/liveview/LiveView.jsx"));
+const TasksList = lazy(() => import("./pages/tasks/TasksList.jsx"));
+const VisitorsList = lazy(() => import("./pages/visitors/VisitorsList.jsx"));
+const VisitorDetail = lazy(() => import("./pages/visitors/VisitorDetail.jsx"));
+const ConversationsInbox = lazy(() => import("./pages/conversations/ConversationsInbox.jsx"));
+const DeveloperOverview = lazy(() => import("./pages/developer/DeveloperOverview.jsx"));
+const ApiKeysPage = lazy(() => import("./pages/developer/ApiKeysPage.jsx"));
+const WebhooksPage = lazy(() => import("./pages/developer/WebhooksPage.jsx"));
+const UsagePage = lazy(() => import("./pages/developer/UsagePage.jsx"));
+const ApiDocumentation = lazy(() => import("./pages/developer/ApiDocumentation.jsx"));
+const DeveloperSettings = lazy(() => import("./pages/developer/DeveloperSettings.jsx"));
+const BillingOverview = lazy(() => import("./pages/billing/BillingOverview.jsx"));
+const PlansPage = lazy(() => import("./pages/billing/PlansPage.jsx"));
+const BillingUsagePage = lazy(() => import("./pages/billing/UsagePage.jsx"));
+const BillingHistoryPage = lazy(() => import("./pages/billing/BillingHistoryPage.jsx"));
+const BillingSettingsPage = lazy(() => import("./pages/billing/BillingSettingsPage.jsx"));
+const CompanyOverview = lazy(() => import("./pages/company/CompanyOverview.jsx"));
+const CompanySettings = lazy(() => import("./pages/company/CompanySettings.jsx"));
 
-// The public marketing page is its own chunk, so the panels never load it.
 const Landing = lazy(() => import("./pages/landing/Landing.jsx"));
 
 function App() {
   return (
+    <Suspense fallback={<PageLoader />}>
     <Routes>
       <Route
         path="/"
@@ -253,6 +246,7 @@ function App() {
 
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </Suspense>
   );
 }
 

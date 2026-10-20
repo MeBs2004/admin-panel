@@ -1,7 +1,7 @@
 // Branded full-screen loader: the logo tile with rings pulsing out of it.
-export default function PageLoader({ label = "Loading Nuformly" }) {
+export default function PageLoader({ label = "Loading Nuformly", inline = false }) {
   return (
-    <div className="flex h-screen flex-col items-center justify-center gap-6 bg-[var(--bg)]" role="status" aria-live="polite">
+    <div className={`flex flex-col items-center justify-center gap-6 ${inline ? "h-[60vh]" : "h-screen bg-[var(--bg)]"}`} role="status" aria-live="polite">
       <div className="relative flex h-16 w-16 items-center justify-center">
         <span className="loader-ring absolute inset-0 rounded-2xl bg-primary-400/40" />
         <span className="loader-ring absolute inset-0 rounded-2xl bg-primary-400/30 [animation-delay:.5s]" />

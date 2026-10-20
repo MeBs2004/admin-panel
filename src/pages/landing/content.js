@@ -49,7 +49,7 @@ export const STEPS = [
   },
 ];
 
-const photo = (id) => `https://images.unsplash.com/${id}?w=900&q=70&auto=format&fit=crop`;
+const photo = (id) => `https://images.unsplash.com/${id}?w=640&q=68&auto=format&fit=crop`;
 
 export const TEMPLATES = [
   {

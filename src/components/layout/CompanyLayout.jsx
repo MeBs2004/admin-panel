@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, Suspense } from "react";
+import PageLoader from "../ui/PageLoader.jsx";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { FiMoon, FiLogOut, FiPlusCircle } from "react-icons/fi";
 import CompanySidebar, { ITEMS } from "./CompanySidebar.jsx";
@@ -81,7 +82,10 @@ export default function CompanyLayout() {
         <Header title={title} onOpenSidebar={() => setSidebarOpen(true)} onOpenSearch={() => setPaletteOpen(true)} profilePath="/company/account" loginPath="/company/login" />
         <main ref={mainRef} className="app-aurora min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
           <div key={location.pathname} className="mx-auto h-full max-w-[1600px] animate-fade-in-up">
-            <Outlet />
+            {/* pages load on first visit; the sidebar and header stay put meanwhile */}
+            <Suspense fallback={<PageLoader inline />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
         <ScrollTopButton scrollRef={mainRef} />

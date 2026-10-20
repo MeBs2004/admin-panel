@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FiRefreshCw } from "react-icons/fi";
 import ChatWidgetRenderer from "../../components/preview/ChatWidgetRenderer.jsx";
 import { THEME_PRESETS, fontStylesheetUrl } from "../../config/widgetStyle.js";
-import { ScaledStage, SplitWords } from "./motion.jsx";
+import { ScaledStage, SplitWords, useMedia } from "./motion.jsx";
 import { themed, demoReply } from "./demoBot.js";
 import { COUNTS } from "./content.js";
 
@@ -62,6 +62,8 @@ function Chips({ label, options, value, onChange, render = pretty }) {
 export default function Playground() {
   const [s, setS] = useState({ preset: "emerald", motion: "float-ripple", icon: "chat", win: "elastic", bubble: "rounded", font: "system" });
   const [view, setView] = useState({ mode: "window", n: 0 });
+  const narrow = useMedia("(max-width: 640px)");
+  const stageW = narrow ? 410 : 440;
   const set = (key, mode) => (value) => {
     setS((cur) => ({ ...cur, [key]: value }));
     if (mode) setView((v) => ({ mode, n: mode === v.mode ? v.n : v.n + 1 }));
@@ -159,8 +161,8 @@ export default function Playground() {
                 <FiRefreshCw className="mr-1 inline" /> Replay
               </button>
             </div>
-            <ScaledStage width={440} height={680}>
-              <div className="lp-stage-bg relative h-[680px] w-[440px] overflow-hidden rounded-2xl">
+            <ScaledStage width={stageW} height={680}>
+              <div className="lp-stage-bg relative h-[680px] overflow-hidden rounded-2xl" style={{ width: stageW }}>
                 <ChatWidgetRenderer key={`${view.mode}-${view.n}`} config={config} mode={view.mode} replyFor={demoReply} />
               </div>
             </ScaledStage>

@@ -270,10 +270,10 @@
   transform: translateY(34px);
 }
 .lp [data-reveal="left"] {
-  transform: translateX(-36px);
+  transform: translateX(-24px); /* less than the page margin at every width */
 }
 .lp [data-reveal="right"] {
-  transform: translateX(36px);
+  transform: translateX(24px);
 }
 .lp [data-reveal="scale"] {
   transform: translateY(30px) scale(0.95);
@@ -435,7 +435,8 @@
   display: inline-block;
   width: 0.08em;
   height: 0.85em;
-  margin: 0 0.02em -0.08em;
+  /* net zero width, so typing never nudges the text around it */
+  margin: 0 -0.04em -0.08em;
   background: var(--lp-leaf);
   animation: lp-caret 0.9s steps(1) infinite;
 }
@@ -602,7 +603,7 @@
 .lp-browser-bar em,
 .lp-app-bar em {
   font-style: normal;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--lp-signal);
 }
@@ -812,7 +813,7 @@
   border-radius: 999px;
   background: var(--lp-forest);
   color: #fff;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   animation: lp-pop 0.5s var(--lp-spring) 0.5s both;
 }
@@ -893,7 +894,7 @@
   font-size: 13px;
 }
 .lp-studio-head small {
-  font-size: 11px;
+  font-size: 12px;
   opacity: 0.8;
 }
 .lp-studio-msg {
@@ -1016,6 +1017,9 @@
   .lp-studio-card {
     grid-template-columns: 1fr 500px;
   }
+}
+.lp-studio-card > * {
+  min-width: 0;
 }
 .lp-studio-controls {
   display: grid;
@@ -1234,7 +1238,7 @@
   font-size: 14px;
 }
 .lp-app-list small {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--lp-muted);
 }
 .lp-app-avatar {
@@ -1253,7 +1257,7 @@
   margin-top: 6px;
   padding: 2px 8px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 .lp-tag-ai {
@@ -1377,7 +1381,7 @@
 /* ── Channels orbit ── */
 .lp-orbit-wrap {
   position: relative;
-  width: min(100%, 480px);
+  width: min(100%, 440px);
   aspect-ratio: 1;
   margin: 0 auto;
   container-type: inline-size;
@@ -1419,7 +1423,7 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: rotate(calc(360deg / var(--n) * var(--i))) translateY(-42cqw) rotate(calc(-360deg / var(--n) * var(--i)));
+  transform: rotate(calc(360deg / var(--n) * var(--i))) translateY(-38cqw) rotate(calc(-360deg / var(--n) * var(--i))) translate(-50%, -50%);
 }
 .lp-channel {
   display: flex;
@@ -1431,7 +1435,6 @@
   border: 1px solid var(--lp-line);
   box-shadow: 0 14px 30px -18px rgba(11, 31, 23, 0.5);
   white-space: nowrap;
-  translate: -50% -50%;
   animation: lp-spin 50s linear infinite reverse;
 }
 .lp-channel svg {
@@ -1449,7 +1452,7 @@
   padding: 1px 7px;
   border-radius: 999px;
   background: #eef1f0;
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--lp-muted);
 }
@@ -1717,7 +1720,8 @@
   animation: lp-card-in 0.8s var(--lp-spring) both, lp-card-float 6s ease-in-out infinite;
   animation-delay: var(--d), calc(var(--d) + 0.8s);
 }
-@media (min-width: 1024px) {
+/* only where there's room around the demo for them to float without crowding it */
+@media (min-width: 1200px) {
   .lp-fcard {
     display: flex;
   }
@@ -1966,7 +1970,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: 12px;
   opacity: 0.85;
 }
 .lp-ph-head small i {
@@ -2062,7 +2066,7 @@
 .lp-ph-img small {
   display: block;
   padding: 5px 9px;
-  font-size: 11px;
+  font-size: 12px;
   color: #d1fae5;
 }
 .lp-ph-wave {
@@ -2112,7 +2116,7 @@
   justify-content: center;
   gap: 6px;
   padding: 4px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: #b4490c;
   animation: lp-msg-in 0.5s var(--lp-spring) both;
@@ -2238,7 +2242,7 @@
   left: 50%;
   top: 50%;
   width: 2px;
-  height: 36cqw;
+  height: 32cqw;
   margin-left: -1px;
   transform-origin: top center;
   transform: rotate(calc(180deg + 360deg / var(--n) * var(--i)));
@@ -2405,7 +2409,7 @@
 
 /* things lean with scroll speed, then spring back */
 .lp-skew {
-  transform: skewY(calc(var(--v, 0) * -2.2deg));
+  /* the scroll engine sets the lean directly (no page-wide custom property) */
   transform-origin: 50% 50%;
 }
 
@@ -2434,8 +2438,12 @@
 
 /* the phone straightens up from a tilt */
 .lp-phone-band .lp-phone {
-  rotate: calc((1 - var(--p, 1)) * 12deg);
   translate: 0 calc((1 - var(--p, 1)) * 110px);
+}
+@media (min-width: 1024px) {
+  .lp-phone-band .lp-phone {
+    rotate: calc((1 - var(--p, 1)) * 12deg);
+  }
 }
 
 /* stat rings turn in as they arrive */
@@ -2508,8 +2516,7 @@
     radial-gradient(closest-side at 35% 40%, rgba(52, 211, 153, 0.26), transparent),
     radial-gradient(closest-side at 70% 60%, rgba(99, 102, 241, 0.14), transparent),
     radial-gradient(closest-side at 45% 75%, rgba(242, 113, 28, 0.12), transparent);
-  transform: translate3d(calc(var(--sp, 0) * -62vw), calc(var(--sp, 0) * 85vh), 0) rotate(calc(var(--sp, 0) * 300deg));
-  will-change: transform;
+  will-change: transform; /* moved by the scroll engine */
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2545,7 +2552,7 @@
 /* phones: the channel orbit stays on screen */
 @media (max-width: 640px) {
   .lp-orbit-items .lp-orbit-item {
-    transform: rotate(calc(360deg / var(--n) * var(--i))) translateY(-33cqw) rotate(calc(-360deg / var(--n) * var(--i)));
+    transform: rotate(calc(360deg / var(--n) * var(--i))) translateY(-33cqw) rotate(calc(-360deg / var(--n) * var(--i))) translate(-50%, -50%);
   }
   .lp-spoke {
     height: 30cqw;
@@ -2570,7 +2577,7 @@
 }
 
 /* comfortable touch targets on phones and touch screens */
-@media (max-width: 700px), (pointer: coarse) {
+@media (max-width: 1024px), (pointer: coarse) {
   .lp-chip {
     min-height: 40px;
     padding: 8px 14px;
@@ -2585,7 +2592,7 @@
   .lp-tpl-cta {
     min-height: 40px;
   }
-  .lp footer nav a {
+  .lp footer a {
     display: inline-flex;
     align-items: center;
     min-height: 40px;
@@ -2643,4 +2650,68 @@
   display: flex;
   justify-content: center;
   margin-top: 16px;
+}
+
+/* phones: the two hero buttons span the width — easy to hit with a thumb */
+@media (max-width: 640px) {
+  .lp-hero-ctas > * {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+  .lp-studio-preview {
+    padding: 14px;
+  }
+}
+
+/* tablets: one-column hero with room to spare — a bigger headline in a narrower bubble */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .lp-h1 {
+    font-size: clamp(2.35rem, min(7.4vw, 9.6vh), 4.6rem);
+  }
+  .lp-hero-copy .lp-bubble {
+    max-width: 600px;
+  }
+  .lp-lede {
+    max-width: 640px;
+  }
+}
+
+/* the inbox chart: lines draw themselves, the fill fades in */
+.lp-mini-area {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.lp-mini-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  stroke-linecap: round;
+}
+.lp-mini-fill {
+  opacity: 0;
+}
+.lp-mini-area.is-drawn .lp-mini-line {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1.6s var(--lp-ease);
+}
+.lp-mini-area.is-drawn .lp-mini-line.is-2 {
+  transition-duration: 1.9s;
+  transition-delay: 0.2s;
+}
+.lp-mini-area.is-drawn .lp-mini-fill {
+  opacity: 1;
+  transition: opacity 1.2s ease 0.5s;
+}
+
+/* phones & tablets: side reveals travel less than the page margin, so nothing starts off-screen */
+@media (max-width: 1023px) {
+  .lp [data-reveal="left"] {
+    transform: translateX(-14px);
+  }
+  .lp [data-reveal="right"] {
+    transform: translateX(14px);
+  }
+  .lp [data-reveal][data-in] {
+    transform: none;
+  }
 }

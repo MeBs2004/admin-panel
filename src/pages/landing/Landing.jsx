@@ -235,7 +235,8 @@ export default function Landing() {
   useEffect(() => {
     const prevTitle = document.title;
     document.title = "Nuformly — AI chat assistant for your website";
-    let link = document.querySelector(`link[href="${FONTS_HREF}"]`);
+    // index.html preloads these; make sure they're applied as a stylesheet either way
+    let link = document.querySelector(`link[rel="stylesheet"][href="${FONTS_HREF}"]`);
     if (!link) {
       link = document.createElement("link");
       link.rel = "stylesheet";

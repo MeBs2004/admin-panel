@@ -1,5 +1,4 @@
 import { useRef } from "react";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { FiInbox, FiUserCheck, FiActivity, FiUsers, FiPieChart } from "react-icons/fi";
 import { useInView, CountUp, SplitWords } from "./motion.jsx";
 
@@ -20,6 +19,39 @@ const FEATURES = [
   { icon: FiUsers, title: "Visitor profiles", body: "Names, emails and form answers saved with each chat." },
   { icon: FiPieChart, title: "Reports", body: "Busiest days, handoff rate and AI usage at a glance." },
 ];
+
+/**
+ * A hand-drawn SVG area chart: no chart library on the landing page, and it
+ * draws itself (stroke reveal) once scrolled into view.
+ */
+function MiniArea({ draw }) {
+  const W = 300;
+  const H = 110;
+  const max = Math.max(...SERIES.map((d) => d.chats)) * 1.1;
+  const pts = (key) => SERIES.map((d, i) => [(i / (SERIES.length - 1)) * W, H - (d[key] / max) * (H - 8)]);
+  // smooth curve through the points
+  const path = (p) =>
+    p.reduce((acc, [x, y], i) => {
+      if (!i) return `M${x},${y}`;
+      const [px, py] = p[i - 1];
+      const cx = (px + x) / 2;
+      return `${acc} C${cx},${py} ${cx},${y} ${x},${y}`;
+    }, "");
+  const chats = path(pts("chats"));
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className={`lp-mini-area ${draw ? "is-drawn" : ""}`} role="img" aria-label="Conversations rising over 14 days (sample data)">
+      <defs>
+        <linearGradient id="lpArea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#1A8A56" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#1A8A56" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={`${chats} L${W},${H} L0,${H} Z`} fill="url(#lpArea)" className="lp-mini-fill" />
+      <path d={chats} fill="none" stroke="#0D5537" strokeWidth="2.5" pathLength="1" className="lp-mini-line" />
+      <path d={path(pts("handoffs"))} fill="none" stroke="#F2711C" strokeWidth="2" pathLength="1" className="lp-mini-line is-2" />
+    </svg>
+  );
+}
 
 export default function Insights() {
   const chartRef = useRef(null);
@@ -48,7 +80,7 @@ export default function Insights() {
           <div className="grid lg:grid-cols-[300px_1fr_300px]">
             <ul className="lp-app-list">
               {THREADS.map((t, i) => (
-                <li key={t.name} className={i === 1 ? "is-on" : ""} data-reveal="left" style={{ "--d": `${200 + i * 90}ms` }}>
+                <li key={t.name} className={i === 1 ? "is-on" : ""} data-reveal="up" style={{ "--d": `${200 + i * 90}ms` }}>
                   <span className="lp-app-avatar">{t.name[0]}</span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center justify-between">
@@ -103,22 +135,7 @@ export default function Insights() {
                   <CountUp to={502} />
                 </p>
                 <div className="mt-2 h-[110px]">
-                  {chartIn && (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={SERIES} margin={{ top: 6, right: 0, left: 0, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="lpArea" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#1A8A56" stopOpacity={0.45} />
-                            <stop offset="100%" stopColor="#1A8A56" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <XAxis dataKey="day" hide />
-                        <Tooltip cursor={{ stroke: "#1A8A56", strokeDasharray: 3 }} contentStyle={{ borderRadius: 12, border: "1px solid #dfe9e3", fontSize: 12 }} />
-                        <Area type="monotone" dataKey="chats" name="Chats" stroke="#0D5537" strokeWidth={2.5} fill="url(#lpArea)" animationDuration={1600} />
-                        <Area type="monotone" dataKey="handoffs" name="Handoffs" stroke="#F2711C" strokeWidth={2} fill="transparent" animationDuration={1900} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  )}
+                  <MiniArea draw={chartIn} />
                 </div>
               </div>
             </div>

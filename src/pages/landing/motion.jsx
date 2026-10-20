@@ -99,7 +99,8 @@ export function useScrollProgress() {
     const read = () => {
       raf = 0;
       const max = document.documentElement.scrollHeight - window.innerHeight;
-      setP(max > 0 ? window.scrollY / max : 0);
+      // quantised, so the nav re-renders a few hundred times per page, not every pixel
+      setP(max > 0 ? Math.round((window.scrollY / max) * 400) / 400 : 0);
       setScrolled(window.scrollY > 12);
     };
     const onScroll = () => {
@@ -197,7 +198,7 @@ export function ScaledStage({ width, height, fitViewport = 0, className = "", ch
  *  - [data-progress]        gets --p (0 → 1) as it enters the viewport; children animate off it
  *  - [data-scrub]           gets --s (0 → 1) as the viewport centre passes through it
  *  - [data-exit]            gets --e (0 → 1) as it leaves through the top
- *  - the root gets --v (scroll speed, -1…1) and --sp (page progress, 0…1)
+ *  - .lp-skew elements lean with scroll speed; .lp-aura travels with page progress
  */
 export function useScrollFx(rootRef) {
   useEffect(() => {
@@ -205,6 +206,19 @@ export function useScrollFx(rootRef) {
     if (!root || prefersReducedMotion()) return undefined;
     // every section mounts in one commit, so the element lists can be read once
     const lists = Object.fromEntries(["parallax", "drift", "progress", "scrub", "exit"].map((k) => [k, [...root.querySelectorAll(`[data-${k}]`)]]));
+    const skews = [...root.querySelectorAll(".lp-skew")];
+    const aura = root.querySelector(".lp-aura");
+    // Only write what changed: an unchanged custom property still makes the
+    // browser re-style that element's whole subtree.
+    const last = new Map();
+    const put = (el, prop, value) => {
+      const key = el;
+      const prev = last.get(key);
+      if (prev && prev[prop] === value) return;
+      last.set(key, { ...prev, [prop]: value });
+      if (prop === "transform") el.style.transform = value;
+      else el.style.setProperty(prop, value);
+    };
     let raf = 0;
     let lastY = window.scrollY;
     let lastT = performance.now();
@@ -213,49 +227,52 @@ export function useScrollFx(rootRef) {
     const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
     const run = () => {
       raf = 0;
+      // ── reads (all layout queries first, so the browser lays out once) ──
       const vh = window.innerHeight;
       const y = window.scrollY;
+      const max = document.documentElement.scrollHeight - vh;
+      const rects = {
+        parallax: lists.parallax.map((el) => el.parentElement.getBoundingClientRect()),
+        drift: lists.drift.map((el) => el.parentElement.getBoundingClientRect()),
+        progress: lists.progress.map((el) => el.getBoundingClientRect()),
+        scrub: lists.scrub.map((el) => el.getBoundingClientRect()),
+        exit: lists.exit.map((el) => el.getBoundingClientRect()),
+      };
+      // ── maths ──
       const now = performance.now();
-      // scroll speed → --v (-1…1), eased back to 0 when scrolling stops
       const dt = Math.max(16, now - lastT);
       target = clamp((y - lastY) / dt / 2.5, -1, 1);
       lastY = y;
       lastT = now;
       vel += (target - vel) * 0.18;
       if (Math.abs(vel) < 0.004) vel = 0;
-      root.style.setProperty("--v", vel.toFixed(3));
-      const max = document.documentElement.scrollHeight - vh;
-      root.style.setProperty("--sp", (max > 0 ? clamp(y / max) : 0).toFixed(4));
-
-      lists.parallax.forEach((el) => {
-        const r = el.parentElement.getBoundingClientRect();
+      // ── writes ──
+      const skew = vel ? `skewY(${(vel * -2.2).toFixed(2)}deg)` : "";
+      skews.forEach((el) => put(el, "transform", skew));
+      if (aura) {
+        const sp = max > 0 ? clamp(y / max) : 0;
+        put(aura, "transform", `translate3d(${(sp * -62).toFixed(2)}vw, ${(sp * 85).toFixed(2)}vh, 0) rotate(${(sp * 300).toFixed(1)}deg)`);
+      }
+      lists.parallax.forEach((el, i) => {
+        const r = rects.parallax[i];
         if (r.bottom < -200 || r.top > vh + 200) return;
         const off = (r.top + r.height / 2 - vh / 2) * Number(el.dataset.parallax || 0.1);
-        el.style.transform = `translate3d(0, ${off.toFixed(1)}px, 0)`;
+        put(el, "transform", `translate3d(0, ${off.toFixed(1)}px, 0)`);
       });
-      lists.drift.forEach((el) => {
-        const r = el.parentElement.getBoundingClientRect();
+      lists.drift.forEach((el, i) => {
+        const r = rects.drift[i];
         if (r.bottom < -200 || r.top > vh + 200) return;
         // measured from the viewport centre and clamped, so any window size stays in range
         const lim = Number(el.dataset.driftMax || 260);
         const x = clamp((r.top + r.height / 2 - vh / 2) * Number(el.dataset.drift || 0.2), -lim, lim);
-        el.style.transform = `translate3d(${x.toFixed(1)}px, 0, 0)`;
+        put(el, "transform", `translate3d(${x.toFixed(1)}px, 0, 0)`);
       });
       // --p: 0 → 1 while entering the viewport
-      lists.progress.forEach((el) => {
-        const r = el.getBoundingClientRect();
-        el.style.setProperty("--p", clamp((vh - r.top) / (vh * 0.8)).toFixed(3));
-      });
+      lists.progress.forEach((el, i) => put(el, "--p", clamp((vh - rects.progress[i].top) / (vh * 0.8)).toFixed(3)));
       // --s: 0 → 1 while the viewport's centre line crosses the element
-      lists.scrub.forEach((el) => {
-        const r = el.getBoundingClientRect();
-        el.style.setProperty("--s", clamp((vh * 0.55 - r.top) / (r.height || 1)).toFixed(3));
-      });
+      lists.scrub.forEach((el, i) => put(el, "--s", clamp((vh * 0.55 - rects.scrub[i].top) / (rects.scrub[i].height || 1)).toFixed(3)));
       // --e: 0 → 1 while the element scrolls off the top
-      lists.exit.forEach((el) => {
-        const r = el.getBoundingClientRect();
-        el.style.setProperty("--e", clamp(-r.top / (r.height * 0.85 || 1)).toFixed(3));
-      });
+      lists.exit.forEach((el, i) => put(el, "--e", clamp(-rects.exit[i].top / (rects.exit[i].height * 0.85 || 1)).toFixed(3)));
       if (vel !== 0) raf = requestAnimationFrame(run);
     };
     const onScroll = () => {
@@ -309,4 +326,19 @@ export function CursorGlow() {
     };
   }, []);
   return <div ref={ref} className="lp-cursor-glow" aria-hidden="true" />;
+}
+
+/** Live media-query match (e.g. "(max-width: 640px)"). */
+export function useMedia(query) {
+  const get = () => typeof window !== "undefined" && !!window.matchMedia?.(query).matches;
+  const [match, setMatch] = useState(get);
+  useEffect(() => {
+    const mq = window.matchMedia?.(query);
+    if (!mq) return undefined;
+    const on = () => setMatch(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, [query]);
+  return match;
 }

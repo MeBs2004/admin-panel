@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { FiArrowRight, FiMessageCircle, FiMail, FiUserCheck, FiGlobe } from "react-icons/fi";
 import ChatWidgetRenderer from "../../components/preview/ChatWidgetRenderer.jsx";
 import Mascot from "./Mascot.jsx";
-import { ScaledStage, prefersReducedMotion } from "./motion.jsx";
+import { ScaledStage, prefersReducedMotion, useMedia } from "./motion.jsx";
 import { DEMO_CONFIG, demoReply } from "./demoBot.js";
 import nsLogo from "../../assets/nuformsocial/logo.svg";
 import nsRocket from "../../assets/nuformsocial/rocket.png";
@@ -108,36 +108,42 @@ function TypedHeadline() {
 }
 
 /** The demo runs on a mock of nuformsocial.com — real name, logo, artwork and figures from that site. */
-function MockSite() {
+function MockSite({ compact }) {
   return (
     <div className="absolute inset-0 flex flex-col bg-white">
       <div className="flex items-center justify-between px-6 py-4">
-        <img src={nsLogo} alt="Nuform Social" className="h-[26px] w-auto" />
+        <img decoding="async" src={nsLogo} alt="Nuform Social" className="h-[26px] w-auto" />
         <div className="flex items-center gap-4 text-[11.5px] font-medium text-gray-500">
-          <span>Services</span>
-          <span>Portfolio</span>
-          <span>Blogs</span>
+          {!compact && (
+            <>
+              <span>Services</span>
+              <span>Portfolio</span>
+              <span>Blogs</span>
+            </>
+          )}
           <span className="rounded-full bg-[#B5470B] px-3 py-1.5 font-semibold text-white">Book a Meeting</span>
         </div>
       </div>
       {/* artwork on the left: it stays visible beside the open chat window */}
       <div className="relative mx-6 h-[262px] overflow-hidden rounded-2xl bg-gradient-to-br from-[#f4f1fb] via-white to-[#eef8f2]">
-        <img src={nsRocket} alt="" className="absolute -left-8 bottom-0 h-[250px] w-auto" />
-        <div className="absolute right-6 top-7 max-w-[240px] text-right">
+        <img decoding="async" src={nsRocket} alt="" className={`absolute -left-8 bottom-0 w-auto ${compact ? "h-[170px]" : "h-[250px]"}`} />
+        <div className={`absolute right-6 top-7 text-right ${compact ? "max-w-[190px]" : "max-w-[240px]"}`}>
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#B5470B]">Digital marketing · Delhi NCR</p>
-          <p className="mt-2 text-[24px] font-bold leading-[1.08] text-[#1f1d2b]">Empowering your growth with smart, scalable solutions</p>
+          <p className={`mt-2 font-bold leading-[1.08] text-[#1f1d2b] ${compact ? "text-[19px]" : "text-[24px]"}`}>Empowering your growth with smart, scalable solutions</p>
           <span className="mt-4 inline-block rounded-full bg-[#0F7A47] px-4 py-2 text-[11.5px] font-semibold text-white">Book a Free Consultation</span>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-3 px-6 pt-4">
+      <div className={`grid gap-3 px-6 pt-4 ${compact ? "grid-cols-2" : "grid-cols-3"}`}>
         {[
           ["200+", "Websites delivered"],
           ["500+", "Campaigns managed"],
           ["95.5%", "Satisfied clients"],
-        ].map(([n, l]) => (
+        ]
+          .slice(0, compact ? 2 : 3)
+          .map(([n, l]) => (
           <div key={l} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
             <p className="text-[18px] font-bold text-[#0F7A47]">{n}</p>
-            <p className="text-[11px] font-medium text-gray-600">{l}</p>
+            <p className="text-xs font-medium text-gray-600">{l}</p>
           </div>
         ))}
       </div>
@@ -178,6 +184,9 @@ const FLOAT_CARDS = [
 
 export default function Hero({ startHref }) {
   const heroRef = useRef(null);
+  // phones: a narrower demo stage (the chat window still fits), so it's drawn bigger
+  const narrow = useMedia("(max-width: 640px)");
+  const stageW = narrow ? 410 : 560;
   usePointerDepth(heroRef);
   const [demo, setDemo] = useState({ mode: "widget", n: 0 });
   // The demo opens itself a few seconds in, with one of the real auto-open animations.
@@ -228,7 +237,7 @@ export default function Hero({ startHref }) {
             Nuformly builds an AI assistant that knows your business, looks like your brand and answers visitors on your website — day and night. Set it up in an afternoon, then paste one line of code.
           </p>
 
-          <div className="lp-load mt-7 flex flex-wrap items-center gap-3" style={{ "--d": "520ms" }}>
+          <div className="lp-load lp-hero-ctas mt-7 flex flex-wrap items-center gap-3" style={{ "--d": "520ms" }}>
             <Link to={startHref} className="lp-btn lp-btn-primary" data-magnet>
               Start free <FiArrowRight />
             </Link>
@@ -262,9 +271,9 @@ export default function Hero({ startHref }) {
               <span>nuformsocial.com</span>
               <em>Live demo</em>
             </div>
-            <ScaledStage width={560} height={690} fitViewport={150}>
-              <div className="relative h-[690px] w-[560px] overflow-hidden">
-                <MockSite />
+            <ScaledStage width={stageW} height={690} fitViewport={150}>
+              <div className="relative h-[690px] overflow-hidden" style={{ width: stageW }}>
+                <MockSite compact={narrow} />
                 <ChatWidgetRenderer key={`${demo.mode}-${demo.n}`} config={config} mode={demo.mode} replyFor={demoReply} />
               </div>
             </ScaledStage>

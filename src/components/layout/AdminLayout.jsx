@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, Suspense } from "react";
+import PageLoader from "../ui/PageLoader.jsx";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { FiMoon, FiLogOut, FiPlusCircle } from "react-icons/fi";
 import Sidebar, { NAV_GROUPS } from "./Sidebar.jsx";
@@ -107,7 +108,10 @@ export default function AdminLayout() {
               so shorter or taller pages still render/scroll exactly as
               before via <main>'s own overflow-y-auto. */}
           <div key={location.pathname} className="mx-auto h-full max-w-[1600px] animate-fade-in-up">
-            <Outlet />
+            {/* pages load on first visit; the sidebar and header stay put meanwhile */}
+            <Suspense fallback={<PageLoader inline />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
         <ScrollTopButton scrollRef={mainRef} />

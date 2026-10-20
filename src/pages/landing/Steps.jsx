@@ -47,7 +47,7 @@ function KnowledgeVisual() {
         ))}
       </div>
       <div className="lp-answer">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--lp-leaf-ink)]">Visitor asked: “Do you do SEO?”</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--lp-leaf-ink)]">Visitor asked: “Do you do SEO?”</p>
         <p className="mt-1.5 text-sm text-[var(--lp-ink)]">Yes! SEO is one of our core services, alongside social media and performance marketing. Shall I book you a free consultation?</p>
       </div>
     </div>
@@ -85,7 +85,7 @@ function StudioVisual() {
         </div>
         {["Launcher size", "Corner radius", "Font size"].map((l, n) => (
           <div key={l}>
-            <p className="text-[11px] font-medium text-[var(--lp-muted)]">{l}</p>
+            <p className="text-xs font-medium text-[var(--lp-muted)]">{l}</p>
             <div className="lp-slider">
               <span style={{ width: `${30 + ((i * 17 + n * 23) % 60)}%` }} />
             </div>

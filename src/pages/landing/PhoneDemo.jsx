@@ -42,7 +42,7 @@ function Bubble({ m }) {
       )}
       {m.kind === "image" ? (
         <div className="lp-ph-img">
-          <img src={nsServices} alt="" />
+          <img decoding="async" src={nsServices} alt="" />
           <small>{m.text}</small>
         </div>
       ) : m.kind === "voice" ? (
