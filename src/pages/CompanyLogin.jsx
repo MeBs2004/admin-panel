@@ -40,7 +40,7 @@ export default function CompanyLogin() {
     setLoading(false);
 
     if (!result.success) {
-      setError(result.message);
+      setError(result.refused ? "Invalid details." : result.message);
       return;
     }
 

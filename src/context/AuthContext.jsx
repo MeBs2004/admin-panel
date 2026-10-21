@@ -73,7 +73,13 @@ export function AuthProvider({ children }) {
       setUser(res.data.user);
       return { success: true, user: res.data.user };
     } catch (error) {
-      return { success: false, message: getErrorMessage(error) };
+      // `refused`: the server said the credentials don't work here — a wrong
+      // password, or an account used on the wrong login page (old servers say
+      // that with a USE_* code, new ones with a plain 401). Login pages show
+      // one generic message for it, so they never reveal which case it was.
+      const data = error?.response?.data;
+      const refused = error?.response?.status === 401 || String(data?.code || "").startsWith("USE_");
+      return { success: false, message: getErrorMessage(error), refused };
     }
   };
 
