@@ -63,15 +63,17 @@ export function AuthProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const login = async (email, password) => {
+  // `panel`: "platform" (/login — super admins only) or "company"
+  // (/company/login — company accounts only). The backend enforces it.
+  const login = async (email, password, panel) => {
     try {
-      const res = await api.post("/auth/login", { email, password });
+      const res = await api.post("/auth/login", { email, password, ...(panel ? { panel } : {}) });
       localStorage.setItem("nuformly-token", res.data.token);
       localStorage.setItem("nuformly-user", JSON.stringify(res.data.user));
       setUser(res.data.user);
       return { success: true, user: res.data.user };
     } catch (error) {
-      return { success: false, message: getErrorMessage(error) };
+      return { success: false, message: getErrorMessage(error), code: error?.response?.data?.code };
     }
   };
 

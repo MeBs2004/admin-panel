@@ -18,11 +18,14 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
+  // set when a company account tried this (super-admin-only) login
+  const [wrongDoor, setWrongDoor] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setWrongDoor(false);
 
     if (!EMAIL_RE.test(email)) {
       setError("Please enter a valid email address.");
@@ -30,11 +33,12 @@ export default function Login() {
     }
 
     setLoading(true);
-    const result = await login(email, password);
+    const result = await login(email, password, "platform");
     setLoading(false);
 
     if (!result.success) {
       setError(result.message);
+      setWrongDoor(result.code === "USE_COMPANY_LOGIN");
       return;
     }
 
@@ -119,6 +123,11 @@ export default function Login() {
             {error && (
               <p className="animate-fade-in-up rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600 dark:bg-red-950 dark:text-red-300">
                 {error}
+                {wrongDoor && (
+                  <Link to="/company/login" className="mt-1 block font-semibold underline">
+                    Go to the company login →
+                  </Link>
+                )}
               </p>
             )}
 

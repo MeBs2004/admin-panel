@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext.jsx";
-import { useToast } from "../context/ToastContext.jsx";
 import Button from "../components/ui/Button.jsx";
 import Input from "../components/ui/Input.jsx";
 import AuthShell from "../components/ui/AuthShell.jsx";
@@ -18,7 +17,6 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // staff shell.
 export default function CompanyLogin() {
   const { login } = useAuth();
-  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -26,11 +24,14 @@ export default function CompanyLogin() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  // set when a super-admin account tried this (company-only) login
+  const [wrongDoor, setWrongDoor] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setWrongDoor(false);
 
     if (!EMAIL_RE.test(email)) {
       setError("Please enter a valid email address.");
@@ -38,21 +39,15 @@ export default function CompanyLogin() {
     }
 
     setLoading(true);
-    const result = await login(email, password);
+    const result = await login(email, password, "company");
     setLoading(false);
 
     if (!result.success) {
       setError(result.message);
+      setWrongDoor(result.code === "USE_ADMIN_LOGIN");
       return;
     }
 
-    // Super-admin accounts never use the Company Panel: they're told so and
-    // taken to their own dashboard.
-    if (result.user?.role === "SUPER_ADMIN") {
-      showToast("This is a super-admin account — opening your admin dashboard. Next time, sign in at /login.");
-      navigate("/dashboard", { replace: true });
-      return;
-    }
     navigate(location.state?.from || "/company/overview", { replace: true });
   };
 
@@ -114,6 +109,11 @@ export default function CompanyLogin() {
             {error && (
               <p className="animate-fade-in-up rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600 dark:bg-red-950 dark:text-red-300">
                 {error}
+                {wrongDoor && (
+                  <Link to="/login" className="mt-1 block font-semibold underline">
+                    Go to the admin login →
+                  </Link>
+                )}
               </p>
             )}
 
