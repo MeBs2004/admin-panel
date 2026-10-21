@@ -73,7 +73,7 @@ export function AuthProvider({ children }) {
       setUser(res.data.user);
       return { success: true, user: res.data.user };
     } catch (error) {
-      return { success: false, message: getErrorMessage(error), code: error?.response?.data?.code };
+      return { success: false, message: getErrorMessage(error) };
     }
   };
 

@@ -24,14 +24,11 @@ export default function CompanyLogin() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  // set when a super-admin account tried this (company-only) login
-  const [wrongDoor, setWrongDoor] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setWrongDoor(false);
 
     if (!EMAIL_RE.test(email)) {
       setError("Please enter a valid email address.");
@@ -44,7 +41,6 @@ export default function CompanyLogin() {
 
     if (!result.success) {
       setError(result.message);
-      setWrongDoor(result.code === "USE_ADMIN_LOGIN");
       return;
     }
 
@@ -109,11 +105,6 @@ export default function CompanyLogin() {
             {error && (
               <p className="animate-fade-in-up rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600 dark:bg-red-950 dark:text-red-300">
                 {error}
-                {wrongDoor && (
-                  <Link to="/login" className="mt-1 block font-semibold underline">
-                    Go to the admin login →
-                  </Link>
-                )}
               </p>
             )}
 
