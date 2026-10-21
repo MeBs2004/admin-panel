@@ -69,7 +69,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem("nuformly-token", res.data.token);
       localStorage.setItem("nuformly-user", JSON.stringify(res.data.user));
       setUser(res.data.user);
-      return { success: true };
+      return { success: true, user: res.data.user };
     } catch (error) {
       return { success: false, message: getErrorMessage(error) };
     }

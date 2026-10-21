@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
-import { isCompanyPanelPath, toPanelPath } from "../../utils/panelPath.js";
+import { isCompanyPanelPath, toPanelPath, platformEquivalent } from "../../utils/panelPath.js";
 import PageLoader from "../ui/PageLoader.jsx";
 
 const Loading = () => <PageLoader />;
@@ -39,6 +39,25 @@ export function PlatformOnly({ children }) {
 
   if (user.role !== "SUPER_ADMIN") {
     return <Navigate to={toPanelPath(pathname + search, true)} replace />;
+  }
+
+  return children;
+}
+
+/**
+ * The Company Panel is for company accounts only. A super admin who opens a
+ * company URL (old bookmark, shared link) is sent to the same page in the
+ * super-admin panel — the two panels never mix.
+ */
+export function CompanyOnly({ children }) {
+  const { user, loading } = useAuth();
+  const { pathname, search } = useLocation();
+
+  if (loading) return <Loading />;
+  if (!user) return <Navigate to="/company/login" replace />;
+
+  if (user.role === "SUPER_ADMIN") {
+    return <Navigate to={platformEquivalent(pathname + search)} replace />;
   }
 
   return children;

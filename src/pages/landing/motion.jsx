@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import Lenis from "lenis";
+import "lenis/dist/lenis.css";
 
 export const prefersReducedMotion = () =>
   typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -341,4 +343,63 @@ export function useMedia(query) {
     return () => mq.removeEventListener("change", on);
   }, [query]);
   return match;
+}
+
+// ── Smooth scrolling (Lenis) ────────────────────────────────────────
+// One instance for the landing page. Lenis drives the real window scroll,
+// so every scroll listener on the page (reveals, the scroll engine, the
+// statement, the nav) keeps working unchanged — it just glides.
+let lenis = null;
+export const NAV_OFFSET = 84; // the fixed nav's height + a little air
+
+/**
+ * Smoothly scroll to an element (or y), through Lenis when it's running.
+ * Sections carry `scroll-margin-top` (the nav height), which Lenis already
+ * honours — `offset` is only for extra adjustment on top of that.
+ */
+export function scrollToTarget(target, { offset = 0, immediate = false } = {}) {
+  if (lenis) return lenis.scrollTo(target, { offset, immediate });
+  const behavior = immediate || prefersReducedMotion() ? "auto" : "smooth";
+  if (typeof target === "number") return window.scrollTo({ top: target, behavior });
+  const margin = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
+  window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - margin + offset, behavior });
+}
+
+export function useLenis(rootRef) {
+  useEffect(() => {
+    // reduced motion: keep the browser's own scrolling
+    if (prefersReducedMotion()) return undefined;
+    lenis = new Lenis({
+      lerp: 0.1, // weight: higher = snappier
+      wheelMultiplier: 1,
+      autoRaf: true,
+      // touch keeps native momentum scrolling (Lenis only smooths wheel/trackpad)
+      // A panel that can scroll on its own (the live widget's message list)
+      // keeps native scrolling; everywhere else the page glides.
+      prevent: (node) => {
+        if (!(node instanceof HTMLElement) || node === document.body) return false;
+        const oy = getComputedStyle(node).overflowY;
+        return (oy === "auto" || oy === "scroll") && node.scrollHeight > node.clientHeight + 1;
+      },
+    });
+    // In-page links (#how, #pricing, back to top…) glide via Lenis and land
+    // below the fixed nav; the skip link keeps its native focus jump.
+    const onClick = (e) => {
+      const a = e.target.closest?.('a[href^="#"]');
+      if (!a || a.classList.contains("lp-skip") || e.defaultPrevented || e.metaKey || e.ctrlKey) return;
+      const id = a.getAttribute("href").slice(1);
+      const el = id && document.getElementById(id);
+      if (!el) return;
+      e.preventDefault();
+      scrollToTarget(id === "top" ? 0 : el);
+      history.replaceState(null, "", `#${id}`);
+    };
+    const root = rootRef.current;
+    root?.addEventListener("click", onClick);
+    return () => {
+      root?.removeEventListener("click", onClick);
+      lenis?.destroy();
+      lenis = null;
+    };
+  }, [rootRef]);
 }

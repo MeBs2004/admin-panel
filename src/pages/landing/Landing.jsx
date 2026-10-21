@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiMenu, FiX, FiArrowRight, FiArrowUp } from "react-icons/fi";
-import { useAuth } from "../../context/AuthContext.jsx";
+import { FiMenu, FiX, FiArrowUp } from "react-icons/fi";
 import Mascot from "./Mascot.jsx";
 import Hero from "./Hero.jsx";
 import Steps from "./Steps.jsx";
@@ -10,9 +9,8 @@ import Templates from "./Templates.jsx";
 import Insights from "./Insights.jsx";
 import Statement from "./Statement.jsx";
 import PhoneDemo from "./PhoneDemo.jsx";
-import Stats from "./Stats.jsx";
 import { Channels, Pricing, Faq, FinalCta, Footer } from "./Sections.jsx";
-import { useReveal, usePointerFx, useScrollProgress, useScrollFx, CursorGlow } from "./motion.jsx";
+import { useReveal, usePointerFx, useScrollProgress, useScrollFx, useLenis, CursorGlow } from "./motion.jsx";
 import { CAPABILITIES } from "./content.js";
 import "./landing.css";
 
@@ -84,7 +82,7 @@ function SectionLinks({ active }) {
   );
 }
 
-function Nav({ startHref, dashboardHref }) {
+function Nav({ startHref }) {
   const { progress, scrolled } = useScrollProgress();
   const active = useActiveSection();
   const [open, setOpen] = useState(false);
@@ -117,20 +115,12 @@ function Nav({ startHref, dashboardHref }) {
         </a>
         <SectionLinks active={active} />
         <div className="flex items-center gap-2">
-          {dashboardHref ? (
-            <Link to={dashboardHref} className="lp-btn lp-btn-primary lp-btn-sm">
-              Open dashboard <FiArrowRight />
-            </Link>
-          ) : (
-            <>
-              <Link to="/company/login" className="lp-nav-link hidden sm:inline-flex">
-                Log in
-              </Link>
-              <Link to={startHref} className="lp-btn lp-btn-primary lp-btn-sm" data-magnet>
-                Start free
-              </Link>
-            </>
-          )}
+          <Link to="/company/login" className="lp-nav-link hidden sm:inline-flex">
+            Log in
+          </Link>
+          <Link to={startHref} className="lp-btn lp-btn-primary lp-btn-sm" data-magnet>
+            Start free
+          </Link>
           <button type="button" className="lp-burger lg:hidden" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} aria-controls="lp-menu" onClick={() => setOpen((v) => !v)}>
             {open ? <FiX /> : <FiMenu />}
           </button>
@@ -142,11 +132,9 @@ function Nav({ startHref, dashboardHref }) {
             {label}
           </a>
         ))}
-        {!dashboardHref && (
-          <Link to="/company/login" style={{ "--i": LINKS.length }}>
-            Log in
-          </Link>
-        )}
+        <Link to="/company/login" style={{ "--i": LINKS.length }}>
+          Log in
+        </Link>
       </nav>
     </header>
   );
@@ -224,13 +212,13 @@ function setMeta(name, content) {
   return () => (created ? el.remove() : el.setAttribute("content", prev));
 }
 
-/** Public marketing page at "/". Logged-in staff get a shortcut back to their panel. */
+/** Public marketing page at "/": always shows "Log in" and "Start free". */
 export default function Landing() {
   const rootRef = useRef(null);
-  const { user } = useAuth();
   useReveal(rootRef);
   usePointerFx(rootRef);
   useScrollFx(rootRef);
+  useLenis(rootRef);
 
   useEffect(() => {
     const prevTitle = document.title;
@@ -247,7 +235,7 @@ export default function Landing() {
     const html = document.documentElement;
     const wasDark = html.classList.contains("dark");
     html.classList.remove("dark");
-    if (!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) html.style.scrollBehavior = "smooth";
+    // (smooth scrolling comes from Lenis; CSS scroll-behavior would fight it)
     const restoreMeta = [
       setMeta("description", "Nuformly builds an AI chat assistant that knows your business, looks like your brand and answers visitors on your website. Free to start."),
       setMeta("theme-color", "#0d5537"),
@@ -258,12 +246,10 @@ export default function Landing() {
     return () => {
       document.title = prevTitle;
       if (wasDark) html.classList.add("dark");
-      html.style.scrollBehavior = "";
       restoreMeta.forEach((undo) => undo());
     };
   }, []);
 
-  const dashboardHref = user ? (user.role === "SUPER_ADMIN" ? "/dashboard" : "/company/overview") : null;
   const startHref = "/company/signup";
 
   return (
@@ -271,7 +257,7 @@ export default function Landing() {
       <a href="#main" className="lp-skip">
         Skip to content
       </a>
-      <Nav startHref={startHref} dashboardHref={dashboardHref} />
+      <Nav startHref={startHref} />
       <main id="main" tabIndex={-1}>
         <Hero startHref={startHref} />
         <Ribbons />
@@ -279,7 +265,6 @@ export default function Landing() {
         <Steps />
         <PhoneDemo />
         <Playground />
-        <Stats />
         <Templates />
         <Insights />
         <Channels />

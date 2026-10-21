@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { FiArrowRight, FiMessageCircle, FiMail, FiUserCheck, FiGlobe } from "react-icons/fi";
 import ChatWidgetRenderer from "../../components/preview/ChatWidgetRenderer.jsx";
 import Mascot from "./Mascot.jsx";
-import { ScaledStage, prefersReducedMotion, useMedia } from "./motion.jsx";
+import { ScaledStage, prefersReducedMotion, useMedia, scrollToTarget, NAV_OFFSET } from "./motion.jsx";
 import { DEMO_CONFIG, demoReply } from "./demoBot.js";
 import nsLogo from "../../assets/nuformsocial/logo.svg";
 import nsRocket from "../../assets/nuformsocial/rocket.png";
@@ -196,7 +196,11 @@ export default function Hero({ startHref }) {
   );
   const openDemo = () => {
     setDemo((d) => ({ mode: "window", n: d.n + 1 }));
-    if (window.innerWidth < 1024) document.getElementById("lp-demo")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const demoEl = document.getElementById("lp-demo");
+    if (window.innerWidth < 1024 && demoEl) {
+      // centred when it fits on screen, otherwise just below the nav
+      scrollToTarget(demoEl, { offset: Math.min(0, NAV_OFFSET - (window.innerHeight - demoEl.offsetHeight) / 2) });
+    }
   };
 
   return (

@@ -32,6 +32,21 @@ export function companyEquivalent(path) {
   return null;
 }
 
+/**
+ * The super-admin (platform) page for a Company Panel path — used to send a
+ * super admin who opens a company URL to the same page in their own panel.
+ * Anything without an equivalent goes to the dashboard.
+ */
+export function platformEquivalent(path) {
+  if (typeof path !== "string") return "/dashboard";
+  for (const [from, to] of COMPANY_EQUIVALENTS) {
+    if (path === to || path.startsWith(`${to}/`) || path.startsWith(`${to}?`)) {
+      return from + path.slice(to.length);
+    }
+  }
+  return "/dashboard";
+}
+
 export function toPanelPath(path, inCompanyPanel) {
   if (!inCompanyPanel || typeof path !== "string" || !path.startsWith("/") || path.startsWith("/company")) {
     return path;

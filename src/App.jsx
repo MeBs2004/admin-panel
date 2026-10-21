@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import AdminLayout from "./components/layout/AdminLayout.jsx";
 import CompanyLayout from "./components/layout/CompanyLayout.jsx";
-import ProtectedRoute, { PlatformOnly } from "./components/layout/ProtectedRoute.jsx";
+import ProtectedRoute, { PlatformOnly, CompanyOnly } from "./components/layout/ProtectedRoute.jsx";
 import PageLoader from "./components/ui/PageLoader.jsx";
 
 // Every page is its own chunk, loaded when it is first opened: the landing
@@ -180,25 +180,25 @@ function App() {
       <Route
         path="/company/chatbots/:id/customize"
         element={
-          <ProtectedRoute>
+          <CompanyOnly>
             <ChatbotStudio />
-          </ProtectedRoute>
+          </CompanyOnly>
         }
       />
       <Route
         path="/company/chatbots/:id/builder"
         element={
-          <ProtectedRoute>
+          <CompanyOnly>
             <ChatbotBuilder />
-          </ProtectedRoute>
+          </CompanyOnly>
         }
       />
 
       <Route
         element={
-          <ProtectedRoute>
+          <CompanyOnly>
             <CompanyLayout />
-          </ProtectedRoute>
+          </CompanyOnly>
         }
       >
         <Route path="/company" element={<Navigate to="/company/overview" replace />} />

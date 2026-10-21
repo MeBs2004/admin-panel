@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useToast } from "../context/ToastContext.jsx";
 import Button from "../components/ui/Button.jsx";
 import Input from "../components/ui/Input.jsx";
 import AuthShell from "../components/ui/AuthShell.jsx";
@@ -17,6 +18,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // staff shell.
 export default function CompanyLogin() {
   const { login } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -44,8 +46,14 @@ export default function CompanyLogin() {
       return;
     }
 
-    const redirectTo = location.state?.from || "/company/overview";
-    navigate(redirectTo, { replace: true });
+    // Super-admin accounts never use the Company Panel: they're told so and
+    // taken to their own dashboard.
+    if (result.user?.role === "SUPER_ADMIN") {
+      showToast("This is a super-admin account — opening your admin dashboard. Next time, sign in at /login.");
+      navigate("/dashboard", { replace: true });
+      return;
+    }
+    navigate(location.state?.from || "/company/overview", { replace: true });
   };
 
   return (
