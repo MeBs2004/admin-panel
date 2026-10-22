@@ -46,6 +46,8 @@ test("every option list and size range matches the backend", { skip: !haveBacken
     "chatWindow.statusStyle": be.STATUS_STYLES,
     "chatWindow.sendAnimation": be.SEND_ANIMATIONS,
     "chatWindow.sendButtonShape": be.SEND_SHAPES,
+    "chatWindow.listenPlacement": be.LISTEN_PLACEMENTS,
+    "chatWindow.attachIcon": be.ATTACH_ICONS,
     "chatWindow.suggestionAnimation": be.SUGGESTION_ANIMATIONS,
     "chatWindow.shadow": be.SHADOWS,
     "chatWindow.chatBackground": be.CHAT_BACKGROUNDS,

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FiX, FiSend, FiPhone, FiMail, FiMessageCircle, FiVolume2, FiPlus, FiMic, FiSquare, FiFile, FiTrash2 } from "react-icons/fi";
+import { FiX, FiSend, FiPhone, FiMail, FiMessageCircle, FiVolume2, FiVolumeX, FiPlus, FiPaperclip, FiMic, FiSquare, FiFile, FiTrash2 } from "react-icons/fi";
 import { FaWhatsapp, FaFilePdf, FaFileWord, FaFileExcel, FaFile } from "react-icons/fa";
 import LauncherIcon from "../studio/LauncherIcon.jsx";
 import ChatbotFormsPreview from "./ChatbotFormsPreview.jsx";
 import { playPreviewChime } from "./previewChime.js";
-import { resolveLauncherStyle, resolveWindowStyle, animClass, messageAnimClass, readableOn, welcomeFor, uiText, shown } from "../../config/widgetStyle.js";
+import { resolveLauncherStyle, resolveWindowStyle, animClass, messageAnimClass, readableOn, welcomeFor, placeholderFor, uiText, shown } from "../../config/widgetStyle.js";
 import { buildScopedCss, nextCssScopeId } from "./scopedCustomCss.js";
 
 const CTA_ICON = { call: FiPhone, whatsapp: FaWhatsapp, email: FiMail, custom: FiMessageCircle };
@@ -322,6 +322,16 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
   const L = resolveLauncherStyle(config);
   const W = resolveWindowStyle(config);
   const sample = SAMPLE[lang] || SAMPLE.English;
+  // Luxe launcher: a few sparkles at fixed spots around the button (like the live widget's random ones).
+  const sparkles = useMemo(
+    () =>
+      Array.from({ length: 5 }, (_, n) => {
+        const angle = (n / 5) * Math.PI * 2 + ((n * 37) % 8) / 10;
+        const radius = 34 + ((n * 53) % 16);
+        return { top: 40 + Math.sin(angle) * radius, left: 40 + Math.cos(angle) * radius, dur: 3.2 + (n % 3) * 0.7, delay: n * 0.8 };
+      }),
+    [],
+  );
   const enabledCtas = ctas.filter((c) => c.enabled && c.label);
   const displaySuggestions = configuredSuggestions.length > 0 ? configuredSuggestions : sample.suggestions;
   const isLeft = launcher.position === "bottom-left";
@@ -465,14 +475,39 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
     );
   }
 
-  const Avatar = ({ size }) => (
+  const Avatar = ({ size, height = size }) => (
     <div
       className="flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold"
-      style={{ width: size, height: size, background: W.primary, color: W.sendText, fontSize: Math.round(size * 0.42) }}
+      style={{ width: size, height, background: W.primary, color: W.sendText, fontSize: Math.round(size * 0.42) }}
     >
       {chatWindow.botAvatar ? <img src={chatWindow.botAvatar} alt="" className="h-full w-full object-cover" /> : botInitial}
     </div>
   );
+  // A reply's text as the live widget lays it out: one markdown paragraph,
+  // 8px under it unless a paragraph gap is set (then none under the last).
+  const para = (text) => <p style={{ margin: 0, marginBottom: W.paragraphGap == null ? 8 : 0 }}>{text}</p>;
+  // Listen / Stop: inside the bot bubble, or as a small link under it (chatWindow.listenPlacement).
+  const listenButton = (id, text) => {
+    if (!behavior.textToSpeech) return null;
+    const active = speakingIndex === id;
+    const below = W.listenBelow;
+    return (
+      <button
+        type="button"
+        data-edit={below ? "chatWindow.listenPlacement" : "behavior.textToSpeech"}
+        onClick={() => toggleListen(id, text)}
+        className={
+          below
+            ? "nfp-listen-below pointer-events-auto mt-[6px] flex items-center gap-1 text-[11px] text-[#6b7280]"
+            : "pointer-events-auto mt-2.5 flex items-center gap-1.5 text-sm font-medium text-[#6b7280] hover:text-[#4b5563]"
+        }
+        style={below ? { "--nf-hover": W.primary } : undefined}
+      >
+        {active ? (below ? <FiVolumeX size={12} /> : <FiSquare size={13} />) : <FiVolume2 size={below ? 12 : 14} />}
+        <span>{active ? uiText(config, "stopLabel", sample.stop) : uiText(config, "listenLabel", sample.listen)}</span>
+      </button>
+    );
+  };
   const statusDot = (
     <span
       className="inline-block shrink-0 animate-pulse rounded-full"
@@ -500,7 +535,7 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
       data-bubble-timing={`${typingBubbles ? "typing" : "plain"}|${randomOrder ? "random" : "sequence"}|${holdMs}|${pauseMs}`}
     >
       {W.fontUrl && <style>{`@import url('${W.fontUrl}');`}</style>}
-      <style>{`.nfp-input::placeholder { color: var(--nf-ph, #9ca3af); opacity: 1 }`}</style>
+      <style>{`.nfp-input::placeholder { color: var(--nf-ph, #9ca3af); opacity: 1 } .nfp-listen-below:hover, .nfp-attach-plain:hover { color: var(--nf-hover) !important }`}</style>
       {scopedCss ? <style>{scopedCss}</style> : null}
 
       {open && (
@@ -532,19 +567,19 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
             <div className="flex min-w-0 items-center gap-3">
               {shown(config, "showHeaderAvatar") && (
               <div data-edit="chatWindow.botAvatar" className={`relative shrink-0 ${animClass("nfp", "avatar", chatWindow.avatarAnimation)}`}>
-                {chatWindow.botAvatar && W.avatarTile ? (
+                {W.headerLogo && W.avatarTile ? (
                   <div
                     className="flex items-center justify-center overflow-hidden"
                     style={{ width: W.avatarSize, height: W.avatarSize, borderRadius: W.avatarRadius, background: "rgba(255,255,255,.13)" }}
                   >
-                    <img src={chatWindow.botAvatar} alt="" className="object-cover" style={{ width: W.avatarSize - 5, height: W.avatarSize - 5, borderRadius: 8 }} />
+                    <img src={W.headerLogo} alt="" className="object-cover" style={{ width: W.headerLogoWidth, height: W.headerLogoHeight, borderRadius: 8 }} />
                   </div>
                 ) : (
                   <div
                     className="flex items-center justify-center overflow-hidden bg-white/20 font-semibold"
                     style={{ width: W.avatarSize, height: W.avatarSize, fontSize: Math.round(W.avatarSize * 0.36), borderRadius: W.avatarRadius }}
                   >
-                    {chatWindow.botAvatar ? <img src={chatWindow.botAvatar} alt="" className="h-full w-full object-cover" /> : botInitial}
+                    {W.headerLogo ? <img src={W.headerLogo} alt="" className="h-full w-full object-cover" /> : botInitial}
                   </div>
                 )}
                 {chatWindow.showStatusDot !== false && !W.inlineStatus && (
@@ -575,7 +610,8 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
                   onClick={() => setMessages([])}
                   title="Clear history"
                   aria-label="Clear chat history"
-                  className="pointer-events-auto flex h-5 w-5 items-center justify-center rounded-full bg-white/20"
+                  className="pointer-events-auto flex h-5 w-5 items-center justify-center rounded-full"
+                  style={{ background: W.headerButtonBg }}
                 >
                   <FiTrash2 size={11} />
                 </button>
@@ -586,16 +622,16 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
                   data-edit="chatWindow.showLanguageSelector"
                   onChange={(e) => setLang(e.target.value)}
                   aria-label="Language"
-                  className="pointer-events-auto cursor-pointer rounded-lg bg-white/20 px-1 py-1 text-[10px] outline-none"
-                  style={{ color: W.headerText }}
+                  className="pointer-events-auto cursor-pointer rounded-lg px-1 py-1 text-[10px] outline-none"
+                  style={{ color: W.headerText, background: W.headerButtonBg }}
                 >
                   <option value="English" style={{ color: "#111" }}>EN</option>
                   <option value="Hindi" style={{ color: "#111" }}>हिं</option>
                 </select>
               )}
               {shown(config, "showCloseButton") && (
-                <button data-edit="chatWindow.showCloseButton" onClick={() => setOpen(false)} className="pointer-events-auto flex h-5 w-5 items-center justify-center rounded-full bg-white/20 transition-transform duration-300 hover:rotate-90" aria-label="Close chat preview">
-                  <FiX size={13} />
+                <button data-edit="chatWindow.showCloseButton" onClick={() => setOpen(false)} className="pointer-events-auto flex h-5 w-5 items-center justify-center rounded-full transition-transform duration-300 hover:rotate-90" style={{ background: W.headerButtonBg }} aria-label="Close chat preview">
+                  <FiX size={W.closeIconSize} />
                 </button>
               )}
             </div>
@@ -671,14 +707,14 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
                           className="pointer-events-auto flex items-center justify-center gap-2 px-3 font-medium"
                           style={{
                             background: bg,
-                            color: readableOn(bg),
+                            color: W.ctaText || readableOn(bg),
                             minHeight: W.ctaHeight,
                             fontSize: W.ctaFontSize,
                             borderRadius: W.ctaRadius,
                             ...(W.ctaWidth ? { width: W.ctaWidth } : { flex: "1 1 0" }),
                           }}
                         >
-                          <Icon style={{ width: W.ctaFontSize, height: W.ctaFontSize }} /> {cta.label}
+                          <Icon style={{ width: W.ctaIconSize, height: W.ctaIconSize }} /> {cta.label}
                         </span>
                       );
                     })}
@@ -690,7 +726,7 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
                 <div className={`flex items-end justify-end gap-2 ${msgAnimFor(true)}`} key={`u-${replayKey}`} style={{ animationDelay: "100ms", marginBottom: W.messageGap }}>
                   <div className="flex flex-col items-end" style={{ maxWidth: `${W.bubbleMaxWidthPct}%` }}>
                     <div data-edit="chatWindow.userBubbleColor" style={{ background: W.userBubble, color: W.userText, borderRadius: W.userRadius, boxShadow: W.userShadow, padding: `${W.bubblePadY}px ${W.bubblePadX}px`, ...bubbleText14 }}>
-                      {sample.userLine}
+                      {para(sample.userLine)}
                     </div>
                     {behavior.showTimestamps && <span className="mt-0.5 text-[10px] opacity-50">9:41 AM</span>}
                   </div>
@@ -698,24 +734,15 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
                 <div className={`flex ${W.avatarTop ? "items-start" : "items-end"} gap-2 ${msgAnimFor(false)}`} key={`b-${replayKey}`} style={{ animationDelay: "250ms", marginBottom: W.messageGap }}>
                   {chatWindow.showMessageAvatars && (
                     <div className={W.avatarTop ? "mt-1 shrink-0" : "shrink-0"}>
-                      <Avatar size={W.messageAvatarSize} />
+                      <Avatar size={W.messageAvatarSize} height={W.messageAvatarHeight} />
                     </div>
                   )}
                   <div className="flex flex-col items-start" style={{ maxWidth: `${W.bubbleMaxWidthPct}%` }}>
                     <div data-edit="chatWindow.botBubbleColor" style={{ background: W.botBubble, color: W.botText, border: W.botBorder, borderRadius: W.botRadius, padding: `${W.bubblePadY}px ${W.bubblePadX}px`, ...bubbleText14 }}>
-                      {sample.replies[0]}
-                      {behavior.textToSpeech && (
-                        <button
-                          type="button"
-                          data-edit="behavior.textToSpeech"
-                          onClick={() => toggleListen("sample", sample.replies[0])}
-                          className="pointer-events-auto mt-2.5 flex items-center gap-1.5 text-sm font-medium text-[#6b7280] hover:text-[#4b5563]"
-                        >
-                          {speakingIndex === "sample" ? <FiSquare size={13} /> : <FiVolume2 size={14} />}
-                          <span>{speakingIndex === "sample" ? uiText(config, "stopLabel", sample.stop) : uiText(config, "listenLabel", sample.listen)}</span>
-                        </button>
-                      )}
+                      {para(sample.replies[0])}
+                      {!W.listenBelow && listenButton("sample", sample.replies[0])}
                     </div>
+                    {W.listenBelow && listenButton("sample", sample.replies[0])}
                     {behavior.showTimestamps && <span className="mt-0.5 text-[10px] opacity-50">9:41 AM</span>}
                   </div>
                 </div>
@@ -728,7 +755,7 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
                     <div key={i} className={`flex ${W.avatarTop ? "items-start" : "items-end"} gap-2 ${isUser ? "justify-end" : ""} ${msgAnimFor(isUser) || "nfp-msg-fade"}`} style={{ marginBottom: W.messageGap }}>
                       {!isUser && chatWindow.showMessageAvatars && (
                         <div className={W.avatarTop ? "mt-1 shrink-0" : "shrink-0"}>
-                          <Avatar size={W.messageAvatarSize} />
+                          <Avatar size={W.messageAvatarSize} height={W.messageAvatarHeight} />
                         </div>
                       )}
                       <div className={`flex flex-col ${isUser ? "items-end" : "items-start"}`} style={{ maxWidth: `${W.bubbleMaxWidthPct}%` }}>
@@ -745,19 +772,10 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
                           }}
                         >
                           {m.file && <FileBlock file={m.file} primary={W.primary} />}
-                          {m.text}
-                          {!isUser && behavior.textToSpeech && (
-                            <button
-                              type="button"
-                              data-edit="behavior.textToSpeech"
-                              onClick={() => toggleListen(i, m.text)}
-                              className="pointer-events-auto mt-2.5 flex items-center gap-1.5 text-sm font-medium text-[#6b7280] hover:text-[#4b5563]"
-                            >
-                              {speakingIndex === i ? <FiSquare size={13} /> : <FiVolume2 size={14} />}
-                              <span>{speakingIndex === i ? uiText(config, "stopLabel", sample.stop) : uiText(config, "listenLabel", sample.listen)}</span>
-                            </button>
-                          )}
+                          {para(m.text)}
+                          {!isUser && !W.listenBelow && listenButton(i, m.text)}
                         </div>
+                        {!isUser && W.listenBelow && listenButton(i, m.text)}
                         {behavior.showTimestamps && <span className="mt-0.5 text-[10px] opacity-50">{m.ts}</span>}
                       </div>
                     </div>
@@ -765,15 +783,22 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
                 })}
 
                 {typing && (
-                  <div
-                    data-edit="chatWindow.typingStyle"
-                    className={`nfp-typing nfp-typing-${typingStyle} w-fit px-3.5 py-3 ${msgAnimFor(false)}`}
-                    style={{ marginBottom: W.messageGap, background: W.botBubble, borderRadius: W.botRadius, border: W.botBorder, "--nf-dot": W.primary, "--nf-dot-size": `${W.typingDot}px` }}
-                    aria-label="Typing"
-                  >
-                    <i />
-                    <i />
-                    <i />
+                  <div className={`flex ${W.avatarTop ? "items-start" : "items-end"} gap-2 ${msgAnimFor(false)}`} style={{ marginBottom: W.messageGap }}>
+                    {W.typingAvatar && chatWindow.showMessageAvatars && (
+                      <div className={W.avatarTop ? "mt-1 shrink-0" : "shrink-0"}>
+                        <Avatar size={W.messageAvatarSize} />
+                      </div>
+                    )}
+                    <div
+                      data-edit="chatWindow.typingStyle"
+                      className={`nfp-typing nfp-typing-${typingStyle} w-fit px-3.5 py-3`}
+                      style={{ background: W.botBubble, borderRadius: W.botRadius, border: W.botBorder, "--nf-dot": W.primary, "--nf-dot-size": `${W.typingDot}px` }}
+                      aria-label="Typing"
+                    >
+                      {[0, 1, 2].map((n) => (
+                        <i key={n} style={W.typingColors ? { background: W.typingColors[n] } : undefined} />
+                      ))}
+                    </div>
                   </div>
                 )}
 
@@ -851,8 +876,8 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
                 )}
                 <form
                   data-edit="chatWindow.inputPlaceholder"
-                  className="relative flex items-center border-2 px-3 py-2"
-                  style={{ borderColor: W.primary, background: inputBg, borderRadius: W.inputRadius, ...(W.inputHeight ? { minHeight: W.inputHeight } : {}) }}
+                  className="relative flex items-center border-2"
+                  style={{ borderColor: W.primary, background: inputBg, borderRadius: W.inputRadius, padding: `${W.inputPadY}px ${W.inputPadX}px`, ...(W.inputHeight ? { minHeight: W.inputHeight } : {}) }}
                   onSubmit={(e) => {
                     e.preventDefault();
                     sendPreview(draft);
@@ -868,9 +893,15 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
                         onChange={handleFile}
                         disabled={recording}
                       />
-                      <button type="button" data-edit="behavior.attachments" aria-label="Attach a file" onClick={() => fileInputRef.current?.click()} className="pointer-events-auto mr-2 transition-transform hover:scale-110" style={{ color: W.primary }}>
-                        <FiPlus size={18} />
-                      </button>
+                      {W.attachIcon === "paperclip" ? (
+                        <button type="button" data-edit="chatWindow.attachIcon" aria-label="Attach a file" onClick={() => fileInputRef.current?.click()} className="nfp-attach-plain pointer-events-auto mr-2 text-[#6b7280] transition-colors" style={{ "--nf-hover": W.primary }}>
+                          <FiPaperclip size={16} />
+                        </button>
+                      ) : (
+                        <button type="button" data-edit="behavior.attachments" aria-label="Attach a file" onClick={() => fileInputRef.current?.click()} className="pointer-events-auto mr-2 transition-transform hover:scale-110" style={{ color: W.primary }}>
+                          <FiPlus size={18} />
+                        </button>
+                      )}
                     </>
                   )}
                   {recording && (
@@ -885,7 +916,7 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
                     value={draft}
                     readOnly={recording}
                     onChange={(e) => setDraft(e.target.value)}
-                    placeholder={recording ? uiText(config, "listeningPlaceholder", "Listening...") : chatWindow.inputPlaceholder || sample.placeholder}
+                    placeholder={recording ? uiText(config, "listeningPlaceholder", "Listening...") : placeholderFor(config, lang, sample.placeholder)}
                     aria-label="Preview message (not sent anywhere)"
                     className="nfp-input pointer-events-auto min-w-0 flex-1 truncate bg-transparent outline-none"
                     style={{ color: W.dark ? "#f3f4f6" : "#333", opacity: 0.9, ...(W.placeholderColor ? { "--nf-ph": W.placeholderColor } : {}) }}
@@ -911,7 +942,7 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
                     className={`nfp-send ${animClass("nfp", "send", chatWindow.sendAnimation)} pointer-events-auto flex shrink-0 items-center justify-center transition-all hover:scale-105 active:scale-95`}
                     style={{ background: W.sendBg, color: W.sendText, width: W.sendSize, height: W.sendSize, borderRadius: W.sendRadius }}
                   >
-                    <FiSend size={15} />
+                    <FiSend size={W.sendIconSize} />
                   </button>
                 </form>
                 {chatWindow.footerText && <p data-edit="chatWindow.footerText" className="mt-2 text-center opacity-60" style={{ fontSize: W.footerFontSize }}>{chatWindow.footerText}</p>}
@@ -932,11 +963,14 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
           <div
             key={typingBubbles ? `bubble-${replayKey}-${bubbleIndex}-${launcher.bubbleAnimation}` : `bubble-${teaserIndex}-${replayKey}-${launcher.bubbleAnimation}`}
             data-edit="launcher.teaserMessages"
-            className={`pointer-events-auto absolute flex rounded-2xl border border-gray-100 bg-white shadow-lg ${animClass("nfp", "bubble", L.bubbleAnimation)} ${
+            className={`pointer-events-auto absolute flex rounded-2xl border shadow-lg ${animClass("nfp", "bubble", L.bubbleAnimation)} ${
               typingBubbles ? "items-start gap-1.5 !rounded-xl py-[7px] pl-2 pr-3" : "px-3.5 py-3"
             }`}
             style={{
-              bottom: L.px + (typingBubbles ? 17 : 14),
+              bottom: L.px + (L.bubbleOffset ?? (typingBubbles ? 17 : 14)),
+              background: L.bubbleBg,
+              borderColor: L.bubbleBorder,
+              color: L.bubbleText,
               [isLeft ? "left" : "right"]: 0,
               width: "max-content",
               maxWidth: L.bubbleMaxWidth,
@@ -947,29 +981,41 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
             }}
           >
             {typingBubbles && L.bubbleAvatar && L.bubbleAvatarSrc && (
-              <img src={L.bubbleAvatarSrc} alt="" className="mt-0.5 h-4 w-4 shrink-0 rounded-full object-cover" />
+              <img src={L.bubbleAvatarSrc} alt="" className="mt-0.5 h-4 w-4 shrink-0 rounded-full object-cover" style={L.bubbleAvatarRing ? { border: `1px solid ${L.bubbleBorder}` } : undefined} />
             )}
             {typingBubbles && bubbleStage === "indicator" ? (
-              <div className="nfp-bdots mt-[3px]">
+              <div className="nfp-bdots mt-[3px]" style={{ "--nf-bdot": L.bubbleDot }}>
                 <i />
                 <i />
                 <i />
               </div>
             ) : typingBubbles ? (
-              <p className="pt-px font-medium leading-snug text-gray-700">{bubbleText}</p>
+              <p className="pt-px font-medium leading-snug" style={L.bubbleLetterSpacing ? { letterSpacing: L.bubbleLetterSpacing } : undefined}>{bubbleText}</p>
             ) : (
               <div>
-                {bubble.title && <p className="font-semibold text-gray-800">{bubble.title}</p>}
-                <p className={bubble.title ? "mt-0.5 text-gray-500" : "text-gray-700"}>{bubble.text}</p>
+                {bubble.title && <p className="font-semibold">{bubble.title}</p>}
+                <p className={bubble.title ? "mt-0.5 opacity-70" : ""}>{bubble.text}</p>
               </div>
             )}
             {typingBubbles && L.bubbleTail && (
-              <span className="pointer-events-none absolute -bottom-[5px] h-[10px] w-[10px] rotate-45 border-b border-r border-gray-200 bg-white" style={{ [isLeft ? "left" : "right"]: 20 }} />
+              <span className="pointer-events-none absolute -bottom-[5px] h-[10px] w-[10px] rotate-45 border-b border-r" style={{ [isLeft ? "left" : "right"]: 20, background: L.bubbleBg, borderColor: L.bubbleBorder }} />
             )}
           </div>
         )}
 
-        {L.wholeLauncherFloat && !open && <span className="nfp-ring" style={{ "--nf-c": L.color }} aria-hidden="true" />}
+        {L.wholeLauncherFloat && !L.luxe && !open && <span className="nfp-ring" style={{ "--nf-c": L.color }} aria-hidden="true" />}
+        {L.luxe && !open && (
+          <>
+            <span className="nfp-halo" style={{ "--nf-g": L.effectColor }} aria-hidden="true" />
+            <div className="nfp-sparkles" style={{ "--nf-g": L.effectColor, "--nf-s": L.sparkleColor }} aria-hidden="true">
+              {sparkles.map((sp, n) => (
+                <span key={n} className="nfp-sparkle" style={{ top: sp.top, left: sp.left, "--dur": `${sp.dur}s`, "--delay": `${sp.delay}s` }}>
+                  ✦
+                </span>
+              ))}
+            </div>
+          </>
+        )}
 
         <button
           key={`launcher-${replayKey}-${launcher.entrance}`}
@@ -994,6 +1040,11 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
         >
           {open ? (
             <FiX className="nfp-icon" style={{ width: Math.round(L.iconPx * 0.9), height: Math.round(L.iconPx * 0.9), color: L.logoOnly ? L.color : L.iconColor }} />
+          ) : L.iconKey === "logo" && L.luxe && !L.pill ? (
+            <span className="nfp-icon nfp-luxe-logo" style={{ "--nf-g": L.effectColor }}>
+              <img src={L.logoSrc} alt="" className="shrink-0 rounded-full object-cover" style={{ width: `${L.logoScale}%`, height: `${L.logoScale}%`, minWidth: `${L.logoScale}%`, minHeight: `${L.logoScale}%` }} />
+              <span className="nfp-shimmer" aria-hidden="true" />
+            </span>
           ) : L.iconKey === "logo" ? (
             <span
               className={`nfp-icon block ${L.wholeLauncherFloat ? "nfp-breathe" : ""}`}
@@ -1019,7 +1070,7 @@ export default function ChatWidgetRenderer({ config, isMobile = false, mode = "w
           {!open && showBadge && (
             <span
               data-edit="launcher.badgeColor"
-              className={`absolute -right-0.5 -top-0.5 flex items-center justify-center rounded-full border-2 border-white font-bold text-white ${L.badgePulse ? "nfp-badge-pulse" : ""}`}
+              className={`absolute flex items-center justify-center rounded-full border-white font-bold text-white ${L.logoOnly ? "right-0 top-0 border" : "-right-0.5 -top-0.5 border-2"} ${L.badgePulse ? "nfp-badge-pulse" : ""}`}
               style={{ background: L.badgeColor, width: L.badgePx, height: L.badgePx, fontSize: Math.max(6, Math.round(L.badgePx * 0.55)) }}
             >
               {L.badgePx >= 14 ? "1" : ""}

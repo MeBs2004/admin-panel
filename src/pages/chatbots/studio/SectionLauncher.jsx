@@ -40,7 +40,7 @@ const SHAPE_OPTIONS = [
   { value: "rounded-square", label: "Rounded", visual: shapeVisual("24%") },
 ];
 
-const ANIMATION_OPTIONS = withSamples(CONFIG_OPTIONS["launcher.animation"], idleSample, { "float-ripple": "Float + ripple" });
+const ANIMATION_OPTIONS = withSamples(CONFIG_OPTIONS["launcher.animation"], idleSample, { "float-ripple": "Float + ripple", luxe: "Luxe" });
 const BUBBLE_EFFECT_OPTIONS = [
   { value: "none", label: "Plain", visual: <span className="text-[10px] text-gray-400">Aa</span> },
   { value: "typing", label: "Typewriter", visual: <span className="nfp-bdots"><i /><i /><i /></span> },
@@ -175,6 +175,12 @@ export default function SectionLauncher({ value, onChange }) {
 
         <FieldGroup title="Motion" icon={FiZap} description="Idle loop, entrance and hover effects">
           <OptionTiles label="Idle animation" hint="Plays continuously to draw attention." options={ANIMATION_OPTIONS} value={value.animation} onChange={(v) => onChange("animation", v)} columns={4} />
+          {value.animation === "luxe" && (
+            <div className="section-in grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field id="launcher.effectColor"><ColorInput label="Glow & halo color" allowEmpty value={value.effectColor} onChange={(v) => onChange("effectColor", v)} /></Field>
+              <Field id="launcher.sparkleColor"><ColorInput label="Sparkle color" allowEmpty value={value.sparkleColor} onChange={(v) => onChange("sparkleColor", v)} /></Field>
+            </div>
+          )}
           <OptionTiles label="Entrance" hint="How the button appears. Hover a tile to replay it." options={ENTRANCE_OPTIONS} value={value.entrance} onChange={(v) => onChange("entrance", v)} columns={4} />
           <OptionTiles label="Hover effect" hint="Hover the sample dot to try it." options={HOVER_OPTIONS} value={value.hoverEffect} onChange={(v) => onChange("hoverEffect", v)} columns={4} />
         </FieldGroup>
@@ -190,6 +196,14 @@ export default function SectionLauncher({ value, onChange }) {
             onChange={(v) => onChange("bubbleEffect", v)}
             columns={2}
           />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field id="launcher.bubbleBgColor"><ColorInput label="Bubble background" allowEmpty value={value.bubbleBgColor} onChange={(v) => onChange("bubbleBgColor", v)} /></Field>
+            <Field id="launcher.bubbleBorderColor"><ColorInput label="Bubble border" allowEmpty value={value.bubbleBorderColor} onChange={(v) => onChange("bubbleBorderColor", v)} /></Field>
+            <Field id="launcher.bubbleTextColor"><ColorInput label="Bubble text" allowEmpty value={value.bubbleTextColor} onChange={(v) => onChange("bubbleTextColor", v)} /></Field>
+            {value.bubbleEffect === "typing" && (
+              <Field id="launcher.bubbleDotColor"><ColorInput label="Typing dots" allowEmpty value={value.bubbleDotColor} onChange={(v) => onChange("bubbleDotColor", v)} /></Field>
+            )}
+          </div>
           {value.bubbleEffect === "typing" && (
             <div className="section-in space-y-4">
               <OptionTiles label="Message order" options={BUBBLE_ORDER_OPTIONS} value={value.bubbleOrder} onChange={(v) => onChange("bubbleOrder", v)} columns={2} />

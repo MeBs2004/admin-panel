@@ -11,6 +11,14 @@ import Field from "../../../components/studio/Field.jsx";
 import { CONFIG_OPTIONS } from "../../../config/chatbotConfigDefaults.js";
 import { withSamples, messageSample, windowSample, suggestionSample, typingSample, headerSample, avatarSample, sendSample } from "../../../components/studio/AnimSamples.jsx";
 
+const LISTEN_OPTIONS = [
+  { value: "inside", label: "Inside the bubble" },
+  { value: "below", label: "Small, below the bubble" },
+];
+const ATTACH_OPTIONS = [
+  { value: "plus", label: "Plus" },
+  { value: "paperclip", label: "Paperclip" },
+];
 const THEME_OPTIONS = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
@@ -102,6 +110,7 @@ export default function SectionChatWindow({ value, onChange }) {
         </div>
         <Field id="chatWindow.subtitle"><Input label="Subtitle" placeholder="We typically reply instantly" value={value.subtitle} maxLength={60} onChange={(e) => onChange("subtitle", e.target.value)} /></Field>
         <Field id="chatWindow.botAvatar"><ImageUpload label="Bot avatar" hint="Shown in the header, and beside messages when enabled." value={value.botAvatar} onChange={(v) => onChange("botAvatar", v)} size={128} /></Field>
+        <Field id="chatWindow.headerLogo"><ImageUpload label="Header logo" hint="Optional — a different image for the header. Leave empty to use the bot avatar." value={value.headerLogo} onChange={(v) => onChange("headerLogo", v)} size={128} /></Field>
         <div className="space-y-4 rounded-xl border border-gray-100 p-3 dark:border-[var(--border)]">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Header elements</p>
           <Field id="chatWindow.showHeaderAvatar"><Toggle label="Show the avatar" checked={value.showHeaderAvatar} onChange={(v) => onChange("showHeaderAvatar", v)} /></Field>
@@ -143,15 +152,23 @@ export default function SectionChatWindow({ value, onChange }) {
         </div>
         <OptionTiles label="Message animation" hint="Hover a tile to replay it." options={MSG_ANIM_OPTIONS} value={value.messageAnimation} onChange={(v) => onChange("messageAnimation", v)} columns={3} />
         <Field id="chatWindow.typingStyle"><OptionTiles label="Typing indicator style" options={TYPING_OPTIONS} value={value.typingStyle} onChange={(v) => onChange("typingStyle", v)} columns={4} /></Field>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <OptionalColor label="Typing dot 1" value={value.typingColor1} onChange={(v) => onChange("typingColor1", v)} autoHint="From style" />
+          <OptionalColor label="Typing dot 2" value={value.typingColor2} onChange={(v) => onChange("typingColor2", v)} autoHint="From style" />
+          <OptionalColor label="Typing dot 3" value={value.typingColor3} onChange={(v) => onChange("typingColor3", v)} autoHint="From style" />
+        </div>
+        <OptionTiles label="Listen button" hint="Where the read-aloud button sits (when text-to-speech is on)." options={LISTEN_OPTIONS} value={value.listenPlacement} onChange={(v) => onChange("listenPlacement", v)} columns={2} />
         <Toggle label="Avatars beside bot messages" checked={value.showMessageAvatars} onChange={(v) => onChange("showMessageAvatars", v)} />
         {value.showMessageAvatars && (
           <div className="section-in">
             <OptionTiles label="Avatar position" options={AVATAR_ALIGN_OPTIONS} value={value.avatarAlign} onChange={(v) => onChange("avatarAlign", v)} columns={2} />
+            <Toggle label="Avatar beside the typing indicator" checked={value.typingAvatar} onChange={(v) => onChange("typingAvatar", v)} />
           </div>
         )}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <OptionalColor label="Welcome card color" value={value.welcomeBgColor} onChange={(v) => onChange("welcomeBgColor", v)} autoHint="Same as bot bubble" />
           <OptionalColor label="Welcome card border" value={value.welcomeBorderColor} onChange={(v) => onChange("welcomeBorderColor", v)} autoHint="Bot bubble border" />
+          <Field id="chatWindow.ctaTextColor"><OptionalColor label="CTA button text" value={value.ctaTextColor} onChange={(v) => onChange("ctaTextColor", v)} autoHint="Readable on each button" /></Field>
         </div>
         <OptionTiles label="Suggestion chips" options={SUGGESTION_OPTIONS} value={value.suggestionStyle} onChange={(v) => onChange("suggestionStyle", v)} columns={3} />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -164,8 +181,10 @@ export default function SectionChatWindow({ value, onChange }) {
 
       <FieldGroup title="Input & send button" icon={FiSend} description="Placeholder text and button color" defaultOpen={false}>
         <Field id="chatWindow.inputPlaceholder"><Input label="Input placeholder" value={value.inputPlaceholder} maxLength={80} placeholder="Type a message..." onChange={(e) => onChange("inputPlaceholder", e.target.value)} /></Field>
+        <Field id="chatWindow.inputPlaceholderHindi"><Input label="Input placeholder (Hindi)" value={value.inputPlaceholderHindi} maxLength={80} placeholder="Leave empty to use the one above" onChange={(e) => onChange("inputPlaceholderHindi", e.target.value)} /></Field>
         <Field id="chatWindow.sendButtonColor"><OptionalColor label="Send button" value={value.sendButtonColor} onChange={(v) => onChange("sendButtonColor", v)} autoHint="Primary color" /></Field>
         <OptionTiles label="Send button shape" options={SEND_SHAPE_OPTIONS} value={value.sendButtonShape} onChange={(v) => onChange("sendButtonShape", v)} columns={2} />
+        <OptionTiles label="Attach button icon" hint="When file attachments are on." options={ATTACH_OPTIONS} value={value.attachIcon} onChange={(v) => onChange("attachIcon", v)} columns={2} />
         <OptionalColor label="Input area background" value={value.footerBackground} onChange={(v) => onChange("footerBackground", v)} autoHint="Same as window" />
         <OptionalColor label="Placeholder text color" value={value.placeholderColor} onChange={(v) => onChange("placeholderColor", v)} autoHint="Light gray" />
         <OptionTiles label="Send button hover" hint="Hover the sample button to try it." options={SEND_ANIM_OPTIONS} value={value.sendAnimation} onChange={(v) => onChange("sendAnimation", v)} columns={4} />

@@ -21,6 +21,12 @@ export const companySignupApi = axios.create({
   timeout: 30000,
 });
 
+// Public password reset for company accounts (forgot → email link → reset).
+export const passwordResetApi = axios.create({
+  baseURL: API_URL.replace(/\/api\/admin\/?$/, "/api/password-reset"),
+  timeout: 30000,
+});
+
 // Phase 14 — neither axios instance had a timeout before this: a
 // hung backend/network request left the UI stuck in a loading state
 // indefinitely instead of ever surfacing an error + retry. 30s is

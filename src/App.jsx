@@ -8,8 +8,10 @@ import PageLoader from "./components/ui/PageLoader.jsx";
 // Every page is its own chunk, loaded when it is first opened: the landing
 // page (and each panel) only downloads the code it actually shows.
 const Login = lazy(() => import("./pages/Login.jsx"));
-const CompanyLogin = lazy(() => import("./pages/CompanyLogin.jsx"));
-const CompanySignup = lazy(() => import("./pages/CompanySignup.jsx"));
+const CompanyLogin = lazy(() => import("./pages/auth/CompanyLogin.jsx"));
+const CompanySignup = lazy(() => import("./pages/auth/CompanySignup.jsx"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword.jsx"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword.jsx"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite.jsx"));
 const PublicInstall = lazy(() => import("./pages/PublicInstall.jsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
@@ -69,6 +71,8 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/company/login" element={<CompanyLogin />} />
       <Route path="/company/signup" element={<CompanySignup />} />
+      <Route path="/company/forgot-password" element={<ForgotPassword />} />
+      <Route path="/company/reset-password" element={<ResetPassword />} />
       <Route path="/accept-invite/:token" element={<AcceptInvite />} />
       {/* Public, no login: install instructions shared with a website's developer. */}
       <Route path="/install/:chatbotId" element={<PublicInstall />} />

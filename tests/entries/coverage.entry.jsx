@@ -39,7 +39,9 @@ const SETUP = {
   "forms.style": (c) => { c.forms.enabled = true; c.forms.fields = ["name", "email"]; },
   "forms.fields": (c) => { c.forms.enabled = true; },
   "chatWindow.welcomeMessageHindi": (c) => { c.language.defaultLanguage = "Hindi"; },
+  "chatWindow.inputPlaceholderHindi": (c) => { c.language.defaultLanguage = "Hindi"; },
   "chatWindow.messageAvatarSize": (c) => { c.chatWindow.showMessageAvatars = true; },
+  "chatWindow.messageAvatarHeight": (c) => { c.chatWindow.showMessageAvatars = true; },
   "chatWindow.statusDotColor": (c) => { c.chatWindow.statusStyle = "inline"; },
   "launcher.bubbleAvatar": (c) => { c.launcher.bubbleEffect = "typing"; c.chatWindow.botAvatar = "https://example.test/a.png"; },
   "launcher.bubbleTail": (c) => { c.launcher.bubbleEffect = "typing"; },
@@ -62,6 +64,20 @@ for (const key of ["formTitle", "formSubtitle", "formButtonLabel"]) {
 SETUP["chatWindow.showCtas"] = (c) => { c.ctas = [{ type: "call", enabled: true, label: "Call us", value: "+10000000" }]; };
 SETUP["chatWindow.listenLabel"] = (c) => { c.behavior.textToSpeech = true; };
 SETUP["chatWindow.offlineMessage"] = (c) => { c.behavior.offlineMode = "offline-message"; };
+// The luxe launcher look, the typewriter bubble, the read-aloud link, the paperclip and the header logo tile.
+const luxe = (c) => { c.launcher.animation = "luxe"; c.launcher.icon = "logo"; c.launcher.logoUrl = "https://example.test/l.png"; };
+SETUP["launcher.effectColor"] = luxe;
+SETUP["launcher.sparkleColor"] = luxe;
+SETUP["launcher.logoScale"] = luxe;
+SETUP["launcher.bubbleLetterSpacing"] = (c) => { c.launcher.bubbleEffect = "typing"; };
+SETUP["chatWindow.listenPlacement"] = (c) => { c.behavior.textToSpeech = true; };
+SETUP["chatWindow.attachIcon"] = (c) => { c.behavior.attachments = true; };
+for (const key of ["ctaTextColor", "ctaIconSize"]) {
+  SETUP[`chatWindow.${key}`] = (c) => { c.ctas = [{ type: "call", enabled: true, label: "Call us", value: "+10000000" }]; };
+}
+for (const key of ["headerLogoWidth", "headerLogoHeight"]) {
+  SETUP[`chatWindow.${key}`] = (c) => { c.chatWindow.avatarShape = "rounded"; c.chatWindow.botAvatar = "https://example.test/a.png"; };
+}
 
 // Wording/switches that only appear in a state the static preview can't be in
 // (a failed send, an offline browser, a scrolled chat, a speaking reply, a
@@ -71,6 +87,8 @@ SETUP["chatWindow.offlineMessage"] = (c) => { c.behavior.offlineMode = "offline-
 const STATE_ONLY = new Set([
   "chatWindow.showScrollButton", "chatWindow.latestLabel", "chatWindow.retryLabel", "chatWindow.errorMessage",
   "chatWindow.noInternetMessage", "chatWindow.stopLabel", "chatWindow.listeningPlaceholder", "chatWindow.emailPrompt", "chatWindow.emailThanks",
+  // the typing indicator (after a send) and the greeting bubble's dots (before it types)
+  "chatWindow.typingColor1", "chatWindow.typingColor2", "chatWindow.typingColor3", "chatWindow.typingAvatar", "launcher.bubbleDotColor",
 ]);
 
 const ARRAY_VALUES = {
@@ -130,8 +148,8 @@ export function audit() {
     else if (typeof def === "number") values = [{ label: String(def + 4), value: def + 4 }];
     else if (typeof def === "string" && /^#[0-9a-f]{6}$/i.test(def)) values = [{ label: "#123456", value: "#123456" }];
     else if (def === "") {
-      const isColor = /Color$|Background$/.test(path);
-      const isImage = /logoUrl|botAvatar/.test(path);
+      const isColor = /Color\d?$|Background$/.test(path);
+      const isImage = /logoUrl|botAvatar|headerLogo$/.test(path);
       const v = isColor ? "#123456" : isImage ? "https://example.test/x.png" : path === "appearance.customCss" ? ".x{color:red}" : "ZQ-sample";
       values = [{ label: v, value: v }];
     } else if (typeof def === "string") values = [{ label: "ZQ-sample", value: "ZQ-sample" }];
