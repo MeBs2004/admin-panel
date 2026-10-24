@@ -3,7 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { FiMail, FiArrowLeft, FiSend } from "react-icons/fi";
 import { passwordResetApi, getErrorMessage } from "../../services/api.js";
 import AuthLayout from "./AuthLayout.jsx";
-import { Field, Alert, SubmitButton, EMAIL_RE } from "./fields.jsx";
+import { checkEmail, normalizeEmail } from "../../config/accountRules.js";
+import { Field, Alert, SubmitButton, EmailSuggestion, suggestEmail } from "./fields.jsx";
 
 const RESEND_AFTER = 30; // seconds
 
@@ -25,16 +26,17 @@ export default function ForgotPassword() {
     return () => clearTimeout(t);
   }, [wait]);
 
-  const emailError = touched && !EMAIL_RE.test(email.trim()) ? "Enter a valid email address." : "";
+  const emailError = touched ? checkEmail(email) : "";
+  const suggestion = !checkEmail(email) && suggestEmail(normalizeEmail(email));
 
   const send = async (e) => {
     e?.preventDefault();
     setTouched(true);
-    if (!EMAIL_RE.test(email.trim())) return ref.current?.focus();
+    if (checkEmail(email)) return ref.current?.focus();
     setError("");
     setLoading(true);
     try {
-      await passwordResetApi.post("/forgot", { email: email.trim() });
+      await passwordResetApi.post("/forgot", { email: normalizeEmail(email) });
       setSent(true);
       setWait(RESEND_AFTER);
     } catch (err) {
@@ -50,7 +52,7 @@ export default function ForgotPassword() {
       variant="recover"
       switcher={
         <p className="au-switch">
-          Remembered it?<Link to="/company/login">Log in</Link>
+          <span className="au-switch-q">Remembered it?</span> <Link to="/company/login">Log in</Link>
         </p>
       }
     >
@@ -61,7 +63,7 @@ export default function ForgotPassword() {
           </div>
           <h1 className="au-display au-title">Check your inbox</h1>
           <p className="au-sub">
-            If <b>{email.trim()}</b> has a Nuformly account, we&apos;ve sent a link to reset your password. It works once and expires in 30 minutes.
+            If <b>{normalizeEmail(email)}</b> has a Nuformly account, we&apos;ve sent a link to reset your password. It works once and expires in 30 minutes.
           </p>
           <p className="au-hint" style={{ marginTop: 14 }}>
             Not there? Check your spam folder, or{" "}
@@ -80,7 +82,7 @@ export default function ForgotPassword() {
             </div>
           )}
           <div style={{ marginTop: 26 }}>
-            <Link to="/company/login" state={{ email: email.trim() }} className="au-btn au-btn-ghost">
+            <Link to="/company/login" state={{ email: normalizeEmail(email) }} className="au-btn au-btn-ghost">
               <FiArrowLeft /> Back to log in
             </Link>
           </div>
@@ -111,7 +113,13 @@ export default function ForgotPassword() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onBlur={() => setTouched(true)}
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder="name@company.com"
+              maxLength={254}
               error={emailError}
+              valid={touched && !emailError}
+              hint={suggestion ? <EmailSuggestion suggestion={suggestion} onAccept={setEmail} /> : null}
             />
             <SubmitButton loading={loading} loadingText="Sending…">
               Send reset link

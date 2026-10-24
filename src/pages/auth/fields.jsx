@@ -1,48 +1,76 @@
-import { forwardRef, useState } from "react";
-import { FiEye, FiEyeOff, FiAlertCircle, FiCheckCircle, FiArrowRight } from "react-icons/fi";
+import { forwardRef, useId, useState } from "react";
+import { FiEye, FiEyeOff, FiAlertCircle, FiCheckCircle, FiCheck, FiArrowRight, FiInfo } from "react-icons/fi";
+import { passwordChecks, passwordStrength } from "../../config/accountRules.js";
 
-export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-/** Input with a floating label and a leading icon. */
-export const Field = forwardRef(function Field({ id, label, icon: Icon, error, hint, valid, trailing, className = "", ...input }, ref) {
-  const describedBy = error || hint ? `${id}-note` : undefined;
+/**
+ * A labelled input. The label sits above the box (always visible, so people
+ * never lose track of what a field was for); the note under it shows the
+ * error, or a hint. `aside` puts a small link on the label row.
+ */
+export const Field = forwardRef(function Field(
+  { id, label, icon: Icon, error, hint, valid, trailing, aside, className = "", "aria-describedby": extraNote, ...input },
+  ref,
+) {
+  const noteId = `${id}-note`;
+  const showNote = Boolean(error || hint);
+  const describedBy = [showNote && noteId, extraNote].filter(Boolean).join(" ") || undefined;
   return (
-    <div className={className}>
-      <div className={`au-field ${error ? "is-invalid" : ""} ${valid ? "is-valid" : ""}`}>
-        <input ref={ref} id={id} placeholder=" " aria-invalid={error ? "true" : undefined} aria-describedby={describedBy} {...input} />
+    <div className={`au-field ${error ? "is-invalid" : ""} ${valid && !error ? "is-valid" : ""} ${className}`}>
+      <div className="au-label-row">
         <label htmlFor={id} className="au-label">
           {label}
         </label>
+        {aside}
+      </div>
+      <div className="au-box">
         {Icon && <Icon className="au-icon" aria-hidden="true" />}
+        <input ref={ref} id={id} aria-invalid={error ? "true" : undefined} aria-describedby={describedBy} {...input} />
+        {valid && !error && !trailing && <FiCheck className="au-ok" aria-hidden="true" />}
         {trailing}
       </div>
-      {(error || hint) && (
-        <p id={describedBy} className={`au-hint ${error ? "is-error" : ""}`} role={error ? "alert" : undefined}>
-          {error || hint}
+      {showNote && (
+        <p id={noteId} className={`au-note ${error ? "is-error" : ""}`} aria-live="polite">
+          {error && <FiAlertCircle aria-hidden="true" />}
+          <span>{error || hint}</span>
         </p>
       )}
     </div>
   );
 });
 
-/** Password field: show/hide toggle, Caps Lock warning, optional strength meter. */
-export const PasswordField = forwardRef(function PasswordField({ id, label = "Password", icon, error, strength = false, value, ...input }, ref) {
+/**
+ * Password input with show/hide and a Caps Lock warning. `rules` adds the
+ * live checklist and strength bar used when creating a password; `ctx`
+ * ({ email, name, company }) lets it refuse passwords built from those.
+ */
+export const PasswordField = forwardRef(function PasswordField(
+  { id, label = "Password", icon, error, rules = false, ctx, value = "", aside, ...input },
+  ref,
+) {
   const [show, setShow] = useState(false);
   const [caps, setCaps] = useState(false);
+  const listId = useId();
   const onKey = (e) => setCaps(Boolean(e.getModifierState?.("CapsLock")));
-  const s = strength ? scorePassword(value) : null;
+  const checks = rules ? passwordChecks(value, ctx) : null;
+  const strength = rules && value ? passwordStrength(value, ctx) : null;
   return (
-    <div>
+    <div className="au-pw">
       <Field
         ref={ref}
         id={id}
         label={label}
         icon={icon}
         error={error}
+        hint={caps && !error ? "Caps Lock is on" : undefined}
+        aside={aside}
         type={show ? "text" : "password"}
         value={value}
         onKeyUp={onKey}
         onKeyDown={onKey}
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        aria-describedby={rules ? listId : undefined}
         trailing={
           <button type="button" className="au-eye" onClick={() => setShow((v) => !v)} aria-label={show ? "Hide password" : "Show password"} aria-pressed={show}>
             {show ? <FiEyeOff /> : <FiEye />}
@@ -50,44 +78,32 @@ export const PasswordField = forwardRef(function PasswordField({ id, label = "Pa
         }
         {...input}
       />
-      {caps && !error && <p className="au-hint is-warn">Caps Lock is on</p>}
-      {s && value && (
-        <>
-          <div className="au-meter" aria-hidden="true">
-            {[0, 1, 2, 3].map((i) => (
-              <i key={i} className={i < s.score ? "is-on" : ""} style={{ "--c": s.color }} />
-            ))}
+      {rules && (
+        <div className="au-pw-rules">
+          <div className="au-meter" data-score={strength?.score ?? 0} aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+            <span>{strength?.label || " "}</span>
           </div>
-          <p className="au-hint" aria-live="polite">
-            <b style={{ color: s.color }}>{s.label}</b> · {s.tip}
-          </p>
-        </>
+          <ul id={listId} className="au-checklist" aria-label="Password requirements">
+            {checks.map((c) => (
+              <li key={c.id} className={c.ok ? "is-ok" : ""}>
+                <span aria-hidden="true">{c.ok ? <FiCheck /> : null}</span>
+                {c.label}
+                <span className="sr-only">{c.ok ? " — done" : " — not yet"}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );
 });
 
-/** 0–4 for the meter; at least 8 characters is what the server requires. */
-export function scorePassword(pw = "") {
-  if (pw.length < 8) return { score: 1, label: "Too short", tip: `${8 - pw.length} more character${8 - pw.length === 1 ? "" : "s"} needed`, color: "#c2341b", ok: false };
-  let score = 1;
-  if (pw.length >= 12) score += 1;
-  if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score += 1;
-  if (/\d/.test(pw) && /[^A-Za-z0-9]/.test(pw)) score += 1;
-  else if (/\d|[^A-Za-z0-9]/.test(pw)) score += 0.5;
-  score = Math.min(4, Math.round(score));
-  const levels = {
-    1: ["Okay", "Add a number or symbol to make it stronger", "#d97706"],
-    2: ["Good", "A longer password is even safer", "#65a30d"],
-    3: ["Strong", "Nice — that's a solid password", "#1a8a56"],
-    4: ["Excellent", "Very hard to guess", "#0d5537"],
-  };
-  const [label, tip, color] = levels[score];
-  return { score, label, tip, color, ok: true };
-}
-
 // "name@gmial.com" → "name@gmail.com"
-const DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", "rediffmail.com", "yahoo.in"];
+const DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", "rediffmail.com", "yahoo.in", "yahoo.co.in", "proton.me", "protonmail.com", "live.com", "zoho.com"];
 export function suggestEmail(email = "") {
   const [user, domain] = email.toLowerCase().split("@");
   if (!user || !domain || DOMAINS.includes(domain)) return null;
@@ -102,28 +118,53 @@ export function suggestEmail(email = "") {
   return best && best[1] > 0 && best[1] <= 2 ? `${user}@${best[0]}` : null;
 }
 
-export function Alert({ tone = "error", children, id }) {
-  const Icon = tone === "ok" ? FiCheckCircle : FiAlertCircle;
+/** "Did you mean …?" under an email field. */
+export function EmailSuggestion({ suggestion, onAccept }) {
+  if (!suggestion) return null;
   return (
-    <div id={id} className={`au-alert ${tone === "ok" ? "is-ok" : "is-error"}`} role={tone === "ok" ? "status" : "alert"}>
+    <>
+      Did you mean{" "}
+      <button type="button" className="au-inline-link" onClick={() => onAccept(suggestion)}>
+        {suggestion}
+      </button>
+      ?
+    </>
+  );
+}
+
+export function Alert({ tone = "error", children, id }) {
+  const Icon = tone === "ok" ? FiCheckCircle : tone === "info" ? FiInfo : FiAlertCircle;
+  return (
+    <div id={id} className={`au-alert is-${tone}`} role={tone === "error" ? "alert" : "status"} tabIndex={-1}>
       <Icon aria-hidden="true" />
-      <span>{children}</span>
+      <div>{children}</div>
     </div>
   );
 }
 
-export function SubmitButton({ loading, children, loadingText = "Please wait…", arrow = true, ...rest }) {
+export function SubmitButton({ loading, children, loadingText = "Please wait…", arrow = true, className = "", ...rest }) {
   return (
-    <button type="submit" className="au-btn" disabled={loading} aria-busy={loading || undefined} {...rest}>
+    <button type="submit" className={`au-btn ${className}`} disabled={loading || rest.disabled} aria-busy={loading || undefined} {...rest}>
       {loading ? (
         <>
           <span className="au-spinner" aria-hidden="true" /> {loadingText}
         </>
       ) : (
         <>
-          {children} {arrow && <FiArrowRight aria-hidden="true" />}
+          {children} {arrow && <FiArrowRight className="au-btn-arrow" aria-hidden="true" />}
         </>
       )}
     </button>
   );
+}
+
+/**
+ * Tracks which fields were touched so errors appear on blur, not while the
+ * person is still typing — then update live once shown.
+ */
+export function useTouched() {
+  const [touched, setTouched] = useState({});
+  const touch = (k) => () => setTouched((t) => (t[k] ? t : { ...t, [k]: true }));
+  const touchAll = (keys) => setTouched((t) => ({ ...t, ...Object.fromEntries(keys.map((k) => [k, true])) }));
+  return { touched, touch, touchAll, reset: () => setTouched({}) };
 }

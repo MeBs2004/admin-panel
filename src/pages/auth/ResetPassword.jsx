@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { FiLock, FiCheck, FiAlertTriangle } from "react-icons/fi";
 import { passwordResetApi, getErrorMessage } from "../../services/api.js";
 import AuthLayout from "./AuthLayout.jsx";
+import { checkPassword } from "../../config/accountRules.js";
 import { PasswordField, Alert, SubmitButton } from "./fields.jsx";
 
 /** /company/reset-password?token=… — the page the emailed link opens. */
@@ -38,8 +39,8 @@ export default function ResetPassword() {
   }, [status]);
 
   const errors = {
-    password: password.length < 8 ? "Use at least 8 characters." : "",
-    confirm: confirm !== password ? "The two passwords don't match." : "",
+    password: checkPassword(password),
+    confirm: !confirm ? "Type the same password again." : confirm !== password ? "The two passwords don't match." : "",
   };
 
   const submit = async (e) => {
@@ -54,6 +55,11 @@ export default function ResetPassword() {
     } catch (err) {
       const message = getErrorMessage(err);
       if (/invalid or has expired/i.test(message)) setStatus("invalid");
+      else if (err?.response?.status === 400) {
+        // a password rule the page can't check (e.g. built from your own name)
+        setTouched({ password: true, confirm: true });
+        setError(message);
+      }
       else setError(message);
     } finally {
       setLoading(false);
@@ -72,7 +78,7 @@ export default function ResetPassword() {
     >
       {status === "checking" && (
         <div className="au-state" role="status">
-          <span className="au-spinner" style={{ display: "inline-block", borderColor: "rgba(13,85,55,.2)", borderTopColor: "#0d5537", width: 28, height: 28 }} />
+          <span className="au-spinner is-dark" />
           <p className="au-sub">Checking your link…</p>
         </div>
       )}
@@ -122,8 +128,10 @@ export default function ResetPassword() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onBlur={() => setTouched((t) => ({ ...t, password: true }))}
+              placeholder="Create a password"
+              maxLength={72}
               error={touched.password ? errors.password : ""}
-              strength
+              rules
             />
             <PasswordField
               id="confirm"
@@ -133,7 +141,10 @@ export default function ResetPassword() {
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               onBlur={() => setTouched((t) => ({ ...t, confirm: true }))}
+              placeholder="Type it again"
+              maxLength={72}
               error={touched.confirm ? errors.confirm : ""}
+              valid={touched.confirm && !errors.confirm}
             />
             <SubmitButton loading={loading} loadingText="Saving…">
               Save new password

@@ -3,7 +3,9 @@ import StatusBadge from "../../../components/ui/StatusBadge.jsx";
 import PreviewFrame from "../../../components/preview/PreviewFrame.jsx";
 import { SECTOR_LABELS } from "../../../config/sectorTemplates.js";
 
-export default function StepReview({ form, companyName, config }) {
+export default function StepReview({ form, companyName, config, knowledge, showAI = true }) {
+  const kbText = knowledge?.content || "";
+  const kbChanged = knowledge?.loaded && kbText !== knowledge.original;
   const ctaCount = config?.ctas?.filter((c) => c.enabled && c.value).length || 0;
   const suggestionCount = config?.suggestions?.filter(Boolean).length || 0;
   return (
@@ -20,11 +22,25 @@ export default function StepReview({ form, companyName, config }) {
           <Row label="Chatbot">{form.name}</Row>
           <Row label="Template">{SECTOR_LABELS[form.template] || form.template}</Row>
           <Row label="Company">{companyName}</Row>
-          <Row label="AI Model">{form.model}</Row>
-          <Row label="Response Style">{form.temperature.toFixed(1)} temperature</Row>
-          <Row label="Response Language">{form.language}</Row>
-          <Row label="Instructions">
-            {form.systemPrompt ? <span className="line-clamp-2">{form.systemPrompt}</span> : <span className="text-gray-400">Not set</span>}
+          {showAI && (
+            <>
+              <Row label="AI Model">{form.model}</Row>
+              <Row label="Response Style">{form.temperature.toFixed(1)} temperature</Row>
+              <Row label="Response Language">{form.language}</Row>
+              <Row label="Instructions">
+                {form.systemPrompt ? <span className="line-clamp-2">{form.systemPrompt}</span> : <span className="text-gray-400">Not set</span>}
+              </Row>
+            </>
+          )}
+          <Row label="Knowledge base">
+            {kbText.trim() ? (
+              <>
+                {kbText.length.toLocaleString()} characters
+                {kbChanged ? <span className="text-amber-600 dark:text-amber-400"> · saved on create</span> : <span className="text-gray-400"> · unchanged</span>}
+              </>
+            ) : (
+              <span className="text-gray-400">Empty — add it any time</span>
+            )}
           </Row>
           <Row label="Launcher">
             <span className="inline-flex items-center gap-1.5">

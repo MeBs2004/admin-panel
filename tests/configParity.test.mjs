@@ -68,4 +68,6 @@ test("shared files are byte-identical across repos", { skip: !haveBackend && "ne
   assert.ok(same(join(here, "../src/config/starterAssets.js"), join(backend, "starterAssets.js")), "starterAssets.js drifted");
   assert.ok(existsSync(frontendStyle), "widget copy of widgetStyle.js is missing");
   assert.ok(same(join(here, "../src/config/widgetStyle.js"), frontendStyle), "widgetStyle.js: admin and widget copies drifted");
+  // the sign-up / login rules the page checks are the ones the server enforces
+  assert.ok(same(join(here, "../src/config/accountRules.js"), join(backend, "../utils/accountRules.js")), "accountRules.js: admin and backend copies drifted");
 });

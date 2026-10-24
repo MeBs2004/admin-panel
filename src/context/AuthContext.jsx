@@ -4,6 +4,23 @@ import { connectRealtime, disconnectRealtime } from "../services/realtime.js";
 
 const AuthContext = createContext(null);
 
+// What a login/sign-up page needs to explain a failure: the status, which
+// field the server objected to, how long to wait after too many attempts,
+// and whether the server could be reached at all.
+function failure(error) {
+  const res = error?.response;
+  const wait = Number(res?.headers?.["retry-after"] ?? res?.headers?.["ratelimit-reset"]);
+  return {
+    success: false,
+    message: getErrorMessage(error),
+    status: res?.status ?? 0,
+    field: res?.data?.field || null,
+    code: res?.data?.code || null,
+    retryAfter: Number.isFinite(wait) && wait > 0 ? wait : null,
+    offline: !res,
+  };
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const raw = localStorage.getItem("nuformly-user");
@@ -79,7 +96,7 @@ export function AuthProvider({ children }) {
       // one generic message for it, so they never reveal which case it was.
       const data = error?.response?.data;
       const refused = error?.response?.status === 401 || String(data?.code || "").startsWith("USE_");
-      return { success: false, message: getErrorMessage(error), refused };
+      return { ...failure(error), refused };
     }
   };
 
@@ -95,7 +112,7 @@ export function AuthProvider({ children }) {
       setUser(res.data.user);
       return { success: true, company: res.data.company };
     } catch (error) {
-      return { success: false, message: getErrorMessage(error) };
+      return failure(error);
     }
   };
 

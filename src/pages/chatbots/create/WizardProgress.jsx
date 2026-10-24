@@ -1,6 +1,6 @@
 import { FiCheck, FiLayers, FiEdit3, FiCpu, FiBookOpen, FiDroplet, FiFlag } from "react-icons/fi";
 
-const STEPS = [
+export const ALL_STEPS = [
   { key: "template", label: "Template", icon: FiLayers },
   { key: "basics", label: "Basics", icon: FiEdit3 },
   { key: "ai", label: "AI", icon: FiCpu },
@@ -11,7 +11,9 @@ const STEPS = [
 
 // Completed steps are clickable (jump back); upcoming ones aren't, so
 // the required-field validation in the wizard can't be skipped.
-export default function WizardProgress({ current, onStepClick }) {
+// `steps`: which of ALL_STEPS this wizard shows (the Company Panel has no AI step).
+export default function WizardProgress({ current, onStepClick, steps }) {
+  const STEPS = steps ? ALL_STEPS.filter((s) => steps.includes(s.key)) : ALL_STEPS;
   const currentIndex = STEPS.findIndex((s) => s.key === current);
   const pct = (currentIndex / (STEPS.length - 1)) * 100;
 

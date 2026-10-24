@@ -11,11 +11,11 @@ import WizardProgress from "./WizardProgress.jsx";
 import StepTemplate from "./StepTemplate.jsx";
 import StepBasics from "./StepBasics.jsx";
 import StepAI from "./StepAI.jsx";
-import StepKnowledge from "./StepKnowledge.jsx";
+import StepKnowledge, { KNOWLEDGE_MAX_BYTES, knowledgeBytes } from "./StepKnowledge.jsx";
 import StepCustomize from "./StepCustomize.jsx";
 import StepReview from "./StepReview.jsx";
 
-const STEP_ORDER = ["template", "basics", "ai", "knowledge", "customize", "review"];
+const ALL_STEP_ORDER = ["template", "basics", "ai", "knowledge", "customize", "review"];
 const NAME_MAX = 100;
 
 const DEFAULT_FORM = {
@@ -29,7 +29,11 @@ const DEFAULT_FORM = {
 };
 
 export default function CreateChatbotWizard() {
-  const { navigate, path: panelPath } = usePanel();
+  const { navigate, path: panelPath, inCompanyPanel } = usePanel();
+  // Companies don't pick the AI model or prompt — the platform manages
+  // that — so the Company Panel skips the AI step (new chatbots keep the
+  // company's existing AI settings).
+  const STEP_ORDER = inCompanyPanel ? ALL_STEP_ORDER.filter((s) => s !== "ai") : ALL_STEP_ORDER;
   const { showToast } = useToast();
   const { companies, loading: companiesLoading } = useEligibleCompanies();
 
@@ -37,6 +41,9 @@ export default function CreateChatbotWizard() {
   const [form, setForm] = useState(DEFAULT_FORM);
   // Every new chatbot starts with the Nuform look and is customized from there.
   const [config, setConfig] = useState(STARTER_CHATBOT_CONFIG);
+  // Knowledge typed or uploaded in the wizard; saved once the chatbot exists.
+  // `original`/`updatedAt` are what was loaded, so an untouched base isn't rewritten.
+  const [knowledge, setKnowledge] = useState({ content: "", original: "", updatedAt: null, loaded: false });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -62,8 +69,11 @@ export default function CreateChatbotWizard() {
     return Object.keys(next).length === 0;
   };
 
+  const knowledgeTooBig = knowledge.loaded && knowledgeBytes(knowledge.content) > KNOWLEDGE_MAX_BYTES;
+
   const goNext = () => {
     if (step === "basics" && !validateBasics()) return;
+    if (step === "knowledge" && knowledgeTooBig) return;
     const idx = STEP_ORDER.indexOf(step);
     if (idx < STEP_ORDER.length - 1) setStep(STEP_ORDER[idx + 1]);
   };
@@ -86,6 +96,10 @@ export default function CreateChatbotWizard() {
   // surface a warning rather than pretending the whole thing failed.
   const handleCreate = async () => {
     if (submitting) return;
+    if (knowledgeTooBig) {
+      setSubmitError("Your knowledge base is over 2 MB. Go back to Knowledge and shorten it.");
+      return;
+    }
     setSubmitting(true);
     setSubmitError("");
 
@@ -107,17 +121,32 @@ export default function CreateChatbotWizard() {
         warnings.push(`Customization: ${getErrorMessage(err)}`);
       }
 
-      try {
-        await api.put(`/chatbots/${chatbot._id}/ai-settings`, {
-          ai: {
-            model: form.model.trim() || undefined,
-            temperature: form.temperature,
-            language: form.language,
-            systemPrompt: form.systemPrompt.trim() || undefined,
-          },
-        });
-      } catch (err) {
-        warnings.push(`AI settings: ${getErrorMessage(err)}`);
+      // AI settings are company-wide; only the platform wizard (which has
+      // the AI step) writes them.
+      if (!inCompanyPanel) {
+        try {
+          await api.put(`/chatbots/${chatbot._id}/ai-settings`, {
+            ai: {
+              model: form.model.trim() || undefined,
+              temperature: form.temperature,
+              language: form.language,
+              systemPrompt: form.systemPrompt.trim() || undefined,
+            },
+          });
+        } catch (err) {
+          warnings.push(`AI settings: ${getErrorMessage(err)}`);
+        }
+      }
+
+      if (knowledge.loaded && knowledge.content !== knowledge.original) {
+        try {
+          await api.put(`/chatbots/${chatbot._id}/knowledge`, {
+            content: knowledge.content,
+            ...(knowledge.updatedAt ? { expectedUpdatedAt: knowledge.updatedAt } : {}),
+          });
+        } catch (err) {
+          warnings.push(`Knowledge base: ${getErrorMessage(err)}`);
+        }
       }
 
       if (warnings.length > 0) {
@@ -180,7 +209,7 @@ export default function CreateChatbotWizard() {
   const isCustomizeStep = step === "customize";
 
   return (
-    <div className={`mx-auto transition-[max-width] duration-500 ease-out ${isCustomizeStep ? "max-w-[1480px]" : step === "review" ? "max-w-5xl" : "max-w-2xl"}`}>
+    <div className={`mx-auto transition-[max-width] duration-500 ease-out ${isCustomizeStep ? "max-w-[1480px]" : step === "review" ? "max-w-5xl" : step === "knowledge" ? "max-w-3xl" : "max-w-2xl"}`}>
       <PageHeader
         title="Create your AI chatbot"
         breadcrumbs={[{ label: "Chatbots", to: panelPath("/chatbots") }, { label: "Create Chatbot" }]}
@@ -192,6 +221,7 @@ export default function CreateChatbotWizard() {
       />
 
       <WizardProgress
+        steps={STEP_ORDER}
         current={step}
         onStepClick={(key) => {
           if (!submitting) setStep(key);
@@ -214,12 +244,12 @@ export default function CreateChatbotWizard() {
         )}
         {step === "ai" && <StepAI form={form} setForm={setForm} companyId={form.companyId} companyName={companyName} />}
         {step === "knowledge" && (
-          <StepKnowledge companyId={form.companyId} companyName={companyName} />
+          <StepKnowledge companyId={form.companyId} companyName={companyName} knowledge={knowledge} setKnowledge={setKnowledge} />
         )}
         {step === "customize" && (
           <StepCustomize config={config} setConfig={setConfig} companyId={form.companyId} />
         )}
-        {step === "review" && <StepReview form={form} companyName={companyName} config={config} />}
+        {step === "review" && <StepReview form={form} companyName={companyName} config={config} knowledge={knowledge} showAI={!inCompanyPanel} />}
         </div>
 
         {submitError && (
@@ -244,7 +274,7 @@ export default function CreateChatbotWizard() {
           ) : (
             <Button
               onClick={goNext}
-              disabled={companies.length === 0}
+              disabled={companies.length === 0 || (step === "knowledge" && knowledgeTooBig)}
             >
               Continue
             </Button>
