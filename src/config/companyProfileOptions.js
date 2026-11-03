@@ -6,10 +6,7 @@ export const INDUSTRY_OPTIONS = [
   { value: "Energy", label: "Energy" },
   { value: "Education", label: "Education" },
   { value: "Digital Marketing", label: "Digital Marketing" },
-  { value: "Technology", label: "Technology" },
-  { value: "Finance", label: "Finance" },
-  { value: "Healthcare", label: "Healthcare" },
-  { value: "E-commerce", label: "E-commerce" },
+  { value: "General", label: "General" },
   { value: "Other", label: "Other" },
 ];
 

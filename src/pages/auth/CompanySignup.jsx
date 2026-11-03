@@ -1,26 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { FiUser, FiMail, FiLock, FiBriefcase, FiArrowLeft, FiZap, FiBookOpen, FiTrendingUp, FiCpu, FiDollarSign, FiHeart, FiShoppingBag, FiGrid, FiCheck } from "react-icons/fi";
+import { FiUser, FiMail, FiLock, FiPhone, FiBriefcase, FiArrowLeft, FiZap, FiBookOpen, FiTrendingUp, FiMessageSquare, FiGrid, FiCheck, FiShield } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { INDUSTRY_OPTIONS } from "../../config/companyProfileOptions.js";
-import { checkName, checkCompanyName, checkEmail, checkPassword, normalizeEmail, tidy, LIMITS } from "../../config/accountRules.js";
+import { checkName, checkCompanyName, checkEmail, checkPassword, checkPhone, normalizeEmail, tidy, LIMITS } from "../../config/accountRules.js";
 import AuthLayout, { AssistantPreview } from "./AuthLayout.jsx";
 import { Field, PasswordField, Alert, SubmitButton, EmailSuggestion, suggestEmail, useTouched } from "./fields.jsx";
 
+// Same four values as the chatbot sector templates, plus "Other" — see
+// backend/config/industries.js. "General" reuses that sector's own icon
+// (config/sectorTemplates.js) for consistency between the two pickers.
 const INDUSTRY_ICONS = {
   Energy: FiZap,
   Education: FiBookOpen,
   "Digital Marketing": FiTrendingUp,
-  Technology: FiCpu,
-  Finance: FiDollarSign,
-  Healthcare: FiHeart,
-  "E-commerce": FiShoppingBag,
+  General: FiMessageSquare,
   Other: FiGrid,
 };
 
-const STEP_FIELDS = { 1: ["companyName", "industry"], 2: ["adminName", "email", "password"] };
-const FIELD_STEP = { companyName: 1, industry: 1, adminName: 2, email: 2, password: 2 };
-const EMPTY = { companyName: "", industry: "", adminName: "", email: "", password: "" };
+const STEP_FIELDS = { 1: ["companyName", "industry"], 2: ["adminName", "phone", "email", "password"] };
+const FIELD_STEP = { companyName: 1, industry: 1, adminName: 2, phone: 2, email: 2, password: 2, otp: 2 };
+const EMPTY = { companyName: "", industry: "", adminName: "", phone: "", email: "", password: "" };
+const RESEND_AFTER = 30; // seconds
 
 // Everything but the password survives a refresh (this tab only).
 const DRAFT = "nuformly-signup-draft";
@@ -39,7 +40,7 @@ const loadDraft = () => {
  * The preview on the left builds the assistant from what's typed.
  */
 export default function CompanySignup() {
-  const { register, user } = useAuth();
+  const { register, sendSignupOtp, user } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState(loadDraft);
   const [step, setStep] = useState(1);
@@ -49,7 +50,14 @@ export default function CompanySignup() {
   const [failure, setFailure] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(null);
-  const refs = { companyName: useRef(null), industry: useRef(null), adminName: useRef(null), email: useRef(null), password: useRef(null) };
+  // "form": still filling in step 2 · "otp": a code was sent, waiting to
+  // be typed in and verified (that's the call that actually creates the
+  // account — see submit()).
+  const [otpPhase, setOtpPhase] = useState("form");
+  const [otp, setOtp] = useState("");
+  const [otpTouched, setOtpTouched] = useState(false);
+  const [otpWait, setOtpWait] = useState(0);
+  const refs = { companyName: useRef(null), industry: useRef(null), adminName: useRef(null), phone: useRef(null), email: useRef(null), password: useRef(null), otp: useRef(null) };
   // set while this page is signing someone up, so the new session doesn't
   // bounce them past the "all set" screen
   const creating = useRef(false);
@@ -69,6 +77,17 @@ export default function CompanySignup() {
   }, [step]);
 
   useEffect(() => {
+    if (otpPhase === "otp") refs.otp.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otpPhase]);
+
+  useEffect(() => {
+    if (!otpWait) return undefined;
+    const t = setTimeout(() => setOtpWait((w) => w - 1), 1000);
+    return () => clearTimeout(t);
+  }, [otpWait]);
+
+  useEffect(() => {
     if (!done) return undefined;
     const t = setTimeout(() => navigate("/company/overview", { replace: true }), 2800);
     return () => clearTimeout(t);
@@ -81,6 +100,7 @@ export default function CompanySignup() {
     companyName: checkCompanyName(form.companyName),
     industry: form.industry ? "" : "Pick the closest match — you can change it later.",
     adminName: checkName(form.adminName),
+    phone: checkPhone(form.phone),
     email: checkEmail(form.email, { forSignup: true }),
     password: checkPassword(form.password, ctx),
   };
@@ -110,14 +130,65 @@ export default function CompanySignup() {
     setDir("back");
     setStep(1);
     setFailure("");
+    setOtpPhase("form");
   };
 
-  const submit = async (e) => {
-    e.preventDefault();
+  // Shared by the field-level errors a login-style failure can carry,
+  // whichever request (send-otp or the final verify-and-create) hit it.
+  const routeFailure = (result) => {
+    if (result.offline) {
+      setFailure("Can't reach Nuformly right now. Check your internet connection and try again.");
+    } else if (result.status === 429) {
+      setFailure(result.retryAfter ? `Too many attempts. Please wait about ${Math.ceil(result.retryAfter / 60)} minute(s) and try again.` : "Too many attempts. Please wait a few minutes and try again.");
+    } else if (result.field === "otp") {
+      setOtpPhase("otp");
+      setOtpTouched(true);
+      setServerErrors({ otp: result.message });
+      requestAnimationFrame(() => refs.otp.current?.focus());
+    } else if (result.field && FIELD_STEP[result.field]) {
+      // Something about an already-collected field was wrong (e.g. the
+      // email got taken by someone else between sending the code and
+      // verifying it) — back out of the OTP screen so the field is visible.
+      setOtpPhase("form");
+      setServerErrors({ [result.field]: result.code === "EMAIL_TAKEN" ? "EMAIL_TAKEN" : result.message });
+      if (FIELD_STEP[result.field] !== step) {
+        setDir("back");
+        setStep(FIELD_STEP[result.field]);
+      }
+      requestAnimationFrame(() => refs[result.field].current?.focus());
+    } else {
+      setFailure(result.message);
+    }
+  };
+
+  // Step 2's submit, while still in "form" phase: validates the fields,
+  // then emails a verification code instead of creating the account yet.
+  const requestOtp = async (e) => {
+    e?.preventDefault();
     if (loading) return;
     touchAll(STEP_FIELDS[2]);
     const bad = firstInvalid(STEP_FIELDS[2]);
     if (bad) return refs[bad].current?.focus();
+    setFailure("");
+    setLoading(true);
+    const result = await sendSignupOtp(normalizeEmail(form.email));
+    setLoading(false);
+    if (!result.success) return routeFailure(result);
+    setOtp("");
+    setOtpTouched(false);
+    setServerErrors((s) => ({ ...s, otp: "" }));
+    setOtpPhase("otp");
+    setOtpWait(RESEND_AFTER);
+  };
+
+  const otpError = otpTouched && !/^\d{6}$/.test(otp) ? "Enter the 6-digit code we emailed you." : serverErrors.otp || "";
+
+  // The OTP screen's submit — the call that actually creates the account.
+  const submit = async (e) => {
+    e.preventDefault();
+    if (loading) return;
+    setOtpTouched(true);
+    if (!/^\d{6}$/.test(otp)) return refs.otp.current?.focus();
     setFailure("");
     setLoading(true);
     creating.current = true;
@@ -125,29 +196,16 @@ export default function CompanySignup() {
       companyName: tidy(form.companyName),
       industry: form.industry,
       adminName: tidy(form.adminName),
+      phone: tidy(form.phone),
       email: normalizeEmail(form.email),
       password: form.password,
       confirmPassword: form.password,
+      otp,
     });
     setLoading(false);
     if (!result.success) {
       creating.current = false;
-      if (result.offline) {
-        setFailure("Can't reach Nuformly right now. Check your internet connection and try again.");
-      } else if (result.status === 429) {
-        setFailure("Too many sign-up attempts from this network. Please wait a few minutes and try again.");
-      } else if (result.field && FIELD_STEP[result.field]) {
-        // Point at the exact field the server objected to.
-        setServerErrors({ [result.field]: result.code === "EMAIL_TAKEN" ? "EMAIL_TAKEN" : result.message });
-        if (FIELD_STEP[result.field] !== step) {
-          setDir("back");
-          setStep(FIELD_STEP[result.field]);
-        }
-        requestAnimationFrame(() => refs[result.field].current?.focus());
-      } else {
-        setFailure(result.message);
-      }
-      return;
+      return routeFailure(result);
     }
     try {
       sessionStorage.removeItem(DRAFT);
@@ -295,69 +353,134 @@ export default function CompanySignup() {
             </div>
           ) : (
             <div key="s2" className={`au-step ${dir === "back" ? "is-back" : ""}`}>
-              <button type="button" className="au-back" onClick={back}>
-                <FiArrowLeft aria-hidden="true" /> Back to business details
+              <button type="button" className="au-back" onClick={otpPhase === "otp" ? () => setOtpPhase("form") : back}>
+                <FiArrowLeft aria-hidden="true" /> {otpPhase === "otp" ? "Change email" : "Back to business details"}
               </button>
-              <h1 className="au-display au-title">Create your account</h1>
-              <p className="au-sub">You&apos;ll use these details to log in to your workspace.</p>
-              <form className="au-form" onSubmit={submit} noValidate>
-                {failure && <Alert>{failure}</Alert>}
-                <Field
-                  ref={refs.adminName}
-                  id="adminName"
-                  name="name"
-                  label="Full name"
-                  icon={FiUser}
-                  autoComplete="name"
-                  autoCapitalize="words"
-                  placeholder="e.g. Priya Sharma"
-                  maxLength={LIMITS.name[1] + 10}
-                  value={form.adminName}
-                  onChange={set("adminName")}
-                  onBlur={touch("adminName")}
-                  error={errorOf("adminName")}
-                  valid={touched.adminName && !errors.adminName}
-                />
-                <Field
-                  ref={refs.email}
-                  id="email"
-                  name="email"
-                  label="Work email"
-                  icon={FiMail}
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  autoCapitalize="none"
-                  spellCheck={false}
-                  placeholder="name@company.com"
-                  maxLength={LIMITS.email}
-                  value={form.email}
-                  onChange={set("email")}
-                  onBlur={touch("email")}
-                  error={emailError}
-                  valid={touched.email && !errors.email && !serverErrors.email && !suggestion}
-                  hint={suggestion ? <EmailSuggestion suggestion={suggestion} onAccept={set("email")} /> : null}
-                />
-                <PasswordField
-                  ref={refs.password}
-                  id="password"
-                  name="new-password"
-                  icon={FiLock}
-                  autoComplete="new-password"
-                  placeholder="Create a password"
-                  maxLength={LIMITS.password[1]}
-                  value={form.password}
-                  onChange={set("password")}
-                  onBlur={touch("password")}
-                  error={errorOf("password")}
-                  rules
-                  ctx={ctx}
-                />
-                <SubmitButton loading={loading} loadingText="Creating your workspace…">
-                  Create my workspace
-                </SubmitButton>
-                <p className="au-fine">No credit card needed.</p>
-              </form>
+              {otpPhase === "otp" ? (
+                <>
+                  <h1 className="au-display au-title">Check your email</h1>
+                  <p className="au-sub">
+                    We sent a 6-digit code to <b>{normalizeEmail(form.email)}</b>. Enter it below to create your workspace.
+                  </p>
+                  <form className="au-form" onSubmit={submit} noValidate>
+                    {failure && <Alert>{failure}</Alert>}
+                    <Field
+                      ref={refs.otp}
+                      id="otp"
+                      name="one-time-code"
+                      label="Verification code"
+                      icon={FiShield}
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      placeholder="123456"
+                      maxLength={6}
+                      value={otp}
+                      onChange={(e) => {
+                        setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
+                        if (serverErrors.otp) setServerErrors((s) => ({ ...s, otp: "" }));
+                      }}
+                      onBlur={() => setOtpTouched(true)}
+                      error={otpError}
+                      valid={otpTouched && !otpError}
+                    />
+                    <SubmitButton loading={loading} loadingText="Creating your workspace…">
+                      Verify &amp; create account
+                    </SubmitButton>
+                    <p className="au-hint" style={{ marginTop: 14 }}>
+                      Didn&apos;t get it? Check spam, or{" "}
+                      {otpWait ? (
+                        <span>resend in {otpWait}s</span>
+                      ) : (
+                        <button type="button" onClick={requestOtp} disabled={loading}>
+                          {loading ? "sending…" : "send a new code"}
+                        </button>
+                      )}
+                      .
+                    </p>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <h1 className="au-display au-title">Create your account</h1>
+                  <p className="au-sub">You&apos;ll use these details to log in to your workspace.</p>
+                  <form className="au-form" onSubmit={requestOtp} noValidate>
+                    {failure && <Alert>{failure}</Alert>}
+                    <Field
+                      ref={refs.adminName}
+                      id="adminName"
+                      name="name"
+                      label="Full name"
+                      icon={FiUser}
+                      autoComplete="name"
+                      autoCapitalize="words"
+                      placeholder="e.g. Priya Sharma"
+                      maxLength={LIMITS.name[1] + 10}
+                      value={form.adminName}
+                      onChange={set("adminName")}
+                      onBlur={touch("adminName")}
+                      error={errorOf("adminName")}
+                      valid={touched.adminName && !errors.adminName}
+                    />
+                    <Field
+                      ref={refs.phone}
+                      id="phone"
+                      name="tel"
+                      label="Phone number"
+                      icon={FiPhone}
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      placeholder="+91 98765 43210"
+                      maxLength={LIMITS.phone + 5}
+                      value={form.phone}
+                      onChange={set("phone")}
+                      onBlur={touch("phone")}
+                      error={errorOf("phone")}
+                      valid={touched.phone && !errors.phone}
+                    />
+                    <Field
+                      ref={refs.email}
+                      id="email"
+                      name="email"
+                      label="Work email"
+                      icon={FiMail}
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      placeholder="name@company.com"
+                      maxLength={LIMITS.email}
+                      value={form.email}
+                      onChange={set("email")}
+                      onBlur={touch("email")}
+                      error={emailError}
+                      valid={touched.email && !errors.email && !serverErrors.email && !suggestion}
+                      hint={suggestion ? <EmailSuggestion suggestion={suggestion} onAccept={set("email")} /> : null}
+                    />
+                    <PasswordField
+                      ref={refs.password}
+                      id="password"
+                      name="new-password"
+                      icon={FiLock}
+                      autoComplete="new-password"
+                      placeholder="Create a password"
+                      maxLength={LIMITS.password[1]}
+                      value={form.password}
+                      onChange={set("password")}
+                      onBlur={touch("password")}
+                      error={errorOf("password")}
+                      rules
+                      ctx={ctx}
+                    />
+                    <SubmitButton loading={loading} loadingText="Sending code…">
+                      Send verification code
+                    </SubmitButton>
+                    <p className="au-fine">No credit card needed.</p>
+                  </form>
+                </>
+              )}
             </div>
           )}
         </div>

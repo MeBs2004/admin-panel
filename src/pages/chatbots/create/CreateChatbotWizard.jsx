@@ -4,7 +4,7 @@ import { FiCheckCircle, FiArrowLeft } from "react-icons/fi";
 import api, { getErrorMessage } from "../../../services/api.js";
 import { useToast } from "../../../context/ToastContext.jsx";
 import useEligibleCompanies from "../../../hooks/useEligibleCompanies.js";
-import { STARTER_CHATBOT_CONFIG } from "../../../config/chatbotStarter.js";
+import { starterConfigForTemplate } from "../../../config/chatbotSectorStarters.js";
 import PageHeader from "../../../components/ui/PageHeader.jsx";
 import Button from "../../../components/ui/Button.jsx";
 import WizardProgress from "./WizardProgress.jsx";
@@ -12,11 +12,25 @@ import StepTemplate from "./StepTemplate.jsx";
 import StepBasics from "./StepBasics.jsx";
 import StepAI from "./StepAI.jsx";
 import StepKnowledge, { KNOWLEDGE_MAX_BYTES, knowledgeBytes } from "./StepKnowledge.jsx";
+import StepEnergyFull from "./StepEnergyFull.jsx";
+import StepEducationFull from "./StepEducationFull.jsx";
+import StepMarketingFull from "./StepMarketingFull.jsx";
 import StepCustomize from "./StepCustomize.jsx";
 import StepReview from "./StepReview.jsx";
 
-const ALL_STEP_ORDER = ["template", "basics", "ai", "knowledge", "customize", "review"];
+const ALL_STEP_ORDER = ["template", "basics", "ai", "knowledge", "energyConfig", "educationConfig", "marketingConfig", "customize", "review"];
 const NAME_MAX = 100;
+
+// Company.industry (chosen at sign-up — see backend/config/industries.js)
+// deliberately maps onto the same four chatbot templates, so a new
+// chatbot defaults to the sector its own company is already in.
+// "Other" has no matching template, so it falls back to General.
+const INDUSTRY_TO_TEMPLATE = {
+  Energy: "energy",
+  Education: "education",
+  "Digital Marketing": "digital_marketing",
+  General: "general",
+};
 
 const DEFAULT_FORM = {
   companyId: "",
@@ -32,15 +46,33 @@ export default function CreateChatbotWizard() {
   const { navigate, path: panelPath, inCompanyPanel } = usePanel();
   // Companies don't pick the AI model or prompt — the platform manages
   // that — so the Company Panel skips the AI step (new chatbots keep the
-  // company's existing AI settings).
-  const STEP_ORDER = inCompanyPanel ? ALL_STEP_ORDER.filter((s) => s !== "ai") : ALL_STEP_ORDER;
+  // company's existing AI settings). The Energy Configuration step only
+  // ever shows up for the Energy template — every other template's flow
+  // is completely unchanged (Template → Basics → Knowledge → Design → Review).
   const { showToast } = useToast();
   const { companies, loading: companiesLoading } = useEligibleCompanies();
 
   const [step, setStep] = useState("template");
   const [form, setForm] = useState(DEFAULT_FORM);
-  // Every new chatbot starts with the Nuform look and is customized from there.
-  const [config, setConfig] = useState(STARTER_CHATBOT_CONFIG);
+  const STEP_ORDER = ALL_STEP_ORDER.filter(
+    (s) =>
+      (s === "ai" ? !inCompanyPanel : true) &&
+      (s === "energyConfig" ? form.template === "energy" : true) &&
+      (s === "educationConfig" ? form.template === "education" : true) &&
+      (s === "marketingConfig" ? form.template === "digital_marketing" : true)
+  );
+  // The real chatbot row, created right after "basics" (see goNext) so
+  // every later step — Energy Configuration above all — can operate on
+  // a real chatbotId instead of deferred local state. Null until then.
+  const [chatbotId, setChatbotId] = useState(null);
+  const [creatingChatbot, setCreatingChatbot] = useState(false);
+  // Once the admin picks a template themselves, their choice always wins —
+  // this only ever supplies the initial default.
+  const [templateTouched, setTemplateTouched] = useState(false);
+  // Every new chatbot starts with a look matching its sector template
+  // (see chatbotSectorStarters.js) — Nuform's own look for "general" — and
+  // is customized from there.
+  const [config, setConfig] = useState(() => starterConfigForTemplate(DEFAULT_FORM.template));
   // Knowledge typed or uploaded in the wizard; saved once the chatbot exists.
   // `original`/`updatedAt` are what was loaded, so an untouched base isn't rewritten.
   const [knowledge, setKnowledge] = useState({ content: "", original: "", updatedAt: null, loaded: false });
@@ -49,12 +81,32 @@ export default function CreateChatbotWizard() {
   const [submitError, setSubmitError] = useState("");
   const [created, setCreated] = useState(null);
 
+  // Picking a different template (while still on that first step) loads
+  // that sector's starter look into Customize/Review. Once the admin has
+  // moved on and started customizing, changing their mind back on Template
+  // never overwrites what they've already done.
+  useEffect(() => {
+    if (step === "template") setConfig(starterConfigForTemplate(form.template));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.template]);
+
   useEffect(() => {
     if (!companiesLoading && companies.length && !form.companyId) {
       setForm((f) => ({ ...f, companyId: companies[0].companyId }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companiesLoading, companies]);
+
+  // Defaults the template to the selected company's own industry —
+  // still shows and allows all four templates, this only picks the
+  // starting selection (see INDUSTRY_TO_TEMPLATE above).
+  useEffect(() => {
+    if (templateTouched || !form.companyId) return;
+    const company = companies.find((c) => c.companyId === form.companyId);
+    const mapped = company && INDUSTRY_TO_TEMPLATE[company.industry];
+    if (mapped) setForm((f) => ({ ...f, template: mapped }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.companyId, companies, templateTouched]);
 
   const companyName =
     companies.find((c) => c.companyId === form.companyId)?.name || "";
@@ -71,8 +123,39 @@ export default function CreateChatbotWizard() {
 
   const knowledgeTooBig = knowledge.loaded && knowledgeBytes(knowledge.content) > KNOWLEDGE_MAX_BYTES;
 
-  const goNext = () => {
-    if (step === "basics" && !validateBasics()) return;
+  // The chatbot row is created right after "basics" (not at the end of
+  // the wizard) so every later step — Energy Configuration above all —
+  // can configure the real thing instead of local-only draft state.
+  // Guarded so going back to "basics" and forward again never creates
+  // a second chatbot.
+  const createChatbotNow = async () => {
+    if (chatbotId || creatingChatbot) return chatbotId;
+    setCreatingChatbot(true);
+    setSubmitError("");
+    try {
+      const createRes = await api.post("/chatbots", {
+        companyId: form.companyId,
+        name: form.name.trim(),
+        model: form.model.trim() || undefined,
+        template: form.template,
+      });
+      const chatbot = createRes.data.chatbot;
+      setChatbotId(chatbot._id);
+      return chatbot._id;
+    } catch (err) {
+      setSubmitError(getErrorMessage(err));
+      return null;
+    } finally {
+      setCreatingChatbot(false);
+    }
+  };
+
+  const goNext = async () => {
+    if (step === "basics") {
+      if (!validateBasics()) return;
+      const id = await createChatbotNow();
+      if (!id) return;
+    }
     if (step === "knowledge" && knowledgeTooBig) return;
     const idx = STEP_ORDER.indexOf(step);
     if (idx < STEP_ORDER.length - 1) setStep(STEP_ORDER[idx + 1]);
@@ -83,19 +166,14 @@ export default function CreateChatbotWizard() {
     if (idx > 0) setStep(STEP_ORDER[idx - 1]);
   };
 
-  // Real backend persistence, in order — never just React state:
-  //   1. create the chatbot row (name/company/model)
-  //   2. persist the customization (same endpoint/schema ChatbotStudio
-  //      uses) and flip it to the v1 config-driven engine — a chatbot
-  //      created through this wizard has a genuinely live config from
-  //      the first moment, not a legacy hardcoded shell
-  //   3. persist AI settings through the real, already-working AI
-  //      Settings endpoint (company-level — see StepAI's warning)
-  // Steps 2/3 are best-effort: if either fails, the chatbot still
-  // exists and is fully editable afterward from its own pages, so we
-  // surface a warning rather than pretending the whole thing failed.
-  const handleCreate = async () => {
-    if (submitting) return;
+  // By the "review" step the chatbot already exists (created right
+  // after "basics") — this just finishes persisting the remaining
+  // local-state steps (customize, AI settings, knowledge) against it.
+  // Each is best-effort: if one fails, the chatbot still exists and is
+  // fully editable afterward from its own pages, so we surface a
+  // warning rather than pretending the whole thing failed.
+  const handleFinish = async () => {
+    if (submitting || !chatbotId) return;
     if (knowledgeTooBig) {
       setSubmitError("Your knowledge base is over 2 MB. Go back to Knowledge and shorten it.");
       return;
@@ -104,19 +182,11 @@ export default function CreateChatbotWizard() {
     setSubmitError("");
 
     try {
-      const createRes = await api.post("/chatbots", {
-        companyId: form.companyId,
-        name: form.name.trim(),
-        model: form.model.trim() || undefined,
-        template: form.template,
-      });
-      const chatbot = createRes.data.chatbot;
-
       const warnings = [];
 
       try {
-        await api.patch(`/chatbots/${chatbot._id}/config`, { config });
-        await api.patch(`/chatbots/${chatbot._id}`, { widgetEngineVersion: "v1" });
+        await api.patch(`/chatbots/${chatbotId}/config`, { config });
+        await api.patch(`/chatbots/${chatbotId}`, { widgetEngineVersion: "v1" });
       } catch (err) {
         warnings.push(`Customization: ${getErrorMessage(err)}`);
       }
@@ -125,7 +195,7 @@ export default function CreateChatbotWizard() {
       // the AI step) writes them.
       if (!inCompanyPanel) {
         try {
-          await api.put(`/chatbots/${chatbot._id}/ai-settings`, {
+          await api.put(`/chatbots/${chatbotId}/ai-settings`, {
             ai: {
               model: form.model.trim() || undefined,
               temperature: form.temperature,
@@ -140,7 +210,7 @@ export default function CreateChatbotWizard() {
 
       if (knowledge.loaded && knowledge.content !== knowledge.original) {
         try {
-          await api.put(`/chatbots/${chatbot._id}/knowledge`, {
+          await api.put(`/chatbots/${chatbotId}/knowledge`, {
             content: knowledge.content,
             ...(knowledge.updatedAt ? { expectedUpdatedAt: knowledge.updatedAt } : {}),
           });
@@ -150,12 +220,13 @@ export default function CreateChatbotWizard() {
       }
 
       if (warnings.length > 0) {
-        showToast(`Chatbot created, but some settings didn't save: ${warnings.join(" · ")}`, "error");
+        showToast(`Chatbot finished, but some settings didn't save: ${warnings.join(" · ")}`, "error");
       } else {
         showToast("Chatbot created successfully.");
       }
 
-      setCreated(chatbot);
+      const { data } = await api.get(`/chatbots/${chatbotId}`);
+      setCreated(data.chatbot);
     } catch (err) {
       setSubmitError(getErrorMessage(err));
     } finally {
@@ -231,7 +302,13 @@ export default function CreateChatbotWizard() {
       <div className="panel-card rounded-2xl border border-gray-200 bg-white p-6 shadow-card dark:bg-[var(--surface)] dark:border-[var(--border)] animate-fade-in-up">
         <div key={step} className="section-in">
         {step === "template" && (
-          <StepTemplate template={form.template} setTemplate={(template) => setForm((f) => ({ ...f, template }))} />
+          <StepTemplate
+            template={form.template}
+            setTemplate={(template) => {
+              setTemplateTouched(true);
+              setForm((f) => ({ ...f, template }));
+            }}
+          />
         )}
         {step === "basics" && (
           <StepBasics
@@ -246,6 +323,9 @@ export default function CreateChatbotWizard() {
         {step === "knowledge" && (
           <StepKnowledge companyId={form.companyId} companyName={companyName} knowledge={knowledge} setKnowledge={setKnowledge} />
         )}
+        {step === "energyConfig" && <StepEnergyFull chatbotId={chatbotId} />}
+        {step === "educationConfig" && <StepEducationFull chatbotId={chatbotId} />}
+        {step === "marketingConfig" && <StepMarketingFull chatbotId={chatbotId} />}
         {step === "customize" && (
           <StepCustomize config={config} setConfig={setConfig} companyId={form.companyId} />
         )}
@@ -262,21 +342,22 @@ export default function CreateChatbotWizard() {
           <Button
             variant="secondary"
             onClick={goBack}
-            disabled={step === "basics" || submitting}
+            disabled={step === STEP_ORDER[0] || submitting}
           >
             Back
           </Button>
 
           {step === "review" ? (
-            <Button onClick={handleCreate} loading={submitting}>
-              {submitting ? "Creating your chatbot..." : "Create Chatbot"}
+            <Button onClick={handleFinish} loading={submitting}>
+              {submitting ? "Finishing up..." : "Finish"}
             </Button>
           ) : (
             <Button
               onClick={goNext}
+              loading={step === "basics" && creatingChatbot}
               disabled={companies.length === 0 || (step === "knowledge" && knowledgeTooBig)}
             >
-              Continue
+              {step === "basics" && creatingChatbot ? "Creating chatbot..." : "Continue"}
             </Button>
           )}
         </div>

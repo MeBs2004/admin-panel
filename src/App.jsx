@@ -31,6 +31,11 @@ const ChatbotDetail = lazy(() => import("./pages/chatbots/ChatbotDetail.jsx"));
 const ChatbotInstall = lazy(() => import("./pages/chatbots/ChatbotInstall.jsx"));
 const ChatbotAiSettings = lazy(() => import("./pages/chatbots/aiSettings/ChatbotAiSettings.jsx"));
 const ChatbotChannels = lazy(() => import("./pages/chatbots/ChatbotChannels.jsx"));
+const EnergyConfiguration = lazy(() => import("./pages/chatbots/EnergyConfiguration.jsx"));
+const EducationConfiguration = lazy(() => import("./pages/chatbots/EducationConfiguration.jsx"));
+const MarketingConfiguration = lazy(() => import("./pages/chatbots/MarketingConfiguration.jsx"));
+const EnergyEnquiries = lazy(() => import("./pages/chatbots/EnergyEnquiries.jsx"));
+const EnergyAnalytics = lazy(() => import("./pages/chatbots/EnergyAnalytics.jsx"));
 const ChatbotKnowledge = lazy(() => import("./pages/chatbots/knowledge/ChatbotKnowledge.jsx"));
 const CreateChatbotWizard = lazy(() => import("./pages/chatbots/create/CreateChatbotWizard.jsx"));
 const ChatbotStudio = lazy(() => import("./pages/chatbots/studio/ChatbotStudio.jsx"));
@@ -122,6 +127,11 @@ function App() {
         <Route path="/chatbots/:id" element={<ChatbotDetail />} />
         <Route path="/chatbots/:id/install" element={<ChatbotInstall />} />
         <Route path="/chatbots/:id/channels" element={<ChatbotChannels />} />
+        <Route path="/chatbots/:id/energy" element={<EnergyConfiguration />} />
+        <Route path="/chatbots/:id/education" element={<EducationConfiguration />} />
+        <Route path="/chatbots/:id/marketing" element={<MarketingConfiguration />} />
+        <Route path="/chatbots/:id/energy/enquiries" element={<EnergyEnquiries />} />
+        <Route path="/chatbots/:id/energy/analytics" element={<EnergyAnalytics />} />
         <Route path="/chatbots/:id/ai-settings" element={<ChatbotAiSettings />} />
         <Route path="/chatbots/:id/knowledge" element={<ChatbotKnowledge />} />
 
@@ -212,6 +222,11 @@ function App() {
         <Route path="/company/chatbots/:id" element={<ChatbotDetail />} />
         <Route path="/company/chatbots/:id/install" element={<ChatbotInstall />} />
         <Route path="/company/chatbots/:id/channels" element={<ChatbotChannels />} />
+        <Route path="/company/chatbots/:id/energy" element={<EnergyConfiguration />} />
+        <Route path="/company/chatbots/:id/education" element={<EducationConfiguration />} />
+        <Route path="/company/chatbots/:id/marketing" element={<MarketingConfiguration />} />
+        <Route path="/company/chatbots/:id/energy/enquiries" element={<EnergyEnquiries />} />
+        <Route path="/company/chatbots/:id/energy/analytics" element={<EnergyAnalytics />} />
         <Route path="/company/chatbots/:id/ai-settings" element={<ChatbotAiSettings />} />
         <Route path="/company/chatbots/:id/knowledge" element={<ChatbotKnowledge />} />
         <Route path="/company/conversations" element={<ConversationsInbox />} />

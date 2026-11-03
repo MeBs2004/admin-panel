@@ -4,6 +4,7 @@ import { usePanel } from "../../utils/panelPath.js";
 import { FiPlus, FiX, FiCpu } from "react-icons/fi";
 import api, { getErrorMessage } from "../../services/api.js";
 import { useToast } from "../../context/ToastContext.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
 import PageHeader from "../../components/ui/PageHeader.jsx";
 import Button from "../../components/ui/Button.jsx";
 import Select from "../../components/ui/Select.jsx";
@@ -27,6 +28,8 @@ export default function ChatbotDetail() {
   const { id } = useParams();
   const { navigate, path: panelPath } = usePanel();
   const { showToast } = useToast();
+  const { user: me } = useAuth();
+  const isSuperAdmin = me?.role === "SUPER_ADMIN";
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -138,22 +141,44 @@ export default function ChatbotDetail() {
         description={company?.name}
         breadcrumbs={[{ label: "Chatbots", to: panelPath("/chatbots") }, { label: chatbot.name }]}
         action={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 sm:justify-end">
             <Button variant="secondary" onClick={() => navigate("/chatbots")}>
               Back to Chatbots
             </Button>
-            <Button variant="secondary" onClick={() => navigate(`/chatbots/${id}/ai-settings`)}>
-              AI Settings
-            </Button>
+            {isSuperAdmin && (
+              <Button variant="secondary" onClick={() => navigate(`/chatbots/${id}/ai-settings`)}>
+                AI Settings
+              </Button>
+            )}
             <Button variant="secondary" onClick={() => navigate(`/chatbots/${id}/knowledge`)}>
               Knowledge Base
             </Button>
             <Button variant="secondary" onClick={() => navigate(`/chatbots/${id}/install`)}>
               Installation
             </Button>
-            <Button variant="secondary" onClick={() => navigate(`/chatbots/${id}/channels`)}>
-              Channels
-            </Button>
+            {chatbot.template === "energy" && (
+              <>
+                <Button variant="secondary" onClick={() => navigate(`/chatbots/${id}/energy`)}>
+                  Energy Configuration
+                </Button>
+                <Button variant="secondary" onClick={() => navigate(`/chatbots/${id}/energy/enquiries`)}>
+                  RFQ / Enquiries
+                </Button>
+                <Button variant="secondary" onClick={() => navigate(`/chatbots/${id}/energy/analytics`)}>
+                  Energy Analytics
+                </Button>
+              </>
+            )}
+            {chatbot.template === "education" && (
+              <Button variant="secondary" onClick={() => navigate(`/chatbots/${id}/education`)}>
+                Education Configuration
+              </Button>
+            )}
+            {chatbot.template === "digital_marketing" && (
+              <Button variant="secondary" onClick={() => navigate(`/chatbots/${id}/marketing`)}>
+                Marketing Configuration
+              </Button>
+            )}
             <Button variant="secondary" onClick={() => navigate(`/chatbots/${id}/builder`)}>
               Bot Builder
             </Button>

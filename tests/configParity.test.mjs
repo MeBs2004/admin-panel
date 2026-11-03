@@ -12,6 +12,12 @@ const url = (p) => pathToFileURL(p).href;
 
 // The admin panel, backend and widget are separate deployables that
 // share one config shape by copy. These tests fail the moment a copy drifts.
+test("the company industry list matches the backend's", { skip: !haveBackend && "needs ../backend" }, async () => {
+  const be = await import(url(join(backend, "industries.js")));
+  const { INDUSTRY_OPTIONS } = await import("../src/config/companyProfileOptions.js");
+  assert.deepEqual(INDUSTRY_OPTIONS.map((o) => o.value), be.INDUSTRIES, "INDUSTRY_OPTIONS drifted from backend INDUSTRIES");
+});
+
 test("admin defaults and starter match the backend's", { skip: !haveBackend && "needs ../backend" }, async () => {
   const be = await import(url(join(backend, "chatbotConfig.js")));
   const beStarter = await import(url(join(backend, "chatbotStarter.js")));
@@ -19,6 +25,21 @@ test("admin defaults and starter match the backend's", { skip: !haveBackend && "
   const adminStarter = await import("../src/config/chatbotStarter.js");
   assert.deepEqual(admin.DEFAULT_CHATBOT_CONFIG, be.DEFAULT_CHATBOT_CONFIG, "DEFAULT_CHATBOT_CONFIG drifted");
   assert.deepEqual(adminStarter.STARTER_CHATBOT_CONFIG, beStarter.STARTER_CHATBOT_CONFIG, "STARTER_CHATBOT_CONFIG drifted");
+});
+
+// The sector starters' import paths and merge-helper names differ between
+// the two repos (same as chatbotStarter.js itself), so this compares the
+// actual produced config objects, not file bytes.
+test("the per-sector starter looks match the backend's", { skip: !haveBackend && "needs ../backend" }, async () => {
+  const be = await import(url(join(backend, "chatbotSectorStarters.js")));
+  const admin = await import("../src/config/chatbotSectorStarters.js");
+  for (const template of ["general", "energy", "education", "digital_marketing"]) {
+    assert.deepEqual(
+      admin.STARTER_CONFIG_BY_TEMPLATE[template],
+      be.STARTER_CONFIG_BY_TEMPLATE[template],
+      `${template} sector starter drifted`,
+    );
+  }
 });
 
 test("every option list and size range matches the backend", { skip: !haveBackend && "needs ../backend" }, async () => {
@@ -66,6 +87,7 @@ test("every option list and size range matches the backend", { skip: !haveBacken
 test("shared files are byte-identical across repos", { skip: !haveBackend && "needs ../backend" }, () => {
   const same = (a, b) => readFileSync(a, "utf8") === readFileSync(b, "utf8");
   assert.ok(same(join(here, "../src/config/starterAssets.js"), join(backend, "starterAssets.js")), "starterAssets.js drifted");
+  assert.ok(same(join(here, "../src/config/sectorStarterAssets.js"), join(backend, "sectorStarterAssets.js")), "sectorStarterAssets.js drifted");
   assert.ok(existsSync(frontendStyle), "widget copy of widgetStyle.js is missing");
   assert.ok(same(join(here, "../src/config/widgetStyle.js"), frontendStyle), "widgetStyle.js: admin and widget copies drifted");
   // the sign-up / login rules the page checks are the ones the server enforces

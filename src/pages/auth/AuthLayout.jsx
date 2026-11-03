@@ -189,10 +189,7 @@ const INDUSTRY_PREVIEW = {
   Energy: { line: "I can help you find the right solar setup and book a free site survey.", chips: ["Can solar cut my bill?", "Book a site survey", "Subsidies available?", "Talk to an expert"] },
   Education: { line: "Ask me about courses, fees, admissions or campus visits.", chips: ["Which courses do you offer?", "Fees & scholarships", "Admission dates", "Book a campus visit"] },
   "Digital Marketing": { line: "I can walk you through our services and set up a strategy call.", chips: ["What does a campaign cost?", "Do you run Meta ads?", "See our work", "Book a strategy call"] },
-  Technology: { line: "Tell me what you're building — I'll point you to the right team.", chips: ["Do you build mobile apps?", "Get a project quote", "Support hours", "Talk to a developer"] },
-  Finance: { line: "I can answer questions about accounts, loans and investments.", chips: ["Open an account", "Check loan eligibility", "Interest rates", "Talk to an advisor"] },
-  Healthcare: { line: "I can share clinic timings, doctors and help you book a visit.", chips: ["Book an appointment", "Clinic timings", "Which doctors are in?", "Insurance accepted?"] },
-  "E-commerce": { line: "Ask me about orders, delivery, returns or our latest collection.", chips: ["Where is my order?", "Return policy", "Do you ship to my city?", "New arrivals"] },
+  General: { line: "Ask me about our products, services, pricing or support — I'm here to help.", chips: ["What do you offer?", "Pricing", "Get in touch", "Support"] },
   Other: { line: "Ask me anything about what we do — I reply instantly, day or night.", chips: ["What do you offer?", "Pricing", "Opening hours", "Talk to the team"] },
 };
 

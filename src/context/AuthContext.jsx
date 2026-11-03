@@ -116,6 +116,18 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Sends the sign-up email-verification code. Never creates an
+  // account by itself — register() above still does that, now with
+  // the code the person typed in.
+  const sendSignupOtp = async (email) => {
+    try {
+      await companySignupApi.post("/send-otp", { email });
+      return { success: true };
+    } catch (error) {
+      return failure(error);
+    }
+  };
+
   const logout = async () => {
     try {
       await api.post("/auth/logout");
@@ -128,7 +140,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, sendSignupOtp, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );

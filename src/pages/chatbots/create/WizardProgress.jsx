@@ -1,10 +1,13 @@
-import { FiCheck, FiLayers, FiEdit3, FiCpu, FiBookOpen, FiDroplet, FiFlag } from "react-icons/fi";
+import { FiCheck, FiLayers, FiEdit3, FiCpu, FiBookOpen, FiZap, FiDroplet, FiFlag, FiAward, FiTrendingUp } from "react-icons/fi";
 
 export const ALL_STEPS = [
   { key: "template", label: "Template", icon: FiLayers },
   { key: "basics", label: "Basics", icon: FiEdit3 },
   { key: "ai", label: "AI", icon: FiCpu },
   { key: "knowledge", label: "Knowledge", icon: FiBookOpen },
+  { key: "energyConfig", label: "Energy", icon: FiZap },
+  { key: "educationConfig", label: "Education", icon: FiAward },
+  { key: "marketingConfig", label: "Marketing", icon: FiTrendingUp },
   { key: "customize", label: "Design", icon: FiDroplet },
   { key: "review", label: "Review", icon: FiFlag },
 ];
