@@ -1492,6 +1492,57 @@
   border: 2px solid var(--lp-leaf);
   background: linear-gradient(180deg, #effaf4, #fff 40%);
 }
+.lp-plan-badge {
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: #d1fae5;
+  color: var(--lp-forest);
+}
+.lp-plan-dot {
+  margin-top: 7px;
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: currentColor;
+}
+.lp-plan-emerald .lp-plan-dot,
+.lp-plan-emerald .lp-btn-primary {
+  color: var(--lp-leaf);
+}
+.lp-plan-blue {
+  border: 2px solid #93c5fd;
+}
+.lp-plan-blue .lp-plan-badge {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.lp-plan-blue .lp-plan-dot {
+  color: #2563eb;
+}
+.lp-plan-blue .lp-btn-primary {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+.lp-plan-violet {
+  border: 2px solid #d8b4fe;
+}
+.lp-plan-violet .lp-plan-badge {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+.lp-plan-violet .lp-plan-dot {
+  color: #7c3aed;
+}
+.lp-plan-violet .lp-btn-primary {
+  background: #7c3aed;
+  border-color: #7c3aed;
+}
 
 /* ── FAQ ── */
 .lp-faq-q {

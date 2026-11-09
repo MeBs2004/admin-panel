@@ -83,14 +83,68 @@ export const TEMPLATES = [
 ];
 
 // Mirrors backend/config/plans.js (tests/landingContent.test.mjs keeps
-// them equal). Paid tiers have no decided price yet, so they read
-// "Contact sales", exactly like the in-app Plans page.
+// the ids, prices and limits equal). Real, decided prices — Starter is
+// genuinely free forever; Growth/Enterprise are real self-reported
+// prices (no payment provider collects them yet — a company only
+// reaches a paid plan via a SUPER_ADMIN grant, see billing.controller.js).
 export const PLANS = [
-  { id: "FREE", name: "Free", price: 0, limits: { maxChatbots: 1, maxMembers: 3, maxMonthlyVisitors: 500, maxMonthlyConversations: 200, maxAIRequests: 500 } },
-  { id: "STARTER", name: "Starter", price: null, limits: { maxChatbots: 3, maxMembers: 10, maxMonthlyVisitors: 2500, maxMonthlyConversations: 1000, maxAIRequests: 2500 } },
-  { id: "GROWTH", name: "Growth", price: null, limits: { maxChatbots: 10, maxMembers: 25, maxMonthlyVisitors: 10000, maxMonthlyConversations: 5000, maxAIRequests: 10000 } },
-  { id: "PRO", name: "Pro", price: null, limits: { maxChatbots: 25, maxMembers: 100, maxMonthlyVisitors: 50000, maxMonthlyConversations: 25000, maxAIRequests: 50000 } },
-  { id: "ENTERPRISE", name: "Enterprise", price: null, limits: { maxChatbots: Infinity, maxMembers: Infinity, maxMonthlyVisitors: Infinity, maxMonthlyConversations: Infinity, maxAIRequests: Infinity } },
+  {
+    id: "FREE",
+    name: "Starter",
+    badge: "Free forever",
+    price: 0,
+    priceNote: "forever",
+    limits: { maxChatbots: 1, maxMembers: 3, maxMonthlyVisitors: 500, maxMonthlyConversations: 200, maxAIRequests: 500 },
+    items: [
+      { title: "1 Chatbot", sub: "Live on your website" },
+      { title: "200 Conversations", sub: "per month" },
+      { title: "500 Visitors", sub: "per month" },
+      { title: "500 AI Replies", sub: "per month" },
+      { title: "3 Team Members", sub: "seats included" },
+      { title: "AI Knowledge Base", sub: "Upload docs & FAQs" },
+      { title: "Conversations Inbox", sub: "Manage & reply to chats" },
+      { title: "Website Widget", sub: "1-line embed code" },
+    ],
+    cta: "Start free",
+  },
+  {
+    id: "GROWTH",
+    name: "Growth",
+    badge: "Most popular",
+    price: 2499,
+    priceNote: "per month",
+    limits: { maxChatbots: 5, maxMembers: 15, maxMonthlyVisitors: 10000, maxMonthlyConversations: 2500, maxAIRequests: 5000 },
+    items: [
+      { title: "5 Chatbots", sub: "Multi-site & multi-purpose" },
+      { title: "2,500 Conversations", sub: "per month" },
+      { title: "10,000 Visitors", sub: "per month" },
+      { title: "5,000 AI Replies", sub: "per month" },
+      { title: "15 Team Members", sub: "seats included" },
+      { title: "Bot Builder", sub: "Visual conversation flows" },
+      { title: "Live View", sub: "See live visitors on site" },
+      { title: "Analytics & Reports", sub: "Visitor & conversation stats" },
+    ],
+    cta: "Get started",
+  },
+  {
+    id: "ENTERPRISE",
+    name: "Enterprise",
+    badge: "Custom scale",
+    price: 7999,
+    priceNote: "per month",
+    limits: { maxChatbots: Infinity, maxMembers: Infinity, maxMonthlyVisitors: Infinity, maxMonthlyConversations: Infinity, maxAIRequests: Infinity },
+    items: [
+      { title: "Unlimited Chatbots", sub: "No limits" },
+      { title: "25,000+ Conversations", sub: "Custom high volume" },
+      { title: "Unlimited Visitors", sub: "No visitor capping" },
+      { title: "50,000+ AI Replies", sub: "Tailored packs" },
+      { title: "Unlimited Members", sub: "Entire organization" },
+      { title: "Chatbot Access", sub: "Assign bots to team members" },
+      { title: "Roles & Permissions", sub: "Admin, Agent & team access" },
+      { title: "Audit Logs & Tasks", sub: "Full activity tracking" },
+    ],
+    cta: "Get started",
+  },
 ];
 
 export const PLAN_ROWS = [
@@ -101,7 +155,11 @@ export const PLAN_ROWS = [
   ["maxMembers", "team members"],
 ];
 
-export const EVERY_PLAN = ["Knowledge base", "Human handoff", "Bot builder", "Developer API & webhooks", "Advanced analytics", "Telegram channel"];
+// "Every plan" copy is deliberately short now — bot builder, live
+// view and advanced analytics moved to being Growth+/Enterprise-only
+// features (see each plan's own `items` above), not something every
+// tier includes.
+export const EVERY_PLAN = ["Knowledge base", "Human handoff", "Website widget", "Telegram channel"];
 
 export const CHANNELS = [
   { key: "website", label: "Website", live: true },
@@ -133,7 +191,7 @@ export const FAQ = [
     a: "Each company is its own workspace. Access is checked on the server for every request, and you can restrict the widget to your own domains.",
   },
   {
-    q: "What does the Free plan include?",
-    a: "One chatbot, three team members, 200 conversations and 500 AI replies a month, plus every feature — knowledge base, handoff, API and webhooks included.",
+    q: "What does the Starter plan include?",
+    a: "One chatbot, three team members, 200 conversations and 500 AI replies a month, forever free — plus a knowledge base, a shared conversations inbox and the website widget. Bot Builder, Live View and Analytics come with Growth and above.",
   },
 ];

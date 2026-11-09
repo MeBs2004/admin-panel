@@ -16,12 +16,29 @@ test("landing plans match backend/config/plans.js", { skip: !existsSync(plansFil
     assert.equal(p.price, BE[p.id].monthlyPrice, `${p.id} price`);
     for (const [key] of PLAN_ROWS) assert.equal(p.limits[key], BE[p.id].limits[key], `${p.id}.${key}`);
   }
-  // "Every plan has every feature" — only the not-yet-built custom_branding is off.
+  // Every plan has the baseline features; bot_builder/live_view/
+  // advanced_analytics start at Growth, roles_permissions/audit_logs/
+  // chatbot_access_assignment start at Enterprise — these keep that
+  // tiering honest instead of asserting "every plan has everything".
   for (const plan of Object.values(BE)) {
-    for (const f of ["knowledge_base", "human_handoff", "bot_builder", "developer_api", "developer_webhooks", "advanced_analytics", "advanced_channels"]) {
+    for (const f of ["knowledge_base", "human_handoff", "developer_api", "developer_webhooks", "advanced_channels"]) {
       assert.equal(plan.features[f], true, `${plan.id} lacks ${f}`);
     }
   }
+  assert.equal(BE.FREE.features.bot_builder, false);
+  assert.equal(BE.FREE.features.live_view, false);
+  assert.equal(BE.FREE.features.advanced_analytics, false);
+  for (const id of ["GROWTH", "ENTERPRISE"]) {
+    assert.equal(BE[id].features.bot_builder, true, `${id} should have bot_builder`);
+    assert.equal(BE[id].features.live_view, true, `${id} should have live_view`);
+    assert.equal(BE[id].features.advanced_analytics, true, `${id} should have advanced_analytics`);
+  }
+  assert.equal(BE.GROWTH.features.roles_permissions, false);
+  assert.equal(BE.GROWTH.features.audit_logs, false);
+  assert.equal(BE.GROWTH.features.chatbot_access_assignment, false);
+  assert.equal(BE.ENTERPRISE.features.roles_permissions, true);
+  assert.equal(BE.ENTERPRISE.features.audit_logs, true);
+  assert.equal(BE.ENTERPRISE.features.chatbot_access_assignment, true);
 });
 
 test("landing templates are the real sector templates", async () => {

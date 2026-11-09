@@ -12,6 +12,9 @@ import {
   FiLogOut,
   FiX,
   FiCode,
+  FiRadio,
+  FiShield,
+  FiFileText,
 } from "react-icons/fi";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { can, PERMISSIONS } from "../../utils/permissions.js";
@@ -25,8 +28,11 @@ export const ITEMS = [
   { to: "/company/chatbots", label: "My Chatbots", icon: FiCpu },
   { to: "/company/conversations", label: "Conversations", icon: FiMessageSquare },
   { to: "/company/visitors", label: "Visitors", icon: FiEye },
+  { to: "/company/live-view", label: "Live View", icon: FiRadio },
   { to: "/company/analytics", label: "Analytics", icon: FiBarChart2 },
   { to: "/company/team", label: "Team", icon: FiUsers },
+  { to: "/company/roles-permissions", label: "Roles & Permissions", icon: FiShield, requires: PERMISSIONS.USERS_READ },
+  { to: "/company/audit-logs", label: "Audit Logs", icon: FiFileText, requires: PERMISSIONS.AUDIT_READ },
   { to: "/company/billing", label: "Plan & Usage", icon: FiCreditCard, requires: PERMISSIONS.USAGE_VIEW },
   { to: "/company/developer", label: "Developer", icon: FiCode, requires: PERMISSIONS.DEVELOPER_VIEW },
   { to: "/company/settings", label: "Company Settings", icon: FiSettings },

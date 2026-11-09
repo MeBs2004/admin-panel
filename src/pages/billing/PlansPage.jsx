@@ -16,13 +16,17 @@ import { useBillingCompany } from "./useBillingCompany.js";
 
 const FEATURE_LABELS = {
   custom_branding: "Custom branding",
-  advanced_analytics: "Advanced analytics",
+  advanced_analytics: "Analytics & Reports",
   human_handoff: "Human handoff",
   developer_api: "Developer API",
   developer_webhooks: "Developer webhooks",
   knowledge_base: "Knowledge base",
-  bot_builder: "Bot builder",
+  bot_builder: "Bot Builder",
   advanced_channels: "Advanced channels",
+  live_view: "Live View",
+  roles_permissions: "Roles & Permissions",
+  audit_logs: "Audit Logs & Tasks",
+  chatbot_access_assignment: "Chatbot Access assignment",
 };
 
 const LIMIT_LABELS = {
@@ -53,6 +57,7 @@ export default function PlansPage() {
   const [busy, setBusy] = useState(false);
 
   const canChangePlan = can(me?.role, PERMISSIONS.BILLING_CHANGE_PLAN);
+  const isSuperAdmin = me?.role === "SUPER_ADMIN";
 
   const load = () => {
     if (!companyId) return;
@@ -109,7 +114,10 @@ export default function PlansPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {plans.map((plan) => {
             const isCurrent = plan.id === currentPlanId;
-            const canSwitchHere = plan.monthlyPrice === 0;
+            // SUPER_ADMIN can grant/comp any plan to any company for
+            // free — not a real checkout, the platform owner manually
+            // assigning a plan (see billing.controller.js's changePlan).
+            const canSwitchHere = plan.monthlyPrice === 0 || isSuperAdmin;
             return (
               <div
                 key={plan.id}

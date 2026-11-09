@@ -233,9 +233,26 @@ function App() {
         <Route path="/company/conversations/:companyId/:visitorId" element={<ConversationsInbox />} />
         <Route path="/company/visitors" element={<VisitorsList />} />
         <Route path="/company/visitors/:id" element={<VisitorDetail />} />
+        <Route path="/company/live-view" element={<LiveView />} />
         <Route path="/company/analytics" element={<Reports />} />
         <Route path="/company/team" element={<UsersList />} />
         <Route path="/company/team/:id" element={<UserDetail />} />
+        <Route
+          path="/company/roles-permissions"
+          element={
+            <ProtectedRoute roles={["COMPANY_ADMIN"]}>
+              <RolesPermissions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/company/audit-logs"
+          element={
+            <ProtectedRoute roles={["COMPANY_ADMIN"]}>
+              <AuditLogs />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           element={

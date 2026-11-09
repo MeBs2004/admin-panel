@@ -6,7 +6,7 @@ import { WIDGET_URL } from "../../config/widget.js";
 import { buildSnippet } from "../chatbots/install/installUtils.js";
 import Mascot from "./Mascot.jsx";
 import { CountUp, SplitWords } from "./motion.jsx";
-import { CHANNELS, PLANS, PLAN_ROWS, EVERY_PLAN, FAQ } from "./content.js";
+import { CHANNELS, PLANS, EVERY_PLAN, FAQ } from "./content.js";
 
 const CHANNEL_ICONS = { website: FiGlobe, telegram: FaTelegramPlane, whatsapp: FaWhatsapp, instagram: FaInstagram, messenger: FaFacebookMessenger };
 
@@ -136,35 +136,49 @@ export function Pricing({ startHref }) {
             <SplitWords text="Start free. Grow when your chats do." />
           </h2>
           <p className="lp-lede mx-auto mt-4 max-w-[560px]" data-reveal="up" style={{ "--d": "160ms" }}>
-            Every plan has every feature. Plans only differ in how much you use.
+            Start free, grow into Bot Builder, Live View and Analytics, then unlock full team controls on Enterprise.
           </p>
         </div>
 
-        <div className="lp-plan-grid lp-skew mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-5" data-progress>
+        <div className="lp-plan-grid lp-skew mt-12 grid gap-5 md:grid-cols-3" data-progress>
           {PLANS.map((p, i) => {
             const free = p.price === 0;
+            const accent = p.id === "FREE" ? "emerald" : p.id === "GROWTH" ? "blue" : "violet";
             return (
-              <div key={p.id} className={`lp-plan ${free ? "is-free" : ""}`} data-spot data-reveal="up" style={{ "--d": `${i * 80}ms`, "--i": i }}>
-                <p className="font-semibold text-[var(--lp-ink)]">{p.name}</p>
-                <p className="lp-display mt-3 text-[34px] leading-none text-[var(--lp-ink)]">{free ? "₹0" : "Let's talk"}</p>
-                <p className="mt-1 text-xs text-[var(--lp-muted)]">{free ? "forever" : "priced for your volume"}</p>
-                <ul className="mt-6 space-y-2.5">
-                  {PLAN_ROWS.map(([key, label]) => (
-                    <li key={key} className="flex items-baseline gap-2 text-sm">
-                      <b className="font-mono text-[var(--lp-ink)]">
-                        <CountUp to={p.limits[key]} />
-                      </b>
-                      <span className="text-[var(--lp-muted)]">{p.limits[key] === 1 ? label.replace(/s$/, "") : label}</span>
+              <div
+                key={p.id}
+                className={`lp-plan lp-plan-card lp-plan-${accent} ${free ? "is-free" : ""}`}
+                data-spot
+                data-reveal="up"
+                style={{ "--d": `${i * 80}ms`, "--i": i }}
+              >
+                <span className="lp-plan-badge">{p.badge}</span>
+                <p className="mt-3 text-xl font-semibold text-[var(--lp-ink)]">{p.name}</p>
+                <p className="lp-display mt-3 text-[34px] leading-none text-[var(--lp-ink)]">
+                  {free ? "₹0" : <>₹<CountUp to={p.price} /></>}
+                </p>
+                <p className="mt-1 text-xs text-[var(--lp-muted)]">{p.priceNote}</p>
+                <ul className="mt-6 space-y-3">
+                  {p.items.map((item) => (
+                    <li key={item.title} className="flex items-start gap-2.5 text-sm">
+                      <span className="lp-plan-dot" aria-hidden="true" />
+                      <span>
+                        <b className="block text-[var(--lp-ink)]">{item.title}</b>
+                        <span className="text-xs text-[var(--lp-muted)]">{item.sub}</span>
+                      </span>
                     </li>
                   ))}
                 </ul>
                 {free ? (
                   <Link to={startHref} className="lp-btn lp-btn-primary mt-7 w-full justify-center">
-                    Start free
+                    {p.cta}
                   </Link>
                 ) : (
-                  <a href={`mailto:info@nuformsocial.com?subject=${encodeURIComponent(`Nuformly ${p.name} plan`)}`} className="lp-btn lp-btn-ghost mt-7 w-full justify-center">
-                    Contact sales
+                  <a
+                    href={`mailto:info@nuformsocial.com?subject=${encodeURIComponent(`Nuformly ${p.name} plan`)}`}
+                    className="lp-btn lp-btn-primary mt-7 w-full justify-center"
+                  >
+                    {p.cta}
                   </a>
                 )}
               </div>
