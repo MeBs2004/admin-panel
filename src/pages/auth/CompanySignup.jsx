@@ -136,7 +136,9 @@ export default function CompanySignup() {
   // Shared by the field-level errors a login-style failure can carry,
   // whichever request (send-otp or the final verify-and-create) hit it.
   const routeFailure = (result) => {
-    if (result.offline) {
+    if (result.timedOut) {
+      setFailure("Nuformly is still waking up — this can take up to a minute on first use. Please try again.");
+    } else if (result.offline) {
       setFailure("Can't reach Nuformly right now. Check your internet connection and try again.");
     } else if (result.status === 429) {
       setFailure(result.retryAfter ? `Too many attempts. Please wait about ${Math.ceil(result.retryAfter / 60)} minute(s) and try again.` : "Too many attempts. Please wait a few minutes and try again.");

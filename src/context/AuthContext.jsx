@@ -18,6 +18,10 @@ function failure(error) {
     code: res?.data?.code || null,
     retryAfter: Number.isFinite(wait) && wait > 0 ? wait : null,
     offline: !res,
+    // A timeout with no response at all is usually a free-tier backend
+    // (Render etc.) cold-starting rather than being actually unreachable
+    // — worth a different, less alarming message than a flat "offline".
+    timedOut: !res && error?.code === "ECONNABORTED",
   };
 }
 

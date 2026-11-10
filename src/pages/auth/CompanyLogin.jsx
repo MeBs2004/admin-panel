@@ -84,7 +84,9 @@ export default function CompanyLogin() {
     }
 
     setShake(1);
-    if (result.offline) {
+    if (result.timedOut) {
+      setFailure({ kind: "offline", message: "Nuformly is still waking up — this can take up to a minute on first use. Please try again." });
+    } else if (result.offline) {
       setFailure({ kind: "offline", message: "Can't reach Nuformly right now. Check your internet connection and try again." });
     } else if (result.status === 429) {
       const wait = Math.min(15 * 60, result.retryAfter || 60);
